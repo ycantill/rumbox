@@ -303,14 +303,14 @@ function Results({
               <p className="text-sm text-muted">
                 {m.kind === "ruta"
                   ? `Va de ${getCity(m.origin_city)?.name} a ${getCity(m.destination_city)?.name}`
-                  : `Disponible en ${getCity(m.origin_city)?.name}`}{" "}
+                  : `Está en ${getCity(m.origin_city)?.name}`}{" "}
                 · {TIME_SLOTS[m.time_slot]} · {DRIVER_LABOR[m.labor]}
               </p>
               <div className="mt-3">
                 <WhatsAppButton
                   href={waLink(
                     m.whatsapp,
-                    `Hola, te encontré en Muvia. Necesito un servicio ${route}. ¿Tienes disponibilidad?`,
+                    `Hola, te encontré en Muvia. Necesito un servicio ${route}. ¿Me puedes ayudar?`,
                   )}
                 >
                   Escribir por WhatsApp

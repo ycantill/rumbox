@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import {
+  getMyAvailability,
   publishAvailability,
   updateAvailability,
   type PendingRequest,
@@ -43,6 +44,7 @@ export type MyPost = {
   origin: string;
   destination: string | null;
   date: string;
+  timeSlot?: TimeSlot; // los guardados antes no lo traen
   space: DriverSpace;
   status: "activa" | "llena";
 };
@@ -68,7 +70,10 @@ export function DriverForm() {
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingRequest[] | null>(null);
   const [posts, setPosts] = useState<MyPost[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
+  // Un día de trabajo a la vez: si ya hay uno de hoy en adelante, se muestra ese.
+  const current = posts.find((p) => p.date >= today);
 
   // Precarga desde el teléfono: tipo de vehículo, mano de obra y WhatsApp.
   useEffect(() => {
@@ -79,7 +84,20 @@ export function DriverForm() {
     setLabor(p.labor);
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []).filter((x) => x.date >= today));
+    setLoaded(Boolean(today));
   }, [today]);
+
+  function updateCurrent(p: MyPost) {
+    setPosts([p]);
+    save(KEYS.driverPosts, [p]);
+  }
+
+  function endCurrent() {
+    setPosts([]);
+    setPending(null);
+    save(KEYS.driverPosts, []);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 
   function pickVehicle(v: VehicleType) {
     setVehicleType(v);
@@ -125,38 +143,36 @@ export function DriverForm() {
         origin,
         destination: destination || null,
         date,
+        timeSlot: timeSlot as TimeSlot,
         space: space as DriverSpace,
         status: "activa",
       };
-      const next = [post, ...posts];
-      setPosts(next);
-      save(KEYS.driverPosts, next);
+      updateCurrent(post);
       setPending(res.pending);
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
 
-  if (pending) {
+  if (!loaded) return null;
+
+  if (current) {
     return (
-      <div className="flex flex-col gap-5">
-        <div className="rounded-2xl bg-brand-soft p-5">
-          <h2 className="text-lg font-bold text-brand-ink">¡Listo! Ya estás disponible.</h2>
-          <p className="mt-1 text-sm text-brand-ink/80">
-            Los clientes que necesiten un servicio te escribirán por WhatsApp.
-          </p>
-        </div>
-        <PendingList items={pending} />
-        <MyPosts posts={posts} onChange={setPosts} />
-        <button type="button" className="btn-secondary" onClick={() => setPending(null)}>
-          Ponerme disponible otro día
-        </button>
-      </div>
+      <CurrentDay
+        key={current.id}
+        post={current}
+        justPublished={pending !== null}
+        pending={pending}
+        onChange={updateCurrent}
+        onEnd={endCurrent}
+      />
     );
   }
 
   return (
     <div className="flex flex-col gap-8">
-      <MyPosts posts={posts} onChange={setPosts} />
+      <p className="-mt-4 text-sm text-muted">
+        Cuéntanos dónde estás y qué día puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
+      </p>
       <form onSubmit={submit} className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
           <div className="flex gap-2">
@@ -299,7 +315,7 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             <WhatsAppButton
               href={waLink(
                 r.whatsapp,
-                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name}. Tengo disponibilidad.`,
+                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name}. Puedo hacerte el viaje.`,
               )}
             >
               Escribir al cliente
@@ -311,74 +327,153 @@ function PendingList({ items }: { items: PendingRequest[] }) {
   );
 }
 
-function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[]) => void }) {
-  const [busy, setBusy] = useState<string | null>(null);
+function CurrentDay({
+  post,
+  justPublished,
+  pending: initialPending,
+  onChange,
+  onEnd,
+}: {
+  post: MyPost;
+  justPublished: boolean;
+  pending: PendingRequest[] | null;
+  onChange: (p: MyPost) => void;
+  onEnd: () => void;
+}) {
+  const { today, tomorrow } = useBogotaDates();
+  const [pending, setPending] = useState<PendingRequest[] | null>(initialPending);
+  const [busy, setBusy] = useState(false);
+  const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  if (posts.length === 0) return null;
 
-  async function patch(post: MyPost, change: { status?: "activa" | "llena"; space?: DriverSpace }) {
-    setBusy(post.id);
+  // Al volver a la pantalla: estado al día y clientes que esperan, desde el servidor.
+  const { id, editToken } = post;
+  const fresh = initialPending !== null;
+  useEffect(() => {
+    if (fresh) return;
+    let cancelled = false;
+    getMyAvailability({ id, editToken }).then((res) => {
+      if (cancelled) return;
+      if (!res.ok) {
+        if (res.gone) onEnd();
+        return;
+      }
+      setPending(res.pending);
+      onChange({ ...post, status: res.status, space: res.space });
+    });
+    return () => {
+      cancelled = true;
+    };
+    // Solo al montar o si cambia el día guardado.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, editToken, fresh]);
+
+  async function patch(change: { status?: "activa" | "llena"; space?: DriverSpace }) {
+    setBusy(true);
     setError(null);
-    const res = await updateAvailability({ id: post.id, editToken: post.editToken, ...change });
-    setBusy(null);
+    const res = await updateAvailability({ id, editToken, ...change });
+    setBusy(false);
     if (!res.ok) {
       setError(res.error);
-      return;
+      return false;
     }
-    const next = posts.map((p) => (p.id === post.id ? { ...p, ...change } : p));
-    onChange(next);
-    save(KEYS.driverPosts, next);
+    if (change.status === "llena") setPending([]);
+    onChange({ ...post, ...change });
+    return true;
   }
 
+  async function end() {
+    // Se apaga en el servidor para que ningún cliente lo vea, y se olvida en el teléfono.
+    if (await patch({ status: "llena" })) onEnd();
+  }
+
+  const full = post.status === "llena";
+  const day = post.date === today ? "Hoy" : post.date === tomorrow ? "Mañana" : formatDay(post.date);
+
   return (
-    <section className="flex flex-col gap-3">
-      <h2 className="font-semibold">Mis días disponibles</h2>
-      <ErrorNote message={error} />
-      {posts.map((p) => (
-        <article key={p.id} className="card flex flex-col gap-3">
+    <div className="flex flex-col gap-5">
+      <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
+        <h2 className="text-lg font-bold">{justPublished ? "¡Listo! Ya estás disponible." : "Tu día de trabajo"}</h2>
+        <p className="mt-1 text-sm text-brand-ink/80">
+          {full
+            ? "Estás lleno: los clientes no te ven hasta que tengas espacio otra vez."
+            : "Los clientes que necesiten un servicio te escribirán por WhatsApp."}
+        </p>
+        <dl className="mt-4 grid gap-1 text-sm">
           <div>
-            <p className="font-semibold">
-              {getCity(p.origin)?.name}
-              {p.destination && ` → ${getCity(p.destination)?.name}`}
-            </p>
-            <p className="text-sm text-muted">
-              {p.date} · {DRIVER_SPACES[p.space]} ·{" "}
-              {p.status === "activa" ? "Disponible" : "No disponible: ya estás lleno"}
-            </p>
+            <dt className="sr-only">Lugar</dt>
+            <dd className="font-semibold">
+              {getCity(post.origin)?.name}
+              {post.destination && ` → ${getCity(post.destination)?.name}`}
+            </dd>
           </div>
-          <div className="flex flex-wrap gap-2">
-            {p.status === "activa" ? (
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={busy === p.id}
-                onClick={() => patch(p, { status: "llena" })}
-              >
-                Ya estoy lleno
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={busy === p.id}
-                onClick={() => patch(p, { status: "activa" })}
-              >
-                Volver a estar disponible
-              </button>
-            )}
-            {p.status === "activa" && SPACE_CAPACITY[p.space] > 1 && (
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={busy === p.id}
-                onClick={() => patch(p, { space: "solo_paquetes" })}
-              >
-                Solo queda espacio para paquetes
-              </button>
-            )}
+          <div>
+            <dt className="sr-only">Día</dt>
+            <dd>
+              {day}
+              {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
+            </dd>
           </div>
-        </article>
-      ))}
-    </section>
+          <div>
+            <dt className="sr-only">Espacio</dt>
+            <dd>
+              {DRIVER_SPACES[post.space]} · {full ? "Lleno" : "Recibiendo clientes"}
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <ErrorNote message={error} />
+      <div className="flex flex-col gap-2">
+        {full ? (
+          <button type="button" className="btn-secondary" disabled={busy} onClick={() => patch({ status: "activa" })}>
+            Ya tengo espacio otra vez
+          </button>
+        ) : (
+          <button type="button" className="btn-secondary" disabled={busy} onClick={() => patch({ status: "llena" })}>
+            Ya estoy lleno
+          </button>
+        )}
+        {!full && SPACE_CAPACITY[post.space] > 1 && (
+          <button
+            type="button"
+            className="btn-secondary"
+            disabled={busy}
+            onClick={() => patch({ space: "solo_paquetes" })}
+          >
+            Solo queda espacio para paquetes
+          </button>
+        )}
+        {confirmEnd ? (
+          <div className="card flex flex-col gap-3">
+            <p className="text-sm">¿Seguro que ya no vas a trabajar ese día? Los clientes dejarán de verte.</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
+                No
+              </button>
+              <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
+                Sí, cancelar
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="text-sm text-muted underline" onClick={() => setConfirmEnd(true)}>
+            Ya no voy a trabajar ese día
+          </button>
+        )}
+      </div>
+
+      {!full && pending && <PendingList items={pending} />}
+    </div>
   );
+}
+
+/** "2026-10-18" → "sábado 18 de octubre". */
+function formatDay(date: string): string {
+  return new Intl.DateTimeFormat("es-CO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T12:00:00Z`));
 }
