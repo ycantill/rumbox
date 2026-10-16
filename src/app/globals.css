@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f7f7f4;
+  --surface: #ffffff;
+  --surface-2: #eef3f1;
+  --ink: #16201d;
+  --muted: #5d6965;
+  --line: #d9e0dd;
+  --brand: #0f766e;
+  --brand-soft: #dff3ef;
+  --brand-ink: #0b4f4a;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --whatsapp: #1f9d55;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1413;
+    --surface: #171e1c;
+    --surface-2: #1d2725;
+    --ink: #e8eeec;
+    --muted: #9aa8a4;
+    --line: #2c3835;
+    --brand: #2dd4bf;
+    --brand-soft: #123a36;
+    --brand-ink: #b8f1e8;
+    --danger: #f97066;
+    --danger-soft: #3a1714;
+    --whatsapp: #22a75d;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-ink: var(--brand-ink);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-whatsapp: var(--whatsapp);
+  --font-sans: var(--font-geist-sans);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+@layer components {
+  .page {
+    @apply mx-auto w-full max-w-md px-4 pb-16 pt-6;
+  }
+  .input {
+    @apply w-full rounded-xl border border-line bg-surface px-3 py-3 text-base text-ink outline-none focus:border-brand;
+  }
+  .card {
+    @apply rounded-2xl border border-line bg-surface p-4;
+  }
+  .btn-primary {
+    @apply rounded-xl bg-brand px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50 dark:text-bg;
+  }
+  .btn-secondary {
+    @apply rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-ink disabled:opacity-50;
+  }
+}
