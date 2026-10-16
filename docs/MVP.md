@@ -8,8 +8,13 @@ plataforma, con costo operativo cercano a cero.
 ## Qué incluye
 
 **Lenguaje sencillo.** La app es para personas que no usan mucho el celular:
-nada de palabras técnicas (ruta programada, cotización, disponibilidad, mano
-de obra, GPS) en la pantalla.
+nada de palabras técnicas (ruta programada, cotización, mano de obra, GPS) en
+la pantalla.
+
+**Disponible, no "publicación".** En el sistema cada registro es una
+publicación, pero para el transportista es un estado: "se pone disponible" y
+luego queda "Disponible" o "No disponible: ya estás lleno". La pantalla nunca
+habla de publicar.
 
 **Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
 publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
@@ -21,10 +26,10 @@ de obra, número) para no volver a escribirlos.
   pantalla no le explica esa lógica al transportista.
 - Fecha y jornada (mañana, tarde, noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
   WhatsApp.
-- Al publicar ve las solicitudes que ya estaban esperando en su zona o ruta
+- Al ponerse disponible ve las solicitudes que ya estaban esperando en su zona o ruta
   (match diferido) y puede escribirle al cliente por WhatsApp.
-- "Mis publicaciones": botón "Ruta llena / Apagar" y "Solo queda espacio para
-  paquetes". Se controla con un token que solo vive en su teléfono.
+- "Mis días disponibles": botones "Ya estoy lleno" / "Volver a estar
+  disponible" y "Solo queda espacio para paquetes". Se controla con un token que solo vive en su teléfono.
 
 **Cotizador del cliente** (`/cotizar`), 4 pasos
 1. Ruta y fecha (Hoy, Mañana o calendario).

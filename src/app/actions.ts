@@ -123,7 +123,7 @@ export async function updateAvailability(input: {
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return fail("No encontramos esa publicación en este teléfono.");
+      return fail("No encontramos ese día disponible en este teléfono.");
     }
     if (input.space && !spaceFitsVehicle(data.vehicle_type, input.space as DriverSpace)) {
       return fail("Algo salió mal. Intenta de nuevo.");

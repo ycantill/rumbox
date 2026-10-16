@@ -140,7 +140,7 @@ export function DriverForm() {
     return (
       <div className="flex flex-col gap-5">
         <div className="rounded-2xl bg-brand-soft p-5">
-          <h2 className="text-lg font-bold text-brand-ink">¡Listo! Ya estás publicado.</h2>
+          <h2 className="text-lg font-bold text-brand-ink">¡Listo! Ya estás disponible.</h2>
           <p className="mt-1 text-sm text-brand-ink/80">
             Los clientes que necesiten un servicio te escribirán por WhatsApp.
           </p>
@@ -148,7 +148,7 @@ export function DriverForm() {
         <PendingList items={pending} />
         <MyPosts posts={posts} onChange={setPosts} />
         <button type="button" className="btn-secondary" onClick={() => setPending(null)}>
-          Publicar otro día
+          Ponerme disponible otro día
         </button>
       </div>
     );
@@ -226,7 +226,7 @@ export function DriverForm() {
 
         <ErrorNote message={error} />
         <button type="submit" className="btn-primary" disabled={isPending}>
-          {isPending ? "Publicando…" : "Publicar"}
+          {isPending ? "Un momento…" : "Ponerme disponible"}
         </button>
       </form>
     </div>
@@ -332,7 +332,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-semibold">Mis publicaciones</h2>
+      <h2 className="font-semibold">Mis días disponibles</h2>
       <ErrorNote message={error} />
       {posts.map((p) => (
         <article key={p.id} className="card flex flex-col gap-3">
@@ -343,7 +343,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
             </p>
             <p className="text-sm text-muted">
               {p.date} · {DRIVER_SPACES[p.space]} ·{" "}
-              {p.status === "activa" ? "Los clientes te pueden ver" : "Oculto: ya estás lleno"}
+              {p.status === "activa" ? "Disponible" : "No disponible: ya estás lleno"}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -363,7 +363,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
                 disabled={busy === p.id}
                 onClick={() => patch(p, { status: "activa" })}
               >
-                Volver a mostrarme
+                Volver a estar disponible
               </button>
             )}
             {p.status === "activa" && SPACE_CAPACITY[p.space] > 1 && (
