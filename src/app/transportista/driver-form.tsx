@@ -145,7 +145,7 @@ export function DriverForm() {
 
         {/* Con destino el match va por el corredor (Modo Ruta); sin destino, por
             cercanía al origen. Es lógica interna: el transportista no la ve. */}
-        <Field label="¿Hacia dónde vas? (opcional)">
+        <Field label="¿Vas a algún lado? (opcional)">
           <CitySelect
             name="destination"
             value={destination}
