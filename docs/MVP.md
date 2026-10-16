@@ -13,8 +13,9 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible" y
-luego queda "Disponible" o "No disponible: ya estás lleno". La pantalla nunca
-habla de publicar.
+luego cada día queda "Recibiendo clientes" o "Lleno". La pantalla nunca habla
+de publicar, y la palabra "disponible" se usa solo en el botón principal y en
+la confirmación para no repetirla.
 
 **Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
 publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
@@ -28,8 +29,8 @@ de obra, número) para no volver a escribirlos.
   WhatsApp.
 - Al ponerse disponible ve las solicitudes que ya estaban esperando en su zona o ruta
   (match diferido) y puede escribirle al cliente por WhatsApp.
-- "Mis días disponibles": botones "Ya estoy lleno" / "Volver a estar
-  disponible" y "Solo queda espacio para paquetes". Se controla con un token que solo vive en su teléfono.
+- "Mis días de trabajo": botones "Ya estoy lleno" / "Ya tengo espacio otra
+  vez" y "Solo queda espacio para paquetes". Se controla con un token que solo vive en su teléfono.
 
 **Cotizador del cliente** (`/cotizar`), 4 pasos
 1. Ruta y fecha (Hoy, Mañana o calendario).

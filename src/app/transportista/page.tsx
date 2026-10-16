@@ -14,7 +14,7 @@ export default function DriverPage() {
       </Link>
       <h1 className="mt-3 text-2xl font-bold">Soy transportista</h1>
       <p className="mb-6 mt-1 text-sm text-muted">
-        Ponte disponible: cuéntanos dónde estás y qué día puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
+        Cuéntanos dónde estás y qué día puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
       </p>
       <DriverForm />
     </main>

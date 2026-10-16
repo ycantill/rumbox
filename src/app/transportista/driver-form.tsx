@@ -148,7 +148,7 @@ export function DriverForm() {
         <PendingList items={pending} />
         <MyPosts posts={posts} onChange={setPosts} />
         <button type="button" className="btn-secondary" onClick={() => setPending(null)}>
-          Ponerme disponible otro día
+          Agregar otro día
         </button>
       </div>
     );
@@ -299,7 +299,7 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             <WhatsAppButton
               href={waLink(
                 r.whatsapp,
-                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name}. Tengo disponibilidad.`,
+                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name}. Puedo hacerte el viaje.`,
               )}
             >
               Escribir al cliente
@@ -332,7 +332,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
 
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-semibold">Mis días disponibles</h2>
+      <h2 className="font-semibold">Mis días de trabajo</h2>
       <ErrorNote message={error} />
       {posts.map((p) => (
         <article key={p.id} className="card flex flex-col gap-3">
@@ -343,7 +343,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
             </p>
             <p className="text-sm text-muted">
               {p.date} · {DRIVER_SPACES[p.space]} ·{" "}
-              {p.status === "activa" ? "Disponible" : "No disponible: ya estás lleno"}
+              {p.status === "activa" ? "Recibiendo clientes" : "Lleno"}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -363,7 +363,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
                 disabled={busy === p.id}
                 onClick={() => patch(p, { status: "activa" })}
               >
-                Volver a estar disponible
+                Ya tengo espacio otra vez
               </button>
             )}
             {p.status === "activa" && SPACE_CAPACITY[p.space] > 1 && (
