@@ -15,6 +15,7 @@ import {
   useBogotaDates,
   useBogotaHour,
 } from "@/components/ui";
+import { VehicleIcon } from "@/components/vehicle-icon";
 import { getCity, nearestCity } from "@/lib/cities";
 import {
   DRIVER_LABOR,
@@ -195,7 +196,7 @@ export function DriverForm() {
         </Field>
 
         <Field label="¿Qué vehículo tienes?">
-          <Choices options={VEHICLE_TYPES} value={vehicleType} onChange={pickVehicle} />
+          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} />
         </Field>
 
         <Field label="¿Cuánto espacio tienes libre?">
@@ -233,6 +234,13 @@ export function DriverForm() {
 }
 
 const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
+
+const VEHICLE_OPTIONS = Object.fromEntries(
+  (Object.keys(VEHICLE_TYPES) as VehicleType[]).map((v) => [
+    v,
+    { label: VEHICLE_TYPES[v], icon: <VehicleIcon type={v} className="h-10 w-16" /> },
+  ]),
+) as Record<VehicleType, { label: string; icon: React.ReactNode }>;
 
 function slotOptions(slots: TimeSlot[]) {
   return Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;

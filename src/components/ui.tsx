@@ -64,7 +64,7 @@ export function Choices<K extends string>({
   onChange,
   columns = 2,
 }: {
-  options: Record<K, string | { label: string; hint?: string }>;
+  options: Record<K, string | { label: string; hint?: string; icon?: React.ReactNode }>;
   value: K | "";
   onChange: (key: K) => void;
   columns?: 1 | 2;
@@ -75,6 +75,7 @@ export function Choices<K extends string>({
         const opt = options[key];
         const label = typeof opt === "string" ? opt : opt.label;
         const hint = typeof opt === "string" ? undefined : opt.hint;
+        const icon = typeof opt === "string" ? undefined : opt.icon;
         const selected = value === key;
         return (
           <button
@@ -82,12 +83,15 @@ export function Choices<K extends string>({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(key)}
-            className={`rounded-xl border px-3 py-3 text-left text-sm transition ${
+            className={`rounded-xl border px-3 py-3 text-sm transition ${
+              icon ? "flex flex-col items-center gap-1.5 text-center" : "text-left"
+            } ${
               selected
                 ? "border-brand bg-brand-soft font-semibold text-brand-ink"
                 : "border-line bg-surface text-ink hover:border-brand/50"
             }`}
           >
+            {icon}
             {label}
             {hint && <span className="mt-0.5 block text-xs font-normal text-muted">{hint}</span>}
           </button>
