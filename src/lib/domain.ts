@@ -13,7 +13,7 @@ export const DRIVER_SPACES = {
   camion_entero: "Camión entero",
   medio_camion: "Medio camión",
   solo_paquetes: "Solo paquetes",
-  baul: "Baúl disponible",
+  baul: "Espacio en el baúl",
   asientos: "Asientos traseros libres",
 } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
@@ -21,7 +21,7 @@ export type DriverSpace = keyof typeof DRIVER_SPACES;
 /** Volumen que el cliente necesita mover. */
 export const VOLUMES = {
   sobres: { label: "Paquetes pequeños o sobres", hint: "Documentos o envíos ligeros" },
-  carga_parcial: { label: "Carga parcial", hint: "Un par de muebles, nevera o cajas grandes" },
+  carga_parcial: { label: "Algunas cosas", hint: "Un par de muebles, nevera o cajas grandes" },
   medio_camion: { label: "Medio camión", hint: "Apartaestudio: cama, nevera, lavadora" },
   camion_entero: { label: "Camión entero", hint: "Casa o apartamento de 2+ habitaciones" },
 } as const;
@@ -42,9 +42,9 @@ export const CLIENT_LABOR = {
 export type ClientLabor = keyof typeof CLIENT_LABOR;
 
 export const TIME_SLOTS = {
-  manana: "Mañana (6am - 12m)",
-  tarde: "Tarde (12m - 6pm)",
-  noche: "Noche (6pm - 10pm)",
+  manana: "Mañana",
+  tarde: "Tarde",
+  noche: "Noche",
   todo_el_dia: "Todo el día",
 } as const;
 export type TimeSlot = keyof typeof TIME_SLOTS;

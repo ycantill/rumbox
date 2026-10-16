@@ -68,11 +68,11 @@ export async function publishAvailability(input: {
   if (!getCity(input.origin)) return fail("Elige la ciudad donde estás.");
   if (destination && !getCity(destination)) return fail("El destino no es válido.");
   if (destination === input.origin) return fail("El destino debe ser distinto al origen.");
-  if (!isValidServiceDate(input.date)) return fail("Elige una fecha de hoy en adelante.");
-  if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige una franja horaria.");
-  if (!isKey(VEHICLE_TYPES, input.vehicleType)) return fail("Elige el tipo de vehículo.");
-  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige el espacio disponible.");
-  if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige la mano de obra.");
+  if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
+  if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si trabajas en la mañana, la tarde o la noche.");
+  if (!isKey(VEHICLE_TYPES, input.vehicleType)) return fail("Elige qué vehículo tienes.");
+  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto espacio tienes libre.");
+  if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige si ayudas a cargar.");
   if (!whatsapp) return fail("Revisa el número de WhatsApp.");
 
   const editToken = randomBytes(24).toString("base64url");
@@ -104,9 +104,9 @@ export async function updateAvailability(input: {
   status?: "activa" | "llena";
   space?: string;
 }): Promise<{ ok: true } | Fail> {
-  if (input.space !== undefined && !isKey(DRIVER_SPACES, input.space)) return fail("Espacio no válido.");
+  if (input.space !== undefined && !isKey(DRIVER_SPACES, input.space)) return fail("Algo salió mal. Intenta de nuevo.");
   if (input.status !== undefined && input.status !== "activa" && input.status !== "llena") {
-    return fail("Estado no válido.");
+    return fail("Algo salió mal. Intenta de nuevo.");
   }
   return withDb(async () => {
     const { data, error } = await db()
@@ -145,8 +145,8 @@ export async function requestQuote(input: {
 }): Promise<QuoteResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   if (!getCity(input.origin) || !getCity(input.destination)) return fail("Elige origen y destino.");
-  if (!isValidServiceDate(input.date)) return fail("Elige una fecha de hoy en adelante.");
-  if (!isKey(VOLUMES, input.volume)) return fail("Elige el volumen.");
+  if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
+  if (!isKey(VOLUMES, input.volume)) return fail("Elige qué vas a mover.");
   if (!isKey(CLIENT_LABOR, input.labor)) return fail("Elige si necesitas ayuda para cargar.");
   if (!whatsapp) return fail("Revisa el número de WhatsApp.");
 

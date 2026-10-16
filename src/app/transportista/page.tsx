@@ -3,7 +3,7 @@ import Link from "next/link";
 import { DriverForm } from "./driver-form";
 
 export const metadata: Metadata = {
-  title: "Publicar disponibilidad",
+  title: "Soy transportista",
 };
 
 export default function DriverPage() {
@@ -14,7 +14,7 @@ export default function DriverPage() {
       </Link>
       <h1 className="mt-3 text-2xl font-bold">Soy transportista</h1>
       <p className="mb-6 mt-1 text-sm text-muted">
-        Publica dónde estás y cuándo puedes trabajar. Sin registro y sin comisiones.
+        Cuéntanos dónde estás y qué día puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
       </p>
       <DriverForm />
     </main>

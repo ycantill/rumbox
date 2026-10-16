@@ -11,7 +11,7 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: { default: "Muvia · Mudanzas y fletes", template: "%s · Muvia" },
   description:
-    "Cotiza tu mudanza, flete o envío en segundos y conecta por WhatsApp con transportistas que ya van en tu ruta.",
+    "Mira cuánto cuesta tu mudanza, flete o envío y habla por WhatsApp con transportistas que ya van para donde tú vas.",
   applicationName: "Muvia",
   appleWebApp: { capable: true, title: "Muvia", statusBarStyle: "default" },
 };

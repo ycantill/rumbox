@@ -18,7 +18,7 @@ import { KEYS, load, save } from "@/lib/local-store";
 import { estimate, formatCOP, type Quote } from "@/lib/pricing";
 import { waLink } from "@/lib/whatsapp";
 
-const STEPS = ["La ruta", "El volumen", "Ajustes", "Contacto"] as const;
+const STEPS = ["De dónde a dónde", "Qué vas a mover", "Ayuda y escaleras", "Tu WhatsApp"] as const;
 
 export function QuoteWizard() {
   const { today, tomorrow } = useBogotaDates();
@@ -111,13 +111,13 @@ export function QuoteWizard() {
 
       {step === 0 && (
         <>
-          <Field label="Origen">
+          <Field label="¿Desde dónde?">
             <CitySelect name="origin" value={origin} onChange={setOrigin} />
           </Field>
-          <Field label="Destino" hint="Puede ser la misma ciudad si es un trasteo local.">
+          <Field label="¿Hacia dónde?" hint="Puede ser el mismo municipio si el trasteo es dentro del pueblo o la ciudad.">
             <CitySelect name="destination" value={destination} onChange={setDestination} />
           </Field>
-          <Field label="Fecha del servicio">
+          <Field label="¿Qué día?">
             <div className="grid grid-cols-3 gap-2">
               {[
                 ["Hoy", today],
@@ -167,7 +167,7 @@ export function QuoteWizard() {
       )}
 
       {step === 3 && (
-        <Field label="Tu WhatsApp" hint="Te conectamos con el transportista por WhatsApp.">
+        <Field label="Tu WhatsApp" hint="El transportista te escribe a este número.">
           <input
             type="tel"
             inputMode="tel"
@@ -183,7 +183,7 @@ export function QuoteWizard() {
 
       {preview && (
         <div className="rounded-xl bg-surface-2 px-4 py-3 text-sm">
-          Precio estimado: <strong className="text-base">{formatCOP(preview.total)}</strong>
+          Precio aproximado: <strong className="text-base">{formatCOP(preview.total)}</strong>
           <span className="text-muted"> · {preview.distanceKm} km aprox.</span>
         </div>
       )}
@@ -196,7 +196,7 @@ export function QuoteWizard() {
           </button>
         )}
         <button type="submit" className="btn-primary flex-1" disabled={!canContinue || isPending}>
-          {step < STEPS.length - 1 ? "Continuar" : isPending ? "Buscando…" : "Ver precio y transportistas"}
+          {step < STEPS.length - 1 ? "Continuar" : isPending ? "Buscando…" : "Ver precio"}
         </button>
       </div>
     </form>
@@ -258,17 +258,17 @@ function Results({
         <p className="mt-1 text-3xl font-bold">{formatCOP(hasRoute ? quote.routeTotal : quote.total)}</p>
         {hasRoute && (
           <p className="text-sm">
-            Precio con descuento por ruta programada (tarifa normal {formatCOP(quote.total)}).
+            Precio más barato porque un transportista ya va para allá (precio normal {formatCOP(quote.total)}).
           </p>
         )}
         <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-brand-ink/80">
-          <dt>Tarifa base</dt>
+          <dt>Precio base</dt>
           <dd className="text-right">{formatCOP(quote.base)}</dd>
           <dt>Distancia ({quote.distanceKm} km)</dt>
           <dd className="text-right">{formatCOP(quote.distance)}</dd>
           {quote.labor > 0 && (
             <>
-              <dt>Mano de obra</dt>
+              <dt>Ayuda para cargar</dt>
               <dd className="text-right">{formatCOP(quote.labor)}</dd>
             </>
           )}
@@ -280,7 +280,7 @@ function Results({
           )}
         </dl>
         <p className="mt-3 text-xs text-brand-ink/70">
-          Es un estimado. El precio final lo acuerdas con el transportista.
+          Es un precio aproximado. El precio final lo acuerdas con el transportista.
         </p>
       </section>
 
@@ -288,13 +288,13 @@ function Results({
         <section className="card">
           <h2 className="font-semibold">Guardamos tu solicitud</h2>
           <p className="mt-1 text-sm text-muted">
-            Ahora mismo no hay transportistas disponibles para esa ruta y fecha. Apenas uno publique
-            disponibilidad en tu zona verá tu solicitud y te escribirá por WhatsApp.
+            Ahora mismo no hay transportistas libres para ese viaje y ese día. Apenas aparezca uno, verá
+            tu pedido y te escribirá por WhatsApp.
           </p>
         </section>
       ) : (
         <section className="flex flex-col gap-3">
-          <h2 className="font-semibold">Transportistas disponibles ({matches.length})</h2>
+          <h2 className="font-semibold">Transportistas libres ({matches.length})</h2>
           {matches.map((m) => (
             <article key={m.id} className="card">
               <p className="font-semibold">
@@ -322,7 +322,7 @@ function Results({
       )}
 
       <button type="button" className="btn-secondary" onClick={onRestart}>
-        Hacer otra cotización
+        Ver otro precio
       </button>
     </div>
   );
