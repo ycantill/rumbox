@@ -4,6 +4,7 @@
 //   solicitud que salga cerca de su ciudad base.
 // - Modo "Ruta": declaró un destino. Atiende solicitudes cuyo origen y destino
 //   quedan sobre su corredor vial y en el mismo sentido de viaje.
+// - En los dos casos trabaja desde su fecha en adelante, hasta que se apague.
 
 import { getCity, haversineKm } from "./cities";
 import {
@@ -30,7 +31,7 @@ export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 export type AvailabilityLike = {
   origin_city: string;
   destination_city: string | null;
-  service_date: string; // YYYY-MM-DD
+  service_date: string; // YYYY-MM-DD: desde cuándo trabaja
   space: DriverSpace;
   labor: DriverLabor;
 };
@@ -46,7 +47,7 @@ export type RequestLike = {
 export type MatchKind = "local" | "ruta";
 
 export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null {
-  if (a.service_date !== r.service_date) return null;
+  if (r.service_date < a.service_date) return null;
   if (SPACE_CAPACITY[a.space] < VOLUME_LEVEL[r.volume]) return null;
   if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return null;
 

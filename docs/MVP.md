@@ -12,10 +12,10 @@ nada de palabras técnicas (ruta programada, cotización, mano de obra, GPS) en
 la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
-publicación, pero para el transportista es un estado: "se pone disponible" y
-luego cada día queda "Recibiendo clientes" o "Lleno". La pantalla nunca habla
-de publicar, y la palabra "disponible" se usa solo en el botón principal y en
-la confirmación para no repetirla.
+publicación, pero para el transportista es un estado: "se pone disponible"
+desde una fecha y luego queda "Recibiendo clientes" o "Lleno". La pantalla
+nunca habla de publicar, y la palabra "disponible" se usa solo en el botón
+principal y en la confirmación para no repetirla.
 
 **Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
 publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
@@ -25,14 +25,16 @@ de obra, número) para no volver a escribirlos.
 - Origen con botón "Ubicarme" y destino opcional. Por debajo, con destino se
   activa el Modo Ruta y sin destino el match es por cercanía al origen; la
   pantalla no le explica esa lógica al transportista.
-- Fecha y jornada (mañana, tarde, noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
-  WhatsApp.
-- Un día de trabajo a la vez: si el teléfono ya tiene uno de hoy en adelante,
-  en vez del formulario ve "Tu día de trabajo" con los clientes que lo están
-  esperando (match diferido), los botones "Ya estoy lleno" / "Ya tengo espacio
-  otra vez" y "Solo queda espacio para paquetes", y "Ya no voy a trabajar ese
-  día" para cancelarlo y poder poner otro. Se controla con un token que solo
-  vive en su teléfono.
+- Desde cuándo trabaja (hoy, mañana u otro día) y jornada (mañana, tarde,
+  noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
+  WhatsApp. Queda recibiendo clientes desde esa fecha en adelante hasta que
+  diga "Ya no voy a trabajar"; no hay fecha de fin.
+- Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
+  "Estás recibiendo clientes" (o "Estás lleno") con los clientes que lo están
+  esperando (match diferido) y el día de cada uno, los botones "Ya estoy lleno"
+  / "Ya tengo espacio otra vez" y "Solo queda espacio para paquetes", y "Ya no
+  voy a trabajar" para apagarlo y poder poner otro. Se controla con un token
+  que solo vive en su teléfono.
 
 **Cotizador del cliente** (`/cotizar`), 4 pasos
 1. Ruta y fecha (Hoy, Mañana o calendario).
@@ -53,8 +55,9 @@ tarifas son valores iniciales para calibrar con precios reales del piloto.
 - Disponible: el cliente sale a menos de 40 km de la ciudad del transportista.
 - Ruta: origen y destino del cliente quedan cerca del corredor del
   transportista y en el mismo sentido de viaje.
-- Además: misma fecha, el espacio alcanza para el volumen y la mano de obra
-  ofrecida cubre la pedida.
+- Además: el cliente pide un día igual o posterior a la fecha desde la que
+  trabaja el transportista, el espacio alcanza para el volumen y la mano de
+  obra ofrecida cubre la pedida.
 
 **PWA**: manifest instalable y service worker que guarda las páginas para que
 abran con mala señal.

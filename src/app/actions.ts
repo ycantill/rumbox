@@ -43,6 +43,7 @@ export type PendingRequest = {
   kind: MatchKind;
   origin_city: string;
   destination_city: string;
+  service_date: string;
   volume: Volume;
   labor: ClientLabor;
   estimated_price: number;
@@ -104,7 +105,7 @@ export async function publishAvailability(input: {
   });
 }
 
-/** "Ruta llena / Apagar disponibilidad" o actualizar el espacio que queda libre. */
+/** "Ya estoy lleno", "Ya no voy a trabajar" o actualizar el espacio que queda libre. */
 export async function updateAvailability(input: {
   id: string;
   editToken: string;
@@ -123,7 +124,7 @@ export async function updateAvailability(input: {
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return fail("No encontramos ese día en este teléfono.");
+      return fail("No encontramos tus datos en este teléfono.");
     }
     if (input.space && !spaceFitsVehicle(data.vehicle_type, input.space as DriverSpace)) {
       return fail("Algo salió mal. Intenta de nuevo.");
@@ -142,8 +143,8 @@ export type MyAvailabilityResult =
   | (Fail & { gone?: true });
 
 /**
- * El día que el transportista tiene guardado en este teléfono, leído de la base
- * de datos (por si cambió) junto con los clientes que lo están esperando.
+ * El trabajo que el transportista tiene guardado en este teléfono, leído de la
+ * base de datos (por si cambió) junto con los clientes que lo están esperando.
  */
 export async function getMyAvailability(input: { id: string; editToken: string }): Promise<MyAvailabilityResult> {
   return withDb(async () => {
@@ -154,7 +155,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return { ...fail("No encontramos ese día en este teléfono."), gone: true as const };
+      return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
     const pending = data.status === "activa" ? await findPendingRequests(data) : [];
     return { ok: true as const, status: data.status, space: data.space, pending };
@@ -215,11 +216,11 @@ export async function requestQuote(input: {
       .single();
     if (error) throw error;
 
-    // Vía A (match inmediato).
+    // Vía A (match inmediato): transportistas que trabajan desde ese día o antes.
     const { data: rows, error: qErr } = await db()
       .from("availabilities")
       .select("id, origin_city, destination_city, service_date, time_slot, vehicle_type, space, labor, whatsapp")
-      .eq("service_date", input.date)
+      .lte("service_date", input.date)
       .eq("status", "activa")
       .order("created_at", { ascending: false })
       .limit(500);
@@ -245,11 +246,14 @@ async function findPendingRequests(a: {
   space: DriverSpace;
   labor: DriverLabor;
 }): Promise<PendingRequest[]> {
+  // Desde que empieza a trabajar en adelante, sin los viajes que ya pasaron.
+  const today = todayInBogota();
   const { data, error } = await db()
     .from("requests")
     .select("id, origin_city, destination_city, service_date, volume, labor, estimated_price, whatsapp")
-    .eq("service_date", a.service_date)
+    .gte("service_date", a.service_date > today ? a.service_date : today)
     .eq("status", "abierta")
+    .order("service_date", { ascending: true })
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
