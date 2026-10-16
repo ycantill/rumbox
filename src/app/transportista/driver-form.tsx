@@ -118,10 +118,7 @@ export function DriverForm() {
         <div className="rounded-2xl bg-brand-soft p-5">
           <h2 className="text-lg font-bold text-brand-ink">¡Listo! Ya estás publicado.</h2>
           <p className="mt-1 text-sm text-brand-ink/80">
-            {destination
-              ? `Modo Ruta: te mostramos a clientes que mueven carga entre ${getCity(origin)?.name} y ${getCity(destination)?.name}.`
-              : `Listo para trabajar en ${getCity(origin)?.name} y alrededores.`}{" "}
-            Los clientes te escribirán por WhatsApp.
+            Los clientes que necesiten un servicio te escribirán por WhatsApp.
           </p>
         </div>
         <PendingList items={pending} />
@@ -146,19 +143,14 @@ export function DriverForm() {
           </div>
         </Field>
 
-        <Field
-          label="¿Hacia dónde vas? (opcional)"
-          hint={
-            destination
-              ? "Modo Ruta: aprovechas el viaje y te llegan cargas en tu trayecto."
-              : "Si lo dejas vacío quedas 'Listo para trabajar' en tu ciudad."
-          }
-        >
+        {/* Con destino el match va por el corredor (Modo Ruta); sin destino, por
+            cercanía al origen. Es lógica interna: el transportista no la ve. */}
+        <Field label="¿Hacia dónde vas? (opcional)">
           <CitySelect
             name="destination"
             value={destination}
             onChange={setDestination}
-            placeholder="Sin destino: trabajo local"
+            placeholder="Sin destino"
             allowEmpty
           />
         </Field>
@@ -243,7 +235,7 @@ function PendingList({ items }: { items: PendingRequest[] }) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Por ahora no hay solicitudes esperando en tu zona para esa fecha. Te mostraremos a los clientes que coticen.
+        Por ahora no hay solicitudes esperando para esa fecha. Te mostraremos a los clientes que coticen.
       </p>
     );
   }
@@ -257,7 +249,6 @@ function PendingList({ items }: { items: PendingRequest[] }) {
           </p>
           <p className="text-sm text-muted">
             {VOLUMES[r.volume].label} · aprox. {formatCOP(r.estimated_price)}
-            {r.kind === "ruta" && " · en tu ruta"}
           </p>
           <div className="mt-3">
             <WhatsAppButton
@@ -303,7 +294,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
           <div>
             <p className="font-semibold">
               {getCity(p.origin)?.name}
-              {p.destination ? ` → ${getCity(p.destination)?.name}` : " (local)"}
+              {p.destination && ` → ${getCity(p.destination)?.name}`}
             </p>
             <p className="text-sm text-muted">
               {p.date} · {DRIVER_SPACES[p.space]} ·{" "}

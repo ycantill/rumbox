@@ -12,8 +12,9 @@ publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
 de obra, número) para no volver a escribirlos.
 
 **Pantalla del transportista** (`/transportista`)
-- Origen con botón "Usar GPS", destino opcional: vacío = "Listo para trabajar"
-  local; con destino = Modo Ruta.
+- Origen con botón "Usar GPS" y destino opcional. Por debajo, con destino se
+  activa el Modo Ruta y sin destino el match es por cercanía al origen; la
+  pantalla no le explica esa lógica al transportista.
 - Fecha y franja horaria, tipo de vehículo, espacio disponible, mano de obra y
   WhatsApp.
 - Al publicar ve las solicitudes que ya estaban esperando en su zona o ruta
