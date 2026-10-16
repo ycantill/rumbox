@@ -137,6 +137,30 @@ export async function updateAvailability(input: {
   });
 }
 
+export type MyAvailabilityResult =
+  | { ok: true; status: "activa" | "llena"; space: DriverSpace; pending: PendingRequest[] }
+  | (Fail & { gone?: true });
+
+/**
+ * El día que el transportista tiene guardado en este teléfono, leído de la base
+ * de datos (por si cambió) junto con los clientes que lo están esperando.
+ */
+export async function getMyAvailability(input: { id: string; editToken: string }): Promise<MyAvailabilityResult> {
+  return withDb(async () => {
+    const { data, error } = await db()
+      .from("availabilities")
+      .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return { ...fail("No encontramos ese día en este teléfono."), gone: true as const };
+    }
+    const pending = data.status === "activa" ? await findPendingRequests(data) : [];
+    return { ok: true as const, status: data.status, space: data.space, pending };
+  });
+}
+
 // ---------------------------------------------------------------------- Cliente
 
 export type QuoteResult =

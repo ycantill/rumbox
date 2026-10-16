@@ -12,10 +12,7 @@ export default function DriverPage() {
       <Link href="/" className="text-sm text-muted">
         ← Inicio
       </Link>
-      <h1 className="mt-3 text-2xl font-bold">Soy transportista</h1>
-      <p className="mb-6 mt-1 text-sm text-muted">
-        Cuéntanos dónde estás y qué día puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
-      </p>
+      <h1 className="mb-6 mt-3 text-2xl font-bold">Soy transportista</h1>
       <DriverForm />
     </main>
   );
