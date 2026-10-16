@@ -9,11 +9,13 @@ import {
 import { CitySelect, Choices, ErrorNote, Field, WhatsAppButton, useBogotaDates } from "@/components/ui";
 import { getCity, nearestCity } from "@/lib/cities";
 import {
+  COVERAGES,
   DRIVER_LABOR,
   DRIVER_SPACES,
   TIME_SLOTS,
   VEHICLE_TYPES,
   VOLUMES,
+  type Coverage,
   type DriverLabor,
   type DriverSpace,
   type TimeSlot,
@@ -23,13 +25,19 @@ import { KEYS, load, save } from "@/lib/local-store";
 import { formatCOP } from "@/lib/pricing";
 import { waLink } from "@/lib/whatsapp";
 
-type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
+type Profile = {
+  vehicleType: VehicleType | "";
+  labor: DriverLabor | "";
+  coverage?: Coverage | "";
+  whatsapp: string;
+};
 
 export type MyPost = {
   id: string;
   editToken: string;
   origin: string;
   destination: string | null;
+  coverage?: Coverage; // publicaciones guardadas antes de existir el alcance no lo traen
   date: string;
   space: DriverSpace;
   status: "activa" | "llena";
@@ -39,6 +47,7 @@ export function DriverForm() {
   const { today, tomorrow } = useBogotaDates();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
+  const [coverage, setCoverage] = useState<Coverage | "">("");
   const [pickedDate, setDate] = useState("");
   const date = pickedDate || today;
   const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
@@ -59,6 +68,7 @@ export function DriverForm() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVehicleType(p.vehicleType);
     setLabor(p.labor);
+    setCoverage(p.coverage ?? "");
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []).filter((x) => x.date >= today));
   }, [today]);
@@ -83,6 +93,7 @@ export function DriverForm() {
       const res = await publishAvailability({
         origin,
         destination: destination || null,
+        coverage,
         date,
         timeSlot,
         vehicleType,
@@ -94,12 +105,13 @@ export function DriverForm() {
         setError(res.error);
         return;
       }
-      save(KEYS.driverProfile, { vehicleType, labor, whatsapp } satisfies Profile);
+      save(KEYS.driverProfile, { vehicleType, labor, coverage, whatsapp } satisfies Profile);
       const post: MyPost = {
         id: res.id,
         editToken: res.editToken,
         origin,
         destination: destination || null,
+        coverage: coverage as Coverage,
         date,
         space: space as DriverSpace,
         status: "activa",
@@ -118,9 +130,12 @@ export function DriverForm() {
         <div className="rounded-2xl bg-brand-soft p-5">
           <h2 className="text-lg font-bold text-brand-ink">¡Listo! Ya estás publicado.</h2>
           <p className="mt-1 text-sm text-brand-ink/80">
+            {coverage === "local"
+              ? `Te mostramos a clientes con servicios dentro de ${getCity(origin)?.name} y alrededores`
+              : `Te mostramos a clientes que salen de ${getCity(origin)?.name} y alrededores hacia cualquier ciudad`}
             {destination
-              ? `Modo Ruta: te mostramos a clientes que mueven carga entre ${getCity(origin)?.name} y ${getCity(destination)?.name}.`
-              : `Listo para trabajar en ${getCity(origin)?.name} y alrededores.`}{" "}
+              ? `, y en Modo Ruta a los que mueven carga entre ${getCity(origin)?.name} y ${getCity(destination)?.name}.`
+              : "."}{" "}
             Los clientes te escribirán por WhatsApp.
           </p>
         </div>
@@ -146,19 +161,23 @@ export function DriverForm() {
           </div>
         </Field>
 
+        <Field label="¿Qué servicios tomas?">
+          <Choices options={COVERAGES} value={coverage} onChange={setCoverage} />
+        </Field>
+
         <Field
-          label="¿Hacia dónde vas? (opcional)"
+          label="¿Ya tienes un viaje programado? (opcional)"
           hint={
             destination
               ? "Modo Ruta: aprovechas el viaje y te llegan cargas en tu trayecto."
-              : "Si lo dejas vacío quedas 'Listo para trabajar' en tu ciudad."
+              : "Si vas hacia otra ciudad, ponla aquí y te llegan cargas en el camino."
           }
         >
           <CitySelect
             name="destination"
             value={destination}
             onChange={setDestination}
-            placeholder="Sin destino: trabajo local"
+            placeholder="Sin viaje programado"
             allowEmpty
           />
         </Field>
@@ -303,7 +322,8 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
           <div>
             <p className="font-semibold">
               {getCity(p.origin)?.name}
-              {p.destination ? ` → ${getCity(p.destination)?.name}` : " (local)"}
+              {p.destination && ` → ${getCity(p.destination)?.name}`}
+              {p.coverage && ` · ${COVERAGES[p.coverage].label}`}
             </p>
             <p className="text-sm text-muted">
               {p.date} · {DRIVER_SPACES[p.space]} ·{" "}

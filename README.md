@@ -24,7 +24,7 @@ El alcance del MVP y lo que queda para después está en
    ```
 
 2. Crea un proyecto en [Supabase](https://supabase.com) y ejecuta
-   `supabase/migrations/0001_init.sql` en el SQL Editor.
+   los archivos de `supabase/migrations/` en orden en el SQL Editor.
 
 3. Copia `.env.example` a `.env.local` y llena `SUPABASE_URL` y
    `SUPABASE_SERVICE_ROLE_KEY` (Project Settings → API).
@@ -60,7 +60,7 @@ El alcance del MVP y lo que queda para después está en
 src/app/                 Páginas: inicio, /cotizar (cliente), /transportista
 src/app/actions.ts       Server Actions: publicar, cotizar, "Ruta llena"
 src/lib/pricing.ts       Tarifa base + modificadores + descuento por ruta
-src/lib/matching.ts      Emparejamiento local y por corredor
+src/lib/matching.ts      Emparejamiento por zona (local/nacional) y por corredor
 src/lib/cities.ts        Municipios del piloto con coordenadas
 supabase/migrations/     Esquema de base de datos
 public/sw.js             Service worker (PWA)

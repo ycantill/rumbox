@@ -8,6 +8,13 @@ export const VEHICLE_TYPES = {
 } as const;
 export type VehicleType = keyof typeof VEHICLE_TYPES;
 
+/** Hasta dónde trabaja el transportista, tenga o no destino declarado. */
+export const COVERAGES = {
+  local: { label: "Local", hint: "Servicios dentro de tu ciudad y alrededores" },
+  nacional: { label: "Nacional", hint: "También viajes desde tu ciudad a otras ciudades" },
+} as const;
+export type Coverage = keyof typeof COVERAGES;
+
 /** Espacio que el transportista declara libre. */
 export const DRIVER_SPACES = {
   camion_entero: "Camión entero",
