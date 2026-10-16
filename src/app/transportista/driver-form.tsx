@@ -18,6 +18,7 @@ import {
 } from "@/components/ui";
 import { VehicleIcon } from "@/components/vehicle-icon";
 import { getCity, nearestCity } from "@/lib/cities";
+import { capitalize, whenText } from "@/lib/dates";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
@@ -43,10 +44,9 @@ export type MyPost = {
   editToken: string;
   origin: string;
   destination: string | null;
-  date: string;
+  date: string; // desde cuándo trabaja
   timeSlot?: TimeSlot; // los guardados antes no lo traen
   space: DriverSpace;
-  status: "activa" | "llena";
 };
 
 export function DriverForm() {
@@ -72,8 +72,8 @@ export function DriverForm() {
   const [posts, setPosts] = useState<MyPost[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
-  // Un día de trabajo a la vez: si ya hay uno de hoy en adelante, se muestra ese.
-  const current = posts.find((p) => p.date >= today);
+  // Un trabajo a la vez: si ya hay uno, se muestra ese en vez del formulario.
+  const current = posts[0];
 
   // Precarga desde el teléfono: tipo de vehículo, mano de obra y WhatsApp.
   useEffect(() => {
@@ -83,7 +83,7 @@ export function DriverForm() {
     setVehicleType(p.vehicleType);
     setLabor(p.labor);
     setWhatsapp(p.whatsapp);
-    setPosts(load<MyPost[]>(KEYS.driverPosts, []).filter((x) => x.date >= today));
+    setPosts(load<MyPost[]>(KEYS.driverPosts, []));
     setLoaded(Boolean(today));
   }, [today]);
 
@@ -93,6 +93,13 @@ export function DriverForm() {
   }
 
   function endCurrent() {
+    // El formulario vuelve con los datos de antes, para ponerse otra vez con un toque.
+    if (current) {
+      setOrigin(current.origin);
+      setDestination(current.destination ?? "");
+      if (current.timeSlot) setTimeSlot(current.timeSlot);
+      if (vehicleType && VEHICLE_SPACES[vehicleType].includes(current.space)) setSpace(current.space);
+    }
     setPosts([]);
     setPending(null);
     save(KEYS.driverPosts, []);
@@ -145,7 +152,6 @@ export function DriverForm() {
         date,
         timeSlot: timeSlot as TimeSlot,
         space: space as DriverSpace,
-        status: "activa",
       };
       updateCurrent(post);
       setPending(res.pending);
@@ -157,7 +163,7 @@ export function DriverForm() {
 
   if (current) {
     return (
-      <CurrentDay
+      <CurrentWork
         key={current.id}
         post={current}
         justPublished={pending !== null}
@@ -171,7 +177,7 @@ export function DriverForm() {
   return (
     <div className="flex flex-col gap-8">
       <p className="-mt-4 text-sm text-muted">
-        Cuéntanos dónde estás y qué día puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
+        Cuéntanos dónde estás y desde cuándo puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
       </p>
       <form onSubmit={submit} className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
@@ -195,7 +201,7 @@ export function DriverForm() {
           />
         </Field>
 
-        <Field label="¿Qué día puedes trabajar?">
+        <Field label="¿Desde cuándo puedes trabajar?">
           <div className="grid grid-cols-3 gap-2">
             {todayOpen && <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />}
             <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
@@ -293,10 +299,11 @@ function QuickDate({
 }
 
 function PendingList({ items }: { items: PendingRequest[] }) {
+  const { today, tomorrow } = useBogotaDates();
   if (items.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Por ahora nadie está buscando transportista para ese día. Cuando alguien busque, le mostramos tu número.
+        Por ahora nadie está buscando transportista. Cuando alguien busque, le mostramos tu número.
       </p>
     );
   }
@@ -309,13 +316,14 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             {getCity(r.origin_city)?.name} → {getCity(r.destination_city)?.name}
           </p>
           <p className="text-sm text-muted">
-            {VOLUMES[r.volume].label} · aprox. {formatCOP(r.estimated_price)}
+            {capitalize(whenText(r.service_date, today, tomorrow))} · {VOLUMES[r.volume].label} · aprox.{" "}
+            {formatCOP(r.estimated_price)}
           </p>
           <div className="mt-3">
             <WhatsAppButton
               href={waLink(
                 r.whatsapp,
-                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name}. Puedo hacerte el viaje.`,
+                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`,
               )}
             >
               Escribir al cliente
@@ -327,7 +335,7 @@ function PendingList({ items }: { items: PendingRequest[] }) {
   );
 }
 
-function CurrentDay({
+function CurrentWork({
   post,
   justPublished,
   pending: initialPending,
@@ -346,7 +354,7 @@ function CurrentDay({
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Al volver a la pantalla: estado al día y clientes que esperan, desde el servidor.
+  // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
   const fresh = initialPending !== null;
   useEffect(() => {
@@ -358,17 +366,21 @@ function CurrentDay({
         if (res.gone) onEnd();
         return;
       }
+      if (res.status !== "activa") {
+        onEnd();
+        return;
+      }
       setPending(res.pending);
-      onChange({ ...post, status: res.status, space: res.space });
+      onChange({ ...post, space: res.space });
     });
     return () => {
       cancelled = true;
     };
-    // Solo al montar o si cambia el día guardado.
+    // Solo al montar o si cambia el trabajo guardado.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, editToken, fresh]);
 
-  async function patch(change: { status?: "activa" | "llena"; space?: DriverSpace }) {
+  async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
     setError(null);
     const res = await updateAvailability({ id, editToken, ...change });
@@ -377,9 +389,11 @@ function CurrentDay({
       setError(res.error);
       return false;
     }
-    if (change.status === "llena") setPending([]);
-    onChange({ ...post, ...change });
     return true;
+  }
+
+  async function onlyPackages() {
+    if (await patch({ space: "solo_paquetes" })) onChange({ ...post, space: "solo_paquetes" });
   }
 
   async function end() {
@@ -387,19 +401,13 @@ function CurrentDay({
     if (await patch({ status: "llena" })) onEnd();
   }
 
-  const full = post.status === "llena";
-  const day = post.date === today ? "Hoy" : post.date === tomorrow ? "Mañana" : formatDay(post.date);
-
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
-        <h2 className="text-lg font-bold">{justPublished ? "¡Listo! Ya estás disponible." : "Tu día de trabajo"}</h2>
-        <p className="mt-1 text-sm text-brand-ink/80">
-          {full
-            ? "Estás lleno: los clientes no te ven hasta que tengas espacio otra vez."
-            : "Los clientes que necesiten un servicio te escribirán por WhatsApp."}
-        </p>
-        <dl className="mt-4 grid gap-1 text-sm">
+        <h2 className="text-lg font-bold">
+          {justPublished ? "¡Listo! Ya estás disponible para este servicio." : "Estás disponible para este servicio"}
+        </h2>
+        <dl className="mt-3 grid gap-1 text-sm">
           <div>
             <dt className="sr-only">Lugar</dt>
             <dd className="font-semibold">
@@ -408,72 +416,49 @@ function CurrentDay({
             </dd>
           </div>
           <div>
-            <dt className="sr-only">Día</dt>
+            <dt className="sr-only">Desde cuándo</dt>
             <dd>
-              {day}
+              Desde {whenText(post.date, today, tomorrow)}
               {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
             </dd>
           </div>
           <div>
             <dt className="sr-only">Espacio</dt>
-            <dd>
-              {DRIVER_SPACES[post.space]} · {full ? "Lleno" : "Recibiendo clientes"}
-            </dd>
+            <dd>{DRIVER_SPACES[post.space]}</dd>
           </div>
         </dl>
+        <p className="mt-4 text-sm text-brand-ink/80">
+          Los clientes que necesiten un servicio te escribirán por WhatsApp.
+        </p>
       </section>
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
-        {full ? (
-          <button type="button" className="btn-secondary" disabled={busy} onClick={() => patch({ status: "activa" })}>
-            Ya tengo espacio otra vez
-          </button>
-        ) : (
-          <button type="button" className="btn-secondary" disabled={busy} onClick={() => patch({ status: "llena" })}>
-            Ya estoy lleno
-          </button>
-        )}
-        {!full && SPACE_CAPACITY[post.space] > 1 && (
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={busy}
-            onClick={() => patch({ space: "solo_paquetes" })}
-          >
+        {SPACE_CAPACITY[post.space] > 1 && (
+          <button type="button" className="btn-secondary" disabled={busy} onClick={onlyPackages}>
             Solo queda espacio para paquetes
           </button>
         )}
         {confirmEnd ? (
           <div className="card flex flex-col gap-3">
-            <p className="text-sm">¿Seguro que ya no vas a trabajar ese día? Los clientes dejarán de verte.</p>
+            <p className="text-sm">¿Dejamos de mostrarte a los clientes?</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
                 No
               </button>
               <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
-                Sí, cancelar
+                Sí
               </button>
             </div>
           </div>
         ) : (
-          <button type="button" className="text-sm text-muted underline" onClick={() => setConfirmEnd(true)}>
-            Ya no voy a trabajar ese día
+          <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
+            Ya no recibo más clientes
           </button>
         )}
       </div>
 
-      {!full && pending && <PendingList items={pending} />}
+      {pending && <PendingList items={pending} />}
     </div>
   );
-}
-
-/** "2026-10-18" → "sábado 18 de octubre". */
-function formatDay(date: string): string {
-  return new Intl.DateTimeFormat("es-CO", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T12:00:00Z`));
 }

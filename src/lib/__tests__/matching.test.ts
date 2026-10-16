@@ -39,8 +39,9 @@ describe("matchKind", () => {
     expect(matchKind(d, request({ destination_city: "medellin" }))).toBeNull();
   });
 
-  it("respeta la fecha", () => {
-    expect(matchKind(driver(), request({ service_date: "2026-11-02" }))).toBeNull();
+  it("trabaja desde su fecha en adelante", () => {
+    expect(matchKind(driver(), request({ service_date: "2026-11-02" }))).toBe("local");
+    expect(matchKind(driver(), request({ service_date: "2026-10-31" }))).toBeNull();
   });
 
   it("respeta el espacio disponible", () => {

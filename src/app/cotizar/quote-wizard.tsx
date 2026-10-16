@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { requestQuote, type DriverMatch } from "@/app/actions";
 import { CitySelect, Choices, ErrorNote, Field, WhatsAppButton, useBogotaDates } from "@/components/ui";
 import { getCity } from "@/lib/cities";
+import { whenText } from "@/lib/dates";
 import {
   CLIENT_LABOR,
   DRIVER_LABOR,
@@ -84,6 +85,7 @@ export function QuoteWizard() {
         quote={result.quote}
         matches={result.matches}
         route={`${getCity(origin)?.name} → ${getCity(destination)?.name}`}
+        when={whenText(date, today, tomorrow)}
         onRestart={() => {
           setResult(null);
           setStep(0);
@@ -243,11 +245,13 @@ function Results({
   quote,
   matches,
   route,
+  when,
   onRestart,
 }: {
   quote: Quote;
   matches: DriverMatch[];
   route: string;
+  when: string;
   onRestart: () => void;
 }) {
   const hasRoute = matches.some((m) => m.kind === "ruta");
@@ -310,7 +314,7 @@ function Results({
                 <WhatsAppButton
                   href={waLink(
                     m.whatsapp,
-                    `Hola, te encontré en Muvia. Necesito un servicio ${route}. ¿Me puedes ayudar?`,
+                    `Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`,
                   )}
                 >
                   Escribir por WhatsApp
