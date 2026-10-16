@@ -6,11 +6,23 @@ import {
   updateAvailability,
   type PendingRequest,
 } from "@/app/actions";
-import { CitySelect, Choices, ErrorNote, Field, WhatsAppButton, useBogotaDates } from "@/components/ui";
+import {
+  CitySelect,
+  Choices,
+  ErrorNote,
+  Field,
+  WhatsAppButton,
+  useBogotaDates,
+  useBogotaHour,
+} from "@/components/ui";
+import { VehicleIcon } from "@/components/vehicle-icon";
 import { getCity, nearestCity } from "@/lib/cities";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
+  SPACE_CAPACITY,
+  slotsLeftToday,
+  VEHICLE_SPACES,
   TIME_SLOTS,
   VEHICLE_TYPES,
   VOLUMES,
@@ -40,8 +52,14 @@ export function DriverForm() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
-  const date = pickedDate || today;
-  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
+  const hour = useBogotaHour();
+  // Para hoy solo quedan las jornadas que no han pasado; ya de noche, hoy desaparece.
+  const todayLeft = hour === null ? ALL_SLOTS : slotsLeftToday(hour);
+  const todayOpen = todayLeft.length > 0;
+  const date = pickedDate && (pickedDate !== today || todayOpen) ? pickedDate : todayOpen ? today : tomorrow;
+  const slots = date === today ? todayLeft : ALL_SLOTS;
+  const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
+  const timeSlot = pickedSlot && slots.includes(pickedSlot) ? pickedSlot : "";
   const [vehicleType, setVehicleType] = useState<VehicleType | "">("");
   const [space, setSpace] = useState<DriverSpace | "">("");
   const [labor, setLabor] = useState<DriverLabor | "">("");
@@ -62,6 +80,12 @@ export function DriverForm() {
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []).filter((x) => x.date >= today));
   }, [today]);
+
+  function pickVehicle(v: VehicleType) {
+    setVehicleType(v);
+    // Si el espacio elegido no le cabe al vehículo nuevo, se borra para que elija otra vez.
+    if (space && !VEHICLE_SPACES[v].includes(space)) setSpace("");
+  }
 
   function locate() {
     if (!navigator.geolocation) return;
@@ -157,26 +181,30 @@ export function DriverForm() {
 
         <Field label="¿Qué día puedes trabajar?">
           <div className="grid grid-cols-3 gap-2">
-            <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />
+            {todayOpen && <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />}
             <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
             <input
               type="date"
               className="input"
-              min={today}
+              min={todayOpen ? today : tomorrow}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               aria-label="Otra fecha"
             />
           </div>
-          <Choices options={TIME_SLOTS} value={timeSlot} onChange={setTimeSlot} />
+          <Choices options={slotOptions(slots)} value={timeSlot} onChange={setTimeSlot} />
         </Field>
 
         <Field label="¿Qué vehículo tienes?">
-          <Choices options={VEHICLE_TYPES} value={vehicleType} onChange={setVehicleType} />
+          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} />
         </Field>
 
         <Field label="¿Cuánto espacio tienes libre?">
-          <Choices options={DRIVER_SPACES} value={space} onChange={setSpace} />
+          {vehicleType ? (
+            <Choices options={spaceOptions(vehicleType)} value={space} onChange={setSpace} />
+          ) : (
+            <p className="text-sm text-muted">Primero elige qué vehículo tienes.</p>
+          )}
         </Field>
 
         <Field label="¿Ayudas a cargar?">
@@ -203,6 +231,23 @@ export function DriverForm() {
       </form>
     </div>
   );
+}
+
+const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
+
+const VEHICLE_OPTIONS = Object.fromEntries(
+  (Object.keys(VEHICLE_TYPES) as VehicleType[]).map((v) => [
+    v,
+    { label: VEHICLE_TYPES[v], icon: <VehicleIcon type={v} className="h-10 w-16" /> },
+  ]),
+) as Record<VehicleType, { label: string; icon: React.ReactNode }>;
+
+function slotOptions(slots: TimeSlot[]) {
+  return Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;
+}
+
+function spaceOptions(vehicle: VehicleType) {
+  return Object.fromEntries(VEHICLE_SPACES[vehicle].map((s) => [s, DRIVER_SPACES[s]])) as Record<DriverSpace, string>;
 }
 
 function QuickDate({
@@ -321,7 +366,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
                 Volver a mostrarme
               </button>
             )}
-            {p.status === "activa" && p.space !== "solo_paquetes" && (
+            {p.status === "activa" && SPACE_CAPACITY[p.space] > 1 && (
               <button
                 type="button"
                 className="btn-secondary"

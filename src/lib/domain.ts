@@ -18,6 +18,18 @@ export const DRIVER_SPACES = {
 } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
 
+/** Espacios que tienen sentido para cada vehículo: un carro no lleva un camión entero. */
+export const VEHICLE_SPACES: Record<VehicleType, readonly DriverSpace[]> = {
+  furgon: ["camion_entero", "medio_camion", "solo_paquetes"],
+  estacas: ["camion_entero", "medio_camion", "solo_paquetes"],
+  pickup: ["medio_camion", "solo_paquetes"],
+  carro: ["baul", "asientos"],
+};
+
+export function spaceFitsVehicle(vehicle: VehicleType, space: DriverSpace): boolean {
+  return VEHICLE_SPACES[vehicle].includes(space);
+}
+
 /** Volumen que el cliente necesita mover. */
 export const VOLUMES = {
   sobres: { label: "Paquetes pequeños o sobres", hint: "Documentos o envíos ligeros" },
@@ -42,12 +54,26 @@ export const CLIENT_LABOR = {
 export type ClientLabor = keyof typeof CLIENT_LABOR;
 
 export const TIME_SLOTS = {
-  manana: "Mañana",
-  tarde: "Tarde",
-  noche: "Noche",
+  manana: "Por la mañana",
+  tarde: "Por la tarde",
+  noche: "Por la noche",
   todo_el_dia: "Todo el día",
 } as const;
 export type TimeSlot = keyof typeof TIME_SLOTS;
+
+/** Hora (0-23, hora Colombia) en que termina cada jornada. No se muestra en pantalla. */
+export const TIME_SLOT_ENDS = { manana: 12, tarde: 18, noche: 22 } as const;
+
+/**
+ * Jornadas que todavía se pueden ofrecer hoy a esta hora. "Todo el día" solo
+ * aparece mientras no haya pasado la mañana; después ya no es todo el día.
+ */
+export function slotsLeftToday(hour: number): TimeSlot[] {
+  const left = (Object.keys(TIME_SLOT_ENDS) as (keyof typeof TIME_SLOT_ENDS)[]).filter(
+    (s) => hour < TIME_SLOT_ENDS[s],
+  );
+  return left.length === 3 ? [...left, "todo_el_dia"] : left;
+}
 
 /** Capacidad relativa: un espacio sirve para volúmenes de nivel igual o menor. */
 export const SPACE_CAPACITY: Record<DriverSpace, number> = {
