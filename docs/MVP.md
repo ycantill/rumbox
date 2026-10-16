@@ -7,15 +7,19 @@ plataforma, con costo operativo cercano a cero.
 
 ## Qué incluye
 
+**Lenguaje sencillo.** La app es para personas que no usan mucho el celular:
+nada de palabras técnicas (ruta programada, cotización, disponibilidad, mano
+de obra, GPS) en la pantalla.
+
 **Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
 publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
 de obra, número) para no volver a escribirlos.
 
 **Pantalla del transportista** (`/transportista`)
-- Origen con botón "Usar GPS" y destino opcional. Por debajo, con destino se
+- Origen con botón "Ubicarme" y destino opcional. Por debajo, con destino se
   activa el Modo Ruta y sin destino el match es por cercanía al origen; la
   pantalla no le explica esa lógica al transportista.
-- Fecha y franja horaria, tipo de vehículo, espacio disponible, mano de obra y
+- Fecha y jornada (mañana, tarde, noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
   WhatsApp.
 - Al publicar ve las solicitudes que ya estaban esperando en su zona o ruta
   (match diferido) y puede escribirle al cliente por WhatsApp.

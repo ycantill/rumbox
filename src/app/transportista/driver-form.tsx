@@ -124,7 +124,7 @@ export function DriverForm() {
         <PendingList items={pending} />
         <MyPosts posts={posts} onChange={setPosts} />
         <button type="button" className="btn-secondary" onClick={() => setPending(null)}>
-          Publicar otra disponibilidad
+          Publicar otro día
         </button>
       </div>
     );
@@ -138,7 +138,7 @@ export function DriverForm() {
           <div className="flex gap-2">
             <CitySelect name="origin" value={origin} onChange={setOrigin} />
             <button type="button" onClick={locate} className="btn-secondary shrink-0" disabled={locating}>
-              {locating ? "…" : "Usar GPS"}
+              {locating ? "…" : "Ubicarme"}
             </button>
           </div>
         </Field>
@@ -155,7 +155,7 @@ export function DriverForm() {
           />
         </Field>
 
-        <Field label="¿Cuándo estás disponible?">
+        <Field label="¿Qué día puedes trabajar?">
           <div className="grid grid-cols-3 gap-2">
             <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />
             <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
@@ -171,15 +171,15 @@ export function DriverForm() {
           <Choices options={TIME_SLOTS} value={timeSlot} onChange={setTimeSlot} />
         </Field>
 
-        <Field label="Tipo de vehículo">
+        <Field label="¿Qué vehículo tienes?">
           <Choices options={VEHICLE_TYPES} value={vehicleType} onChange={setVehicleType} />
         </Field>
 
-        <Field label="Espacio disponible">
+        <Field label="¿Cuánto espacio tienes libre?">
           <Choices options={DRIVER_SPACES} value={space} onChange={setSpace} />
         </Field>
 
-        <Field label="Mano de obra">
+        <Field label="¿Ayudas a cargar?">
           <Choices options={DRIVER_LABOR} value={labor} onChange={setLabor} columns={1} />
         </Field>
 
@@ -198,7 +198,7 @@ export function DriverForm() {
 
         <ErrorNote message={error} />
         <button type="submit" className="btn-primary" disabled={isPending}>
-          {isPending ? "Publicando…" : "Publicar disponibilidad"}
+          {isPending ? "Publicando…" : "Publicar"}
         </button>
       </form>
     </div>
@@ -235,13 +235,13 @@ function PendingList({ items }: { items: PendingRequest[] }) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Por ahora no hay solicitudes esperando para esa fecha. Te mostraremos a los clientes que coticen.
+        Por ahora nadie está buscando transportista para ese día. Cuando alguien busque, le mostramos tu número.
       </p>
     );
   }
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="font-semibold">Solicitudes esperando transportista</h3>
+      <h3 className="font-semibold">Clientes buscando transportista</h3>
       {items.map((r) => (
         <article key={r.id} className="card">
           <p className="font-semibold">
@@ -298,7 +298,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
             </p>
             <p className="text-sm text-muted">
               {p.date} · {DRIVER_SPACES[p.space]} ·{" "}
-              {p.status === "activa" ? "Recibiendo solicitudes" : "Ruta llena"}
+              {p.status === "activa" ? "Los clientes te pueden ver" : "Oculto: ya estás lleno"}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -309,7 +309,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
                 disabled={busy === p.id}
                 onClick={() => patch(p, { status: "llena" })}
               >
-                Ruta llena / Apagar
+                Ya estoy lleno
               </button>
             ) : (
               <button
@@ -318,7 +318,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
                 disabled={busy === p.id}
                 onClick={() => patch(p, { status: "activa" })}
               >
-                Volver a activar
+                Volver a mostrarme
               </button>
             )}
             {p.status === "activa" && p.space !== "solo_paquetes" && (
