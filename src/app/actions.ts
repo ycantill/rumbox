@@ -4,7 +4,6 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getCity } from "@/lib/cities";
 import {
   CLIENT_LABOR,
-  COVERAGES,
   DRIVER_LABOR,
   DRIVER_SPACES,
   TIME_SLOTS,
@@ -12,7 +11,6 @@ import {
   VOLUMES,
   isKey,
   type ClientLabor,
-  type Coverage,
   type DriverLabor,
   type DriverSpace,
   type TimeSlot,
@@ -31,7 +29,6 @@ export type DriverMatch = {
   kind: MatchKind;
   origin_city: string;
   destination_city: string | null;
-  coverage: Coverage;
   time_slot: TimeSlot;
   vehicle_type: VehicleType;
   space: DriverSpace;
@@ -59,7 +56,6 @@ export type PublishResult =
 export async function publishAvailability(input: {
   origin: string;
   destination: string | null;
-  coverage: string;
   date: string;
   timeSlot: string;
   vehicleType: string;
@@ -72,7 +68,6 @@ export async function publishAvailability(input: {
   if (!getCity(input.origin)) return fail("Elige la ciudad donde estás.");
   if (destination && !getCity(destination)) return fail("El destino no es válido.");
   if (destination === input.origin) return fail("El destino debe ser distinto al origen.");
-  if (!isKey(COVERAGES, input.coverage)) return fail("Elige si trabajas local o nacional.");
   if (!isValidServiceDate(input.date)) return fail("Elige una fecha de hoy en adelante.");
   if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige una franja horaria.");
   if (!isKey(VEHICLE_TYPES, input.vehicleType)) return fail("Elige el tipo de vehículo.");
@@ -84,7 +79,6 @@ export async function publishAvailability(input: {
   const row = {
     origin_city: input.origin,
     destination_city: destination,
-    coverage: input.coverage,
     service_date: input.date,
     time_slot: input.timeSlot,
     vehicle_type: input.vehicleType,
@@ -98,12 +92,7 @@ export async function publishAvailability(input: {
     const { data, error } = await db().from("availabilities").insert(row).select("id").single();
     if (error) throw error;
     // Vía B (match diferido): solicitudes que estaban esperando un transportista.
-    const pending = await findPendingRequests({
-      ...row,
-      coverage: input.coverage as Coverage,
-      space: input.space as DriverSpace,
-      labor: input.labor as DriverLabor,
-    });
+    const pending = await findPendingRequests({ ...row, space: input.space as DriverSpace, labor: input.labor as DriverLabor });
     return { ok: true as const, id: data.id as string, editToken, pending };
   });
 }
@@ -195,7 +184,7 @@ export async function requestQuote(input: {
     // Vía A (match inmediato).
     const { data: rows, error: qErr } = await db()
       .from("availabilities")
-      .select("id, origin_city, destination_city, coverage, service_date, time_slot, vehicle_type, space, labor, whatsapp")
+      .select("id, origin_city, destination_city, service_date, time_slot, vehicle_type, space, labor, whatsapp")
       .eq("service_date", input.date)
       .eq("status", "activa")
       .order("created_at", { ascending: false })
@@ -218,7 +207,6 @@ export async function requestQuote(input: {
 async function findPendingRequests(a: {
   origin_city: string;
   destination_city: string | null;
-  coverage: Coverage;
   service_date: string;
   space: DriverSpace;
   labor: DriverLabor;
@@ -236,7 +224,6 @@ async function findPendingRequests(a: {
     const kind = matchKind(a, r);
     if (kind) out.push({ ...r, kind } as PendingRequest);
   }
-  out.sort((x, y) => Number(y.kind === "ruta") - Number(x.kind === "ruta"));
   return out.slice(0, 20);
 }
 

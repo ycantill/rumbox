@@ -12,10 +12,9 @@ publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
 de obra, número) para no volver a escribirlos.
 
 **Pantalla del transportista** (`/transportista`)
-- Origen con botón "Usar GPS" y alcance: Local (servicios dentro de su ciudad
-  y alrededores) o Nacional (también viajes desde su zona a otras ciudades).
-- Viaje programado opcional: si pone destino entra además en Modo Ruta. El
-  destino no define el alcance.
+- Origen con botón "Usar GPS" y destino opcional. Por debajo, con destino se
+  activa el Modo Ruta y sin destino el match es por cercanía al origen; la
+  pantalla no le explica esa lógica al transportista.
 - Fecha y franja horaria, tipo de vehículo, espacio disponible, mano de obra y
   WhatsApp.
 - Al publicar ve las solicitudes que ya estaban esperando en su zona o ruta
@@ -39,12 +38,9 @@ Descuento del 25% cuando hay un transportista en Modo Ruta compatible. Las
 tarifas son valores iniciales para calibrar con precios reales del piloto.
 
 **Emparejamiento** (`src/lib/matching.ts`)
-- Zona: el cliente sale a menos de 40 km de la ciudad del transportista. Si
-  el transportista es Local, el destino del cliente también debe quedar a
-  menos de 40 km; si es Nacional, puede ir a cualquier ciudad.
-- Ruta (solo con destino): origen y destino del cliente quedan cerca del
-  corredor del transportista y en el mismo sentido de viaje. Tiene prioridad
-  sobre Zona porque da descuento.
+- Disponible: el cliente sale a menos de 40 km de la ciudad del transportista.
+- Ruta: origen y destino del cliente quedan cerca del corredor del
+  transportista y en el mismo sentido de viaje.
 - Además: misma fecha, el espacio alcanza para el volumen y la mano de obra
   ofrecida cubre la pedida.
 

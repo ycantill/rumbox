@@ -1,12 +1,9 @@
 // Motor de emparejamiento (documento de producto, sección 8).
 //
-// Dos cosas independientes:
-// - Alcance: "local" atiende servicios que empiezan y terminan cerca de su
-//   ciudad; "nacional" atiende además los que salen de su zona hacia cualquier
-//   otra ciudad.
-// - Destino (opcional): activa el Modo "Ruta". Además de su zona, atiende
-//   solicitudes cuyo origen y destino quedan sobre su corredor vial y en el
-//   mismo sentido de viaje. Ese match tiene descuento para el cliente.
+// - Modo "Disponible": el transportista no declaró destino. Atiende cualquier
+//   solicitud que salga cerca de su ciudad base.
+// - Modo "Ruta": declaró un destino. Atiende solicitudes cuyo origen y destino
+//   quedan sobre su corredor vial y en el mismo sentido de viaje.
 
 import { getCity, haversineKm } from "./cities";
 import {
@@ -15,13 +12,12 @@ import {
   SPACE_CAPACITY,
   VOLUME_LEVEL,
   type ClientLabor,
-  type Coverage,
   type DriverLabor,
   type DriverSpace,
   type Volume,
 } from "./domain";
 
-/** Radio en km alrededor de la ciudad base del transportista ("su zona"). */
+/** Radio en km alrededor de la ciudad base de un transportista disponible. */
 export const LOCAL_RADIUS_KM = 40;
 /**
  * Desvío máximo respecto a la línea recta del corredor en Modo Ruta. Las
@@ -34,7 +30,6 @@ export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 export type AvailabilityLike = {
   origin_city: string;
   destination_city: string | null;
-  coverage: Coverage;
   service_date: string; // YYYY-MM-DD
   space: DriverSpace;
   labor: DriverLabor;
@@ -48,8 +43,7 @@ export type RequestLike = {
   labor: ClientLabor;
 };
 
-/** "ruta": la carga va sobre su corredor. "zona": sale de su ciudad o alrededores. */
-export type MatchKind = "ruta" | "zona";
+export type MatchKind = "local" | "ruta";
 
 export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null {
   if (a.service_date !== r.service_date) return null;
@@ -61,16 +55,13 @@ export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null
   const to = getCity(r.destination_city);
   if (!driverFrom || !from || !to) return null;
 
-  // Primero la ruta: es la que le da descuento al cliente.
-  const driverTo = a.destination_city ? getCity(a.destination_city) : undefined;
-  if (driverTo && onRoute(driverFrom, driverTo, from, to)) return "ruta";
+  if (!a.destination_city) {
+    const km = haversineKm(driverFrom.lat, driverFrom.lng, from.lat, from.lng);
+    return km <= LOCAL_RADIUS_KM ? "local" : null;
+  }
 
-  const near = (p: Point) => haversineKm(driverFrom.lat, driverFrom.lng, p.lat, p.lng) <= LOCAL_RADIUS_KM;
-  if (!near(from)) return null;
-  return a.coverage === "nacional" || near(to) ? "zona" : null;
-}
-
-function onRoute(driverFrom: Point, driverTo: Point, from: Point, to: Point): boolean {
+  const driverTo = getCity(a.destination_city);
+  if (!driverTo) return null;
   const corridorKm = haversineKm(driverFrom.lat, driverFrom.lng, driverTo.lat, driverTo.lng);
   const tolerance = Math.max(CORRIDOR_MIN_TOLERANCE_KM, corridorKm * CORRIDOR_TOLERANCE_RATIO);
   const pFrom = projectOnSegment(driverFrom, driverTo, from);
@@ -78,7 +69,7 @@ function onRoute(driverFrom: Point, driverTo: Point, from: Point, to: Point): bo
   const onCorridor = pFrom.offKm <= tolerance && pTo.offKm <= tolerance;
   // Mismo sentido: la recogida va antes que la entrega sobre el trayecto.
   // Un servicio dentro de una sola ciudad del corredor también vale.
-  return onCorridor && pFrom.t <= pTo.t;
+  return onCorridor && pFrom.t <= pTo.t ? "ruta" : null;
 }
 
 type Point = { lat: number; lng: number };
