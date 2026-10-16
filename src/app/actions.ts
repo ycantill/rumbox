@@ -10,6 +10,7 @@ import {
   VEHICLE_TYPES,
   VOLUMES,
   isKey,
+  spaceFitsVehicle,
   type ClientLabor,
   type DriverLabor,
   type DriverSpace,
@@ -71,7 +72,9 @@ export async function publishAvailability(input: {
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
   if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si trabajas en la mañana, la tarde o la noche.");
   if (!isKey(VEHICLE_TYPES, input.vehicleType)) return fail("Elige qué vehículo tienes.");
-  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto espacio tienes libre.");
+  if (!isKey(DRIVER_SPACES, input.space) || !spaceFitsVehicle(input.vehicleType, input.space)) {
+    return fail("Elige cuánto espacio tienes libre.");
+  }
   if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige si ayudas a cargar.");
   if (!whatsapp) return fail("Revisa el número de WhatsApp.");
 
@@ -111,12 +114,15 @@ export async function updateAvailability(input: {
   return withDb(async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("edit_token_hash")
+      .select("edit_token_hash, vehicle_type")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos esa publicación en este teléfono.");
+    }
+    if (input.space && !spaceFitsVehicle(data.vehicle_type, input.space as DriverSpace)) {
+      return fail("Algo salió mal. Intenta de nuevo.");
     }
     const patch: Record<string, string> = {};
     if (input.status) patch.status = input.status;

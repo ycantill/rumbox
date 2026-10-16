@@ -18,6 +18,18 @@ export const DRIVER_SPACES = {
 } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
 
+/** Espacios que tienen sentido para cada vehículo: un carro no lleva un camión entero. */
+export const VEHICLE_SPACES: Record<VehicleType, readonly DriverSpace[]> = {
+  furgon: ["camion_entero", "medio_camion", "solo_paquetes"],
+  estacas: ["camion_entero", "medio_camion", "solo_paquetes"],
+  pickup: ["medio_camion", "solo_paquetes"],
+  carro: ["baul", "asientos"],
+};
+
+export function spaceFitsVehicle(vehicle: VehicleType, space: DriverSpace): boolean {
+  return VEHICLE_SPACES[vehicle].includes(space);
+}
+
 /** Volumen que el cliente necesita mover. */
 export const VOLUMES = {
   sobres: { label: "Paquetes pequeños o sobres", hint: "Documentos o envíos ligeros" },
@@ -42,9 +54,9 @@ export const CLIENT_LABOR = {
 export type ClientLabor = keyof typeof CLIENT_LABOR;
 
 export const TIME_SLOTS = {
-  manana: "Mañana",
-  tarde: "Tarde",
-  noche: "Noche",
+  manana: "Por la mañana",
+  tarde: "Por la tarde",
+  noche: "Por la noche",
   todo_el_dia: "Todo el día",
 } as const;
 export type TimeSlot = keyof typeof TIME_SLOTS;

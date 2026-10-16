@@ -11,6 +11,8 @@ import { getCity, nearestCity } from "@/lib/cities";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
+  SPACE_CAPACITY,
+  VEHICLE_SPACES,
   TIME_SLOTS,
   VEHICLE_TYPES,
   VOLUMES,
@@ -62,6 +64,12 @@ export function DriverForm() {
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []).filter((x) => x.date >= today));
   }, [today]);
+
+  function pickVehicle(v: VehicleType) {
+    setVehicleType(v);
+    // Si el espacio elegido no le cabe al vehículo nuevo, se borra para que elija otra vez.
+    if (space && !VEHICLE_SPACES[v].includes(space)) setSpace("");
+  }
 
   function locate() {
     if (!navigator.geolocation) return;
@@ -172,11 +180,15 @@ export function DriverForm() {
         </Field>
 
         <Field label="¿Qué vehículo tienes?">
-          <Choices options={VEHICLE_TYPES} value={vehicleType} onChange={setVehicleType} />
+          <Choices options={VEHICLE_TYPES} value={vehicleType} onChange={pickVehicle} />
         </Field>
 
         <Field label="¿Cuánto espacio tienes libre?">
-          <Choices options={DRIVER_SPACES} value={space} onChange={setSpace} />
+          {vehicleType ? (
+            <Choices options={spaceOptions(vehicleType)} value={space} onChange={setSpace} />
+          ) : (
+            <p className="text-sm text-muted">Primero elige qué vehículo tienes.</p>
+          )}
         </Field>
 
         <Field label="¿Ayudas a cargar?">
@@ -203,6 +215,10 @@ export function DriverForm() {
       </form>
     </div>
   );
+}
+
+function spaceOptions(vehicle: VehicleType) {
+  return Object.fromEntries(VEHICLE_SPACES[vehicle].map((s) => [s, DRIVER_SPACES[s]])) as Record<DriverSpace, string>;
 }
 
 function QuickDate({
@@ -321,7 +337,7 @@ function MyPosts({ posts, onChange }: { posts: MyPost[]; onChange: (p: MyPost[])
                 Volver a mostrarme
               </button>
             )}
-            {p.status === "activa" && p.space !== "solo_paquetes" && (
+            {p.status === "activa" && SPACE_CAPACITY[p.space] > 1 && (
               <button
                 type="button"
                 className="btn-secondary"
