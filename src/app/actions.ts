@@ -10,6 +10,7 @@ import {
   VEHICLE_TYPES,
   VOLUMES,
   isKey,
+  slotsLeftToday,
   spaceFitsVehicle,
   type ClientLabor,
   type DriverLabor,
@@ -71,6 +72,9 @@ export async function publishAvailability(input: {
   if (destination === input.origin) return fail("El destino debe ser distinto al origen.");
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
   if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si trabajas en la mañana, la tarde o la noche.");
+  if (input.date === todayInBogota() && !slotsLeftToday(hourInBogota()).includes(input.timeSlot)) {
+    return fail("Esa jornada de hoy ya pasó. Elige otra.");
+  }
   if (!isKey(VEHICLE_TYPES, input.vehicleType)) return fail("Elige qué vehículo tienes.");
   if (!isKey(DRIVER_SPACES, input.space) || !spaceFitsVehicle(input.vehicleType, input.space)) {
     return fail("Elige cuánto espacio tienes libre.");
@@ -267,4 +271,12 @@ function isValidServiceDate(date: string): boolean {
 
 function todayInBogota(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
+}
+
+function hourInBogota(): number {
+  return Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", hour: "numeric", hourCycle: "h23" }).format(
+      new Date(),
+    ),
+  );
 }

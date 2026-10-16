@@ -6,12 +6,21 @@ import {
   updateAvailability,
   type PendingRequest,
 } from "@/app/actions";
-import { CitySelect, Choices, ErrorNote, Field, WhatsAppButton, useBogotaDates } from "@/components/ui";
+import {
+  CitySelect,
+  Choices,
+  ErrorNote,
+  Field,
+  WhatsAppButton,
+  useBogotaDates,
+  useBogotaHour,
+} from "@/components/ui";
 import { getCity, nearestCity } from "@/lib/cities";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SPACE_CAPACITY,
+  slotsLeftToday,
   VEHICLE_SPACES,
   TIME_SLOTS,
   VEHICLE_TYPES,
@@ -42,8 +51,14 @@ export function DriverForm() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
-  const date = pickedDate || today;
-  const [timeSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
+  const hour = useBogotaHour();
+  // Para hoy solo quedan las jornadas que no han pasado; ya de noche, hoy desaparece.
+  const todayLeft = hour === null ? ALL_SLOTS : slotsLeftToday(hour);
+  const todayOpen = todayLeft.length > 0;
+  const date = pickedDate && (pickedDate !== today || todayOpen) ? pickedDate : todayOpen ? today : tomorrow;
+  const slots = date === today ? todayLeft : ALL_SLOTS;
+  const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
+  const timeSlot = pickedSlot && slots.includes(pickedSlot) ? pickedSlot : "";
   const [vehicleType, setVehicleType] = useState<VehicleType | "">("");
   const [space, setSpace] = useState<DriverSpace | "">("");
   const [labor, setLabor] = useState<DriverLabor | "">("");
@@ -165,18 +180,18 @@ export function DriverForm() {
 
         <Field label="¿Qué día puedes trabajar?">
           <div className="grid grid-cols-3 gap-2">
-            <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />
+            {todayOpen && <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />}
             <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
             <input
               type="date"
               className="input"
-              min={today}
+              min={todayOpen ? today : tomorrow}
               value={date}
               onChange={(e) => setDate(e.target.value)}
               aria-label="Otra fecha"
             />
           </div>
-          <Choices options={TIME_SLOTS} value={timeSlot} onChange={setTimeSlot} />
+          <Choices options={slotOptions(slots)} value={timeSlot} onChange={setTimeSlot} />
         </Field>
 
         <Field label="¿Qué vehículo tienes?">
@@ -215,6 +230,12 @@ export function DriverForm() {
       </form>
     </div>
   );
+}
+
+const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
+
+function slotOptions(slots: TimeSlot[]) {
+  return Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;
 }
 
 function spaceOptions(vehicle: VehicleType) {

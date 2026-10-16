@@ -61,6 +61,20 @@ export const TIME_SLOTS = {
 } as const;
 export type TimeSlot = keyof typeof TIME_SLOTS;
 
+/** Hora (0-23, hora Colombia) en que termina cada jornada. No se muestra en pantalla. */
+export const TIME_SLOT_ENDS = { manana: 12, tarde: 18, noche: 22 } as const;
+
+/**
+ * Jornadas que todavía se pueden ofrecer hoy a esta hora. "Todo el día" solo
+ * aparece mientras no haya pasado la mañana; después ya no es todo el día.
+ */
+export function slotsLeftToday(hour: number): TimeSlot[] {
+  const left = (Object.keys(TIME_SLOT_ENDS) as (keyof typeof TIME_SLOT_ENDS)[]).filter(
+    (s) => hour < TIME_SLOT_ENDS[s],
+  );
+  return left.length === 3 ? [...left, "todo_el_dia"] : left;
+}
+
 /** Capacidad relativa: un espacio sirve para volúmenes de nivel igual o menor. */
 export const SPACE_CAPACITY: Record<DriverSpace, number> = {
   camion_entero: 4,

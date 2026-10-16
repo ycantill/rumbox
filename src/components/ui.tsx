@@ -123,6 +123,22 @@ const noopSubscribe = () => () => {};
 const bogotaToday = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
 
+const everyMinute = (cb: () => void) => {
+  const id = setInterval(cb, 60_000);
+  return () => clearInterval(id);
+};
+const bogotaHour = () =>
+  Number(
+    new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", hour: "numeric", hourCycle: "h23" }).format(
+      new Date(),
+    ),
+  );
+
+/** Hora actual en Colombia (0-23), o null en el HTML prerenderizado. Se refresca cada minuto. */
+export function useBogotaHour(): number | null {
+  return useSyncExternalStore(everyMinute, bogotaHour, () => null);
+}
+
 /**
  * Fecha de hoy y mañana en hora de Colombia (YYYY-MM-DD). Se calcula solo en el
  * navegador: en el HTML prerenderizado llegan vacías para no congelar una fecha

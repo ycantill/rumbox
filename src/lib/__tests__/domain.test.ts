@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { DRIVER_SPACES, VEHICLE_SPACES, VEHICLE_TYPES, spaceFitsVehicle, type DriverSpace } from "../domain";
+import {
+  DRIVER_SPACES,
+  VEHICLE_SPACES,
+  VEHICLE_TYPES,
+  slotsLeftToday,
+  spaceFitsVehicle,
+  type DriverSpace,
+} from "../domain";
 
 describe("spaceFitsVehicle", () => {
   it("un carro particular no ofrece camión entero ni medio camión", () => {
@@ -24,5 +31,21 @@ describe("spaceFitsVehicle", () => {
     }
     const used = new Set(Object.values(VEHICLE_SPACES).flat());
     for (const s of Object.keys(DRIVER_SPACES) as DriverSpace[]) expect(used.has(s)).toBe(true);
+  });
+});
+
+describe("slotsLeftToday", () => {
+  it("temprano se puede ofrecer cualquier jornada", () => {
+    expect(slotsLeftToday(7)).toEqual(["manana", "tarde", "noche", "todo_el_dia"]);
+  });
+
+  it("pasada la mañana ya no aparecen la mañana ni todo el día", () => {
+    expect(slotsLeftToday(12)).toEqual(["tarde", "noche"]);
+    expect(slotsLeftToday(17)).toEqual(["tarde", "noche"]);
+  });
+
+  it("de tarde-noche solo queda la noche, y después de las 10 no queda nada", () => {
+    expect(slotsLeftToday(18)).toEqual(["noche"]);
+    expect(slotsLeftToday(22)).toEqual([]);
   });
 });
