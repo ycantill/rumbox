@@ -13,9 +13,10 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-desde una fecha y luego queda "Recibiendo clientes" o "Lleno". La pantalla
-nunca habla de publicar, y la palabra "disponible" se usa solo en el botón
-principal y en la confirmación para no repetirla.
+desde una fecha y lo sigue estando hasta que diga "Ya no recibo más clientes".
+La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
+el botón principal y en el título de su servicio para no repetirla. Tampoco le
+promete clientes: dice que está disponible, no que está recibiendo clientes.
 
 **Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
 publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
@@ -27,14 +28,14 @@ de obra, número) para no volver a escribirlos.
   pantalla no le explica esa lógica al transportista.
 - Desde cuándo trabaja (hoy, mañana u otro día) y jornada (mañana, tarde,
   noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
-  WhatsApp. Queda recibiendo clientes desde esa fecha en adelante hasta que
-  diga "Ya no voy a trabajar"; no hay fecha de fin.
+  WhatsApp. Queda disponible desde esa fecha en adelante; no hay fecha de fin.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
-  "Estás recibiendo clientes" (o "Estás lleno") con los clientes que lo están
-  esperando (match diferido) y el día de cada uno, los botones "Ya estoy lleno"
-  / "Ya tengo espacio otra vez" y "Solo queda espacio para paquetes", y "Ya no
-  voy a trabajar" para apagarlo y poder poner otro. Se controla con un token
-  que solo vive en su teléfono.
+  "Estás disponible para este servicio" con sus datos, los clientes que lo
+  están esperando (match diferido) y el día de cada uno, "Solo queda espacio
+  para paquetes" y "Ya no recibo más clientes". Ese último botón sirve tanto si
+  se llenó como si ya no va a trabajar: lo apaga y le devuelve el formulario
+  con los mismos datos para ponerse otra vez cuando quiera. Se controla con un
+  token que solo vive en su teléfono.
 
 **Cotizador del cliente** (`/cotizar`), 4 pasos
 1. Ruta y fecha (Hoy, Mañana o calendario).

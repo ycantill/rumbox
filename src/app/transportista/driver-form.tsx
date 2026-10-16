@@ -47,7 +47,6 @@ export type MyPost = {
   date: string; // desde cuándo trabaja
   timeSlot?: TimeSlot; // los guardados antes no lo traen
   space: DriverSpace;
-  status: "activa" | "llena";
 };
 
 export function DriverForm() {
@@ -94,6 +93,13 @@ export function DriverForm() {
   }
 
   function endCurrent() {
+    // El formulario vuelve con los datos de antes, para ponerse otra vez con un toque.
+    if (current) {
+      setOrigin(current.origin);
+      setDestination(current.destination ?? "");
+      if (current.timeSlot) setTimeSlot(current.timeSlot);
+      if (vehicleType && VEHICLE_SPACES[vehicleType].includes(current.space)) setSpace(current.space);
+    }
     setPosts([]);
     setPending(null);
     save(KEYS.driverPosts, []);
@@ -146,7 +152,6 @@ export function DriverForm() {
         date,
         timeSlot: timeSlot as TimeSlot,
         space: space as DriverSpace,
-        status: "activa",
       };
       updateCurrent(post);
       setPending(res.pending);
@@ -349,7 +354,7 @@ function CurrentWork({
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Al volver a la pantalla: estado al día y clientes que esperan, desde el servidor.
+  // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
   const fresh = initialPending !== null;
   useEffect(() => {
@@ -361,8 +366,12 @@ function CurrentWork({
         if (res.gone) onEnd();
         return;
       }
+      if (res.status !== "activa") {
+        onEnd();
+        return;
+      }
       setPending(res.pending);
-      onChange({ ...post, status: res.status, space: res.space });
+      onChange({ ...post, space: res.space });
     });
     return () => {
       cancelled = true;
@@ -371,7 +380,7 @@ function CurrentWork({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, editToken, fresh]);
 
-  async function patch(change: { status?: "activa" | "llena"; space?: DriverSpace }) {
+  async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
     setError(null);
     const res = await updateAvailability({ id, editToken, ...change });
@@ -380,9 +389,11 @@ function CurrentWork({
       setError(res.error);
       return false;
     }
-    if (change.status === "llena") setPending([]);
-    onChange({ ...post, ...change });
     return true;
+  }
+
+  async function onlyPackages() {
+    if (await patch({ space: "solo_paquetes" })) onChange({ ...post, space: "solo_paquetes" });
   }
 
   async function end() {
@@ -390,20 +401,13 @@ function CurrentWork({
     if (await patch({ status: "llena" })) onEnd();
   }
 
-  const full = post.status === "llena";
-
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
         <h2 className="text-lg font-bold">
-          {full ? "Estás lleno" : justPublished ? "¡Listo! Ya estás disponible." : "Estás recibiendo clientes"}
+          {justPublished ? "¡Listo! Ya estás disponible para este servicio." : "Estás disponible para este servicio"}
         </h2>
-        <p className="mt-1 text-sm text-brand-ink/80">
-          {full
-            ? "Los clientes no te ven hasta que tengas espacio otra vez."
-            : "Los clientes que necesiten un servicio te escribirán por WhatsApp."}
-        </p>
-        <dl className="mt-4 grid gap-1 text-sm">
+        <dl className="mt-3 grid gap-1 text-sm">
           <div>
             <dt className="sr-only">Lugar</dt>
             <dd className="font-semibold">
@@ -423,49 +427,38 @@ function CurrentWork({
             <dd>{DRIVER_SPACES[post.space]}</dd>
           </div>
         </dl>
+        <p className="mt-4 text-sm text-brand-ink/80">
+          Los clientes que necesiten un servicio te escribirán por WhatsApp.
+        </p>
       </section>
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
-        {full ? (
-          <button type="button" className="btn-secondary" disabled={busy} onClick={() => patch({ status: "activa" })}>
-            Ya tengo espacio otra vez
-          </button>
-        ) : (
-          <button type="button" className="btn-secondary" disabled={busy} onClick={() => patch({ status: "llena" })}>
-            Ya estoy lleno
-          </button>
-        )}
-        {!full && SPACE_CAPACITY[post.space] > 1 && (
-          <button
-            type="button"
-            className="btn-secondary"
-            disabled={busy}
-            onClick={() => patch({ space: "solo_paquetes" })}
-          >
+        {SPACE_CAPACITY[post.space] > 1 && (
+          <button type="button" className="btn-secondary" disabled={busy} onClick={onlyPackages}>
             Solo queda espacio para paquetes
           </button>
         )}
         {confirmEnd ? (
           <div className="card flex flex-col gap-3">
-            <p className="text-sm">¿Seguro que ya no vas a trabajar? Los clientes dejarán de verte.</p>
+            <p className="text-sm">¿Dejamos de mostrarte a los clientes?</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
                 No
               </button>
               <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
-                Sí, cancelar
+                Sí
               </button>
             </div>
           </div>
         ) : (
-          <button type="button" className="text-sm text-muted underline" onClick={() => setConfirmEnd(true)}>
-            Ya no voy a trabajar
+          <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
+            Ya no recibo más clientes
           </button>
         )}
       </div>
 
-      {!full && pending && <PendingList items={pending} />}
+      {pending && <PendingList items={pending} />}
     </div>
   );
 }

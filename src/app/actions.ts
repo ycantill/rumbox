@@ -105,7 +105,7 @@ export async function publishAvailability(input: {
   });
 }
 
-/** "Ya estoy lleno", "Ya no voy a trabajar" o actualizar el espacio que queda libre. */
+/** "Ya no recibo más clientes" (status llena) o actualizar el espacio que queda libre. */
 export async function updateAvailability(input: {
   id: string;
   editToken: string;
