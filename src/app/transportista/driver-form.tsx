@@ -35,6 +35,7 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { formatCOP } from "@/lib/pricing";
+import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { waLink } from "@/lib/whatsapp";
 
 type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
@@ -129,16 +130,18 @@ export function DriverForm() {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await publishAvailability({
-        origin,
-        destination: destination || null,
-        date,
-        timeSlot,
-        vehicleType,
-        space,
-        labor,
-        whatsapp,
-      });
+      const res = await callServer(() =>
+        publishAvailability({
+          origin,
+          destination: destination || null,
+          date,
+          timeSlot,
+          vehicleType,
+          space,
+          labor,
+          whatsapp,
+        }),
+      );
       if (!res.ok) {
         setError(res.error);
         return;
@@ -360,19 +363,25 @@ function CurrentWork({
   useEffect(() => {
     if (fresh) return;
     let cancelled = false;
-    getMyAvailability({ id, editToken }).then((res) => {
-      if (cancelled) return;
-      if (!res.ok) {
-        if (res.gone) onEnd();
-        return;
-      }
-      if (res.status !== "activa") {
-        onEnd();
-        return;
-      }
-      setPending(res.pending);
-      onChange({ ...post, space: res.space });
-    });
+    getMyAvailability({ id, editToken }).then(
+      (res) => {
+        if (cancelled) return;
+        if (!res.ok) {
+          if (res.gone) onEnd();
+          return;
+        }
+        if (res.status !== "activa") {
+          onEnd();
+          return;
+        }
+        setPending(res.pending);
+        onChange({ ...post, space: res.space });
+      },
+      () => {
+        // Sin señal se queda lo guardado en el teléfono, con el aviso.
+        if (!cancelled) setError(NO_CONNECTION);
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -383,7 +392,7 @@ function CurrentWork({
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
     setError(null);
-    const res = await updateAvailability({ id, editToken, ...change });
+    const res = await callServer(() => updateAvailability({ id, editToken, ...change }));
     setBusy(false);
     if (!res.ok) {
       setError(res.error);

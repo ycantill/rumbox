@@ -17,6 +17,7 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { estimate, formatCOP, type Quote } from "@/lib/pricing";
+import { callServer } from "@/lib/server-call";
 import { waLink } from "@/lib/whatsapp";
 
 const STEPS = ["De dónde a dónde", "Qué vas a mover", "Ayuda y escaleras", "Tu WhatsApp"] as const;
@@ -59,16 +60,18 @@ export function QuoteWizard() {
       return;
     }
     startTransition(async () => {
-      const res = await requestQuote({
-        origin,
-        destination,
-        date,
-        volume,
-        labor,
-        stairsOrigin,
-        stairsDestination,
-        whatsapp,
-      });
+      const res = await callServer(() =>
+        requestQuote({
+          origin,
+          destination,
+          date,
+          volume,
+          labor,
+          stairsOrigin,
+          stairsDestination,
+          whatsapp,
+        }),
+      );
       if (!res.ok) {
         setError(res.error);
         return;

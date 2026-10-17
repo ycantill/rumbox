@@ -58,6 +58,9 @@ public/sw.js                     Service worker
   `src/lib/supabase.ts`, que usa la service role key solo en el servidor. Las
   tablas tienen RLS sin políticas públicas. Nunca expongas la clave al
   navegador ni le pongas el prefijo `NEXT_PUBLIC_`.
+- Desde el navegador, llama las Server Actions con `callServer()` de
+  `src/lib/server-call.ts`. Con mala señal la llamada falla y, sin eso, el
+  error rompe la pantalla y la persona pierde lo que llenó.
 - Con `cacheComponents` no se puede usar `new Date()` durante el render. Para
   "hoy" y "mañana" usa `useBogotaDates()`; las fechas van en hora de Colombia.
 - Las etiquetas visibles viven en `src/lib/domain.ts`. Cambia el texto ahí, no
