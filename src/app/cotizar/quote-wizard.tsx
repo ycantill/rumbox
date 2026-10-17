@@ -17,7 +17,8 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { estimate, formatCOP, type Quote } from "@/lib/pricing";
-import { waLink } from "@/lib/whatsapp";
+import { callServer } from "@/lib/server-call";
+import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
 
 const STEPS = ["De dónde a dónde", "Qué vas a mover", "Ayuda y escaleras", "Tu WhatsApp"] as const;
 
@@ -59,16 +60,18 @@ export function QuoteWizard() {
       return;
     }
     startTransition(async () => {
-      const res = await requestQuote({
-        origin,
-        destination,
-        date,
-        volume,
-        labor,
-        stairsOrigin,
-        stairsDestination,
-        whatsapp,
-      });
+      const res = await callServer(() =>
+        requestQuote({
+          origin,
+          destination,
+          date,
+          volume,
+          labor,
+          stairsOrigin,
+          stairsDestination,
+          whatsapp,
+        }),
+      );
       if (!res.ok) {
         setError(res.error);
         return;
@@ -86,6 +89,7 @@ export function QuoteWizard() {
         matches={result.matches}
         route={`${getCity(origin)?.name} → ${getCity(destination)?.name}`}
         when={whenText(date, today, tomorrow)}
+        phone={normalizeWhatsApp(whatsapp)}
         onRestart={() => {
           setResult(null);
           setStep(0);
@@ -246,12 +250,15 @@ function Results({
   matches,
   route,
   when,
+  phone,
   onRestart,
 }: {
   quote: Quote;
   matches: DriverMatch[];
   route: string;
   when: string;
+  /** El WhatsApp del cliente como quedó guardado, para que vea si está bien. */
+  phone: string | null;
   onRestart: () => void;
 }) {
   const hasRoute = matches.some((m) => m.kind === "ruta");
@@ -293,7 +300,7 @@ function Results({
           <h2 className="font-semibold">Guardamos tu solicitud</h2>
           <p className="mt-1 text-sm text-muted">
             Ahora mismo no hay transportistas libres para ese viaje y ese día. Apenas aparezca uno, verá
-            tu pedido y te escribirá por WhatsApp.
+            tu pedido y te escribirá por WhatsApp{phone ? ` al ${formatWhatsApp(phone)}` : ""}.
           </p>
         </section>
       ) : (

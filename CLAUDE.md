@@ -58,6 +58,9 @@ public/sw.js                     Service worker
   `src/lib/supabase.ts`, que usa la service role key solo en el servidor. Las
   tablas tienen RLS sin políticas públicas. Nunca expongas la clave al
   navegador ni le pongas el prefijo `NEXT_PUBLIC_`.
+- Desde el navegador, llama las Server Actions con `callServer()` de
+  `src/lib/server-call.ts`. Con mala señal la llamada falla y, sin eso, el
+  error rompe la pantalla y la persona pierde lo que llenó.
 - Con `cacheComponents` no se puede usar `new Date()` durante el render. Para
   "hoy" y "mañana" usa `useBogotaDates()`; las fechas van en hora de Colombia.
 - Las etiquetas visibles viven en `src/lib/domain.ts`. Cambia el texto ahí, no
@@ -69,7 +72,11 @@ public/sw.js                     Service worker
   desplegar.
 - La lógica de precios y emparejamiento tiene pruebas en `src/lib/__tests__`;
   si la cambias, actualiza o agrega pruebas.
-- Comentarios y nombres de funciones en español, como el resto del código.
+- Los comentarios y las descripciones de las pruebas van en español. Los
+  nombres de funciones, variables, tipos, componentes y archivos van en inglés,
+  como ya está todo el código (`publishAvailability`, `matchKind`,
+  `driver-form.tsx`). Las claves internas que se guardan en la base
+  (`manana`, `activa`) sí están en español.
 - Mantén `docs/MVP.md` al día cuando cambie una decisión de producto.
 
 ## Decisiones de producto

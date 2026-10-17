@@ -35,7 +35,8 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { formatCOP } from "@/lib/pricing";
-import { waLink } from "@/lib/whatsapp";
+import { NO_CONNECTION, callServer } from "@/lib/server-call";
+import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
 
 type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
 
@@ -129,16 +130,18 @@ export function DriverForm() {
     e.preventDefault();
     setError(null);
     startTransition(async () => {
-      const res = await publishAvailability({
-        origin,
-        destination: destination || null,
-        date,
-        timeSlot,
-        vehicleType,
-        space,
-        labor,
-        whatsapp,
-      });
+      const res = await callServer(() =>
+        publishAvailability({
+          origin,
+          destination: destination || null,
+          date,
+          timeSlot,
+          vehicleType,
+          space,
+          labor,
+          whatsapp,
+        }),
+      );
       if (!res.ok) {
         setError(res.error);
         return;
@@ -166,6 +169,7 @@ export function DriverForm() {
       <CurrentWork
         key={current.id}
         post={current}
+        phone={normalizeWhatsApp(whatsapp)}
         justPublished={pending !== null}
         pending={pending}
         onChange={updateCurrent}
@@ -337,12 +341,15 @@ function PendingList({ items }: { items: PendingRequest[] }) {
 
 function CurrentWork({
   post,
+  phone,
   justPublished,
   pending: initialPending,
   onChange,
   onEnd,
 }: {
   post: MyPost;
+  /** El WhatsApp con que se puso disponible, para que vea si quedó bien. */
+  phone: string | null;
   justPublished: boolean;
   pending: PendingRequest[] | null;
   onChange: (p: MyPost) => void;
@@ -360,19 +367,25 @@ function CurrentWork({
   useEffect(() => {
     if (fresh) return;
     let cancelled = false;
-    getMyAvailability({ id, editToken }).then((res) => {
-      if (cancelled) return;
-      if (!res.ok) {
-        if (res.gone) onEnd();
-        return;
-      }
-      if (res.status !== "activa") {
-        onEnd();
-        return;
-      }
-      setPending(res.pending);
-      onChange({ ...post, space: res.space });
-    });
+    getMyAvailability({ id, editToken }).then(
+      (res) => {
+        if (cancelled) return;
+        if (!res.ok) {
+          if (res.gone) onEnd();
+          return;
+        }
+        if (res.status !== "activa") {
+          onEnd();
+          return;
+        }
+        setPending(res.pending);
+        onChange({ ...post, space: res.space });
+      },
+      () => {
+        // Sin señal se queda lo guardado en el teléfono, con el aviso.
+        if (!cancelled) setError(NO_CONNECTION);
+      },
+    );
     return () => {
       cancelled = true;
     };
@@ -383,7 +396,7 @@ function CurrentWork({
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
     setError(null);
-    const res = await updateAvailability({ id, editToken, ...change });
+    const res = await callServer(() => updateAvailability({ id, editToken, ...change }));
     setBusy(false);
     if (!res.ok) {
       setError(res.error);
@@ -428,7 +441,8 @@ function CurrentWork({
           </div>
         </dl>
         <p className="mt-4 text-sm text-brand-ink/80">
-          Los clientes que necesiten un servicio te escribirán por WhatsApp.
+          Los clientes que necesiten un servicio te escribirán por WhatsApp
+          {phone ? ` al ${formatWhatsApp(phone)}` : ""}.
         </p>
       </section>
 
