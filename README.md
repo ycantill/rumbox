@@ -14,7 +14,8 @@ directa por WhatsApp. El piloto es en Córdoba y la Costa (Colombia).
   ve los clientes que lo esperan, hasta que toque "Ya no recibo más clientes".
 
 El alcance del MVP y lo que queda para después está en
-[docs/MVP.md](docs/MVP.md). Las decisiones de producto y las convenciones del
+[docs/MVP.md](docs/MVP.md). La visión de negocio completa está en
+docs/negocio/. Las decisiones de producto y las convenciones del
 código están en [CLAUDE.md](CLAUDE.md).
 
 ## Stack
@@ -101,5 +102,6 @@ src/lib/pricing.ts       Tarifa base + modificadores + descuento por ruta
 src/lib/matching.ts      Emparejamiento por cercanía y por ruta
 src/lib/cities.ts        Municipios del piloto con coordenadas
 supabase/migrations/     Esquema de base de datos
+docs/                    Alcance del MVP y base de conocimiento de negocio
 public/sw.js             Service worker (PWA)
 ```

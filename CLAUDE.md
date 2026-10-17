@@ -6,7 +6,10 @@ Muvia es una PWA de mudanzas, fletes y envíos para el piloto de Córdoba y la
 Costa (Colombia). Conecta clientes con transportistas que tienen espacio libre,
 ya sea en su ciudad o porque ya van hacia otro lado. Sin registro, sin
 comisiones y con contacto directo por WhatsApp. El alcance del MVP está en
-[docs/MVP.md](docs/MVP.md); léelo antes de proponer funciones nuevas.
+[docs/MVP.md](docs/MVP.md) y la visión de negocio completa (modelo, precios,
+emparejamiento, monetización, roadmap) en docs/negocio/.
+Léelos antes de proponer funciones nuevas. Si el documento de negocio y las
+decisiones de abajo no coinciden, mandan las decisiones de abajo.
 
 La dueña del producto es Yohany y escribe en español. Responde, nombra los
 commits y escribe los textos de la app en español.
