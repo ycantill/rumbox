@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import {
   getMyAvailability,
   publishAvailability,
+  renewAvailability,
   updateAvailability,
   type PendingRequest,
 } from "@/app/actions";
@@ -18,11 +19,12 @@ import {
 } from "@/components/ui";
 import { VehicleIcon } from "@/components/vehicle-icon";
 import { getCity, nearestCity } from "@/lib/cities";
-import { capitalize, whenText } from "@/lib/dates";
+import { capitalize, expiresText, whenText } from "@/lib/dates";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SPACE_CAPACITY,
+  lastAvailableDay,
   slotsLeftToday,
   spaceFitsVolume,
   VEHICLE_SPACES,
@@ -377,10 +379,16 @@ function CurrentWork({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [serverExpired, setServerExpired] = useState(false);
 
   // Un viaje con destino vale solo su día. Si ya pasó, se apagó solo y vuelve el
   // formulario con sus datos; no hace falta preguntarle al servidor.
   const tripPassed = Boolean(post.destination) && post.date < today;
+
+  // Sin destino dura una semana: la tarjeta cuenta los días que faltan y, cuando
+  // se vence, ofrece "Renovar una semana más" o "No por ahora".
+  const lastDay = post.destination ? null : lastAvailableDay(post.date);
+  const expired = serverExpired || (lastDay !== null && lastDay < today);
 
   // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
@@ -399,8 +407,12 @@ function CurrentWork({
           if (res.gone) onEnd();
           return;
         }
-        if (res.status !== "activa") {
+        if (res.status === "llena") {
           onEnd();
+          return;
+        }
+        if (res.status === "vencida") {
+          setServerExpired(true);
           return;
         }
         setPending(res.pending);
@@ -442,32 +454,76 @@ function CurrentWork({
     if (await patch({ status: "llena" })) onEnd();
   }
 
+  async function renew() {
+    setBusy(true);
+    setError(null);
+    const res = await callServer(() => renewAvailability({ id, editToken }));
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    // Vuelve a salirles a los clientes desde hoy, por otra semana.
+    setServerExpired(false);
+    setPending(res.pending);
+    onChange({ ...post, date: res.date });
+  }
+
+  const details = (
+    <dl className="mt-3 grid gap-1 text-sm">
+      <div>
+        <dt className="sr-only">Lugar</dt>
+        <dd className="font-semibold">
+          {getCity(post.origin)?.name}
+          {post.destination && ` → ${getCity(post.destination)?.name}`}
+        </dd>
+      </div>
+      <div>
+        <dt className="sr-only">{post.destination ? "Día del viaje" : "Desde cuándo"}</dt>
+        <dd>
+          {post.destination ? "Viajas" : "Desde"} {whenText(post.date, today, tomorrow)}
+          {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
+        </dd>
+      </div>
+      <div>
+        <dt className="sr-only">Espacio</dt>
+        <dd>{DRIVER_SPACES[post.space]}</dd>
+      </div>
+    </dl>
+  );
+
+  if (expired) {
+    // Ya no les sale a los clientes. "No por ahora" la retira y vuelve el formulario
+    // con sus datos; como ya no lo mostramos, no pide confirmar.
+    return (
+      <div className="flex flex-col gap-5">
+        <section className="rounded-2xl border border-line bg-surface p-5">
+          <h2 className="text-lg font-bold">Pasó una semana</h2>
+          {details}
+          <p className="mt-4 text-sm">Ya no te mostramos a los clientes. ¿Sigues trabajando?</p>
+        </section>
+
+        <ErrorNote message={error} />
+        <div className="flex flex-col gap-2">
+          <button type="button" className="btn-primary" disabled={busy} onClick={renew}>
+            Renovar una semana más
+          </button>
+          <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
+            No por ahora
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
         <h2 className="text-lg font-bold">
           {justPublished ? "¡Listo! Ya estás disponible para este servicio." : "Estás disponible para este servicio"}
         </h2>
-        <dl className="mt-3 grid gap-1 text-sm">
-          <div>
-            <dt className="sr-only">Lugar</dt>
-            <dd className="font-semibold">
-              {getCity(post.origin)?.name}
-              {post.destination && ` → ${getCity(post.destination)?.name}`}
-            </dd>
-          </div>
-          <div>
-            <dt className="sr-only">{post.destination ? "Día del viaje" : "Desde cuándo"}</dt>
-            <dd>
-              {post.destination ? "Viajas" : "Desde"} {whenText(post.date, today, tomorrow)}
-              {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
-            </dd>
-          </div>
-          <div>
-            <dt className="sr-only">Espacio</dt>
-            <dd>{DRIVER_SPACES[post.space]}</dd>
-          </div>
-        </dl>
+        {details}
+        {lastDay && <p className="mt-3 text-sm font-semibold">{expiresText(lastDay, today)}</p>}
         <p className="mt-4 text-sm text-brand-ink/80">
           Los clientes que necesiten un servicio te escribirán por WhatsApp
           {phone ? ` al ${formatWhatsApp(phone)}` : ""}.

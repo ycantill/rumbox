@@ -13,8 +13,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-desde una fecha y lo sigue estando hasta que diga "Ya no recibo más clientes"
-(o, si va de viaje, hasta que pase el día del viaje).
+desde una fecha por una semana, que puede renovar, hasta que diga "Ya no
+recibo más clientes" (si va de viaje, solo el día del viaje).
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -29,7 +29,10 @@ de obra, número) para no volver a escribirlos.
   pantalla no le explica esa lógica al transportista.
 - Desde cuándo trabaja (hoy, mañana u otro día) y jornada (mañana, tarde,
   noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
-  WhatsApp. Queda disponible desde esa fecha en adelante; no hay fecha de fin.
+  WhatsApp. Queda disponible desde esa fecha por una semana: la tarjeta cuenta
+  los días que faltan ("Se vence en 6 días") y, cuando se vence, dice "Pasó una
+  semana. ¿Sigues trabajando?" y ofrece "Renovar una semana más" o "No por
+  ahora".
 - Si pone destino, es un viaje: se le pregunta "¿Qué día viajas?", su tarjeta
   dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y vuelve el
   formulario con sus datos. Las rutas que se repiten quedan para después, como
@@ -63,8 +66,9 @@ tarifas son valores iniciales para calibrar con precios reales del piloto.
 - Ruta: origen y destino del cliente quedan cerca del corredor del
   transportista y en el mismo sentido de viaje.
 - Además: el cliente pide un día igual o posterior a la fecha desde la que
-  trabaja el transportista (con destino, el mismo día del viaje), el espacio
-  alcanza para el volumen y la mano de obra ofrecida cubre la pedida.
+  trabaja el transportista (con destino, el mismo día del viaje), la semana del
+  transportista sin destino no se ha vencido, el espacio alcanza para el
+  volumen y la mano de obra ofrecida cubre la pedida.
 
 **PWA**: manifest instalable y service worker que guarda las páginas para que
 abran con mala señal.
