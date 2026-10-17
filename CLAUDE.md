@@ -72,7 +72,11 @@ public/sw.js                     Service worker
   desplegar.
 - La lógica de precios y emparejamiento tiene pruebas en `src/lib/__tests__`;
   si la cambias, actualiza o agrega pruebas.
-- Comentarios y nombres de funciones en español, como el resto del código.
+- Los comentarios y las descripciones de las pruebas van en español. Los
+  nombres de funciones, variables, tipos, componentes y archivos van en inglés,
+  como ya está todo el código (`publishAvailability`, `matchKind`,
+  `driver-form.tsx`). Las claves internas que se guardan en la base
+  (`manana`, `activa`) sí están en español.
 - Mantén `docs/MVP.md` al día cuando cambie una decisión de producto.
 
 ## Decisiones de producto
