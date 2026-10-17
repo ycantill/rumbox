@@ -111,9 +111,15 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   pantalla muestra "Estás disponible para este servicio" con sus datos, los
   clientes que lo esperan (cada uno con su día) y al final el aviso de
   WhatsApp, en vez del formulario. No hay lista de varios días.
-- Sin destino, el formulario pregunta "¿Desde cuándo puedes trabajar?". Queda
-  disponible desde esa fecha en adelante, sin fecha de fin: el match exige que
-  la fecha del cliente sea igual o posterior a `service_date`.
+- Sin destino, el formulario pregunta "¿Desde cuándo puedes trabajar?". El
+  match exige que la fecha del cliente sea igual o posterior a `service_date`.
+- Sin destino dura una semana (`AVAILABILITY_DAYS`): les sale a los clientes
+  desde esa fecha y los 6 días siguientes, y la tarjeta cuenta los días ("Se
+  vence en 6 días", "Se vence mañana", "Se vence hoy"). Cuando se vence, la
+  tarjeta dice "Pasó una semana. ¿Sigues trabajando?" y ofrece "Renovar una
+  semana más" (la deja desde hoy por otra semana) o "No por ahora" (la retira
+  sin pedir confirmar y vuelve el formulario con sus datos). Renovar a mano es
+  gratis.
 - Con destino es un viaje: la pregunta es "¿Qué día viajas?", su tarjeta dice
   "Viajas…" y solo le salen clientes de ese mismo día (`service_date` es el día
   del viaje). Cuando pasa ese día se apaga sola y vuelve el formulario con sus
@@ -121,8 +127,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
   futura para el transportista: las "disponibilidades programadas". No van
   en el MVP: quien repite una ruta registra cada viaje.
-- Un solo botón para apagarla: "Ya no recibo más clientes" (sirve si se llenó
-  o si ya no va a trabajar). Pide confirmar y luego vuelve al formulario con
+- Un solo botón para apagarla: "Ya no voy a trabajar" (también sirve si se
+  llenó). Pide confirmar y luego vuelve al formulario con
   los mismos datos. También existe "Solo queda espacio para paquetes".
 
 **Destino y emparejamiento**

@@ -2,7 +2,9 @@
 
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getCity } from "@/lib/cities";
+import { addDays } from "@/lib/dates";
 import {
+  AVAILABILITY_DAYS,
   CLIENT_LABOR,
   DRIVER_LABOR,
   DRIVER_SPACES,
@@ -10,6 +12,7 @@ import {
   VEHICLE_TYPES,
   VOLUMES,
   isKey,
+  lastAvailableDay,
   slotsLeftToday,
   spaceFitsVehicle,
   type ClientLabor,
@@ -105,7 +108,7 @@ export async function publishAvailability(input: {
   });
 }
 
-/** "Ya no recibo más clientes" (status llena) o actualizar el espacio que queda libre. */
+/** "Ya no voy a trabajar" o "No por ahora" (status llena), o actualizar el espacio que queda libre. */
 export async function updateAvailability(input: {
   id: string;
   editToken: string;
@@ -139,7 +142,7 @@ export async function updateAvailability(input: {
 }
 
 export type MyAvailabilityResult =
-  | { ok: true; status: "activa" | "llena"; space: DriverSpace; pending: PendingRequest[] }
+  | { ok: true; status: "activa" | "llena" | "vencida"; space: DriverSpace; pending: PendingRequest[] }
   | (Fail & { gone?: true });
 
 /**
@@ -157,11 +160,43 @@ export async function getMyAvailability(input: { id: string; editToken: string }
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
-    // Un viaje con destino vale solo su día: si ya pasó, se apagó solo.
-    const tripPassed = Boolean(data.destination_city) && data.service_date < todayInBogota();
-    const status: "activa" | "llena" = tripPassed ? "llena" : data.status;
+    const today = todayInBogota();
+    let status: "activa" | "llena" | "vencida" = data.status;
+    if (status === "activa" && data.destination_city) {
+      // Un viaje con destino vale solo su día: si ya pasó, se apagó solo.
+      if (data.service_date < today) status = "llena";
+    } else if (status === "activa" && lastAvailableDay(data.service_date) < today) {
+      // Sin destino dura una semana: después se vence hasta que la renueve.
+      status = "vencida";
+    }
     const pending = status === "activa" ? await findPendingRequests(data) : [];
     return { ok: true as const, status, space: data.space, pending };
+  });
+}
+
+export type RenewResult = { ok: true; date: string; pending: PendingRequest[] } | Fail;
+
+/**
+ * "Renovar una semana más": la disponibilidad sin destino vuelve a salirles a
+ * los clientes desde hoy, por otra semana. Los viajes con destino no se renuevan.
+ */
+export async function renewAvailability(input: { id: string; editToken: string }): Promise<RenewResult> {
+  return withDb(DRIVER_DB_ERROR, async () => {
+    const { data, error } = await db()
+      .from("availabilities")
+      .select("origin_city, destination_city, space, labor, status, edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return fail("No encontramos tus datos en este teléfono.");
+    }
+    if (data.destination_city || data.status !== "activa") return fail("Algo salió mal. Intenta de nuevo.");
+    const today = todayInBogota();
+    const { error: upErr } = await db().from("availabilities").update({ service_date: today }).eq("id", input.id);
+    if (upErr) throw upErr;
+    const pending = await findPendingRequests({ ...data, service_date: today });
+    return { ok: true as const, date: today, pending };
   });
 }
 
@@ -219,13 +254,15 @@ export async function requestQuote(input: {
       .single();
     if (error) throw error;
 
-    // Vía A (match inmediato): transportistas que trabajan desde ese día o antes,
-    // y los que viajan justo ese día (los viajes de otros días no sirven).
+    // Vía A (match inmediato): transportistas sin destino que trabajan desde ese
+    // día o antes y no se han vencido (duran una semana), y los que viajan justo
+    // ese día (los viajes de otros días no sirven).
+    const oldestStart = addDays(todayInBogota(), -(AVAILABILITY_DAYS - 1));
     const { data: rows, error: qErr } = await db()
       .from("availabilities")
       .select("id, origin_city, destination_city, service_date, time_slot, vehicle_type, space, labor, whatsapp")
       .lte("service_date", input.date)
-      .or(`destination_city.is.null,service_date.eq.${input.date}`)
+      .or(`and(destination_city.is.null,service_date.gte.${oldestStart}),service_date.eq.${input.date}`)
       .eq("status", "activa")
       .order("created_at", { ascending: false })
       .limit(500);
