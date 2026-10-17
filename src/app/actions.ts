@@ -157,8 +157,11 @@ export async function getMyAvailability(input: { id: string; editToken: string }
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
-    const pending = data.status === "activa" ? await findPendingRequests(data) : [];
-    return { ok: true as const, status: data.status, space: data.space, pending };
+    // Un viaje con destino vale solo su día: si ya pasó, se apagó solo.
+    const tripPassed = Boolean(data.destination_city) && data.service_date < todayInBogota();
+    const status: "activa" | "llena" = tripPassed ? "llena" : data.status;
+    const pending = status === "activa" ? await findPendingRequests(data) : [];
+    return { ok: true as const, status, space: data.space, pending };
   });
 }
 
@@ -216,11 +219,13 @@ export async function requestQuote(input: {
       .single();
     if (error) throw error;
 
-    // Vía A (match inmediato): transportistas que trabajan desde ese día o antes.
+    // Vía A (match inmediato): transportistas que trabajan desde ese día o antes,
+    // y los que viajan justo ese día (los viajes de otros días no sirven).
     const { data: rows, error: qErr } = await db()
       .from("availabilities")
       .select("id, origin_city, destination_city, service_date, time_slot, vehicle_type, space, labor, whatsapp")
       .lte("service_date", input.date)
+      .or(`destination_city.is.null,service_date.eq.${input.date}`)
       .eq("status", "activa")
       .order("created_at", { ascending: false })
       .limit(500);
@@ -248,13 +253,16 @@ async function findPendingRequests(a: {
   space: DriverSpace;
   labor: DriverLabor;
 }): Promise<PendingRequest[]> {
-  // Desde que empieza a trabajar en adelante, sin los viajes que ya pasaron.
+  // Sin destino: desde que empieza a trabajar en adelante, sin los viajes que ya
+  // pasaron. Con destino: solo los clientes del día del viaje.
   const today = todayInBogota();
-  const { data, error } = await db()
+  const query = db()
     .from("requests")
     .select("id, origin_city, destination_city, service_date, volume, labor, estimated_price, whatsapp")
-    .gte("service_date", a.service_date > today ? a.service_date : today)
-    .eq("status", "abierta")
+    .eq("status", "abierta");
+  const { data, error } = await (a.destination_city
+    ? query.eq("service_date", a.service_date)
+    : query.gte("service_date", a.service_date > today ? a.service_date : today))
     .order("service_date", { ascending: true })
     .order("created_at", { ascending: false })
     .limit(500);

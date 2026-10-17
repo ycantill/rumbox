@@ -221,7 +221,8 @@ export function DriverForm() {
           />
         </Field>
 
-        <Field label="¿Desde cuándo puedes trabajar?">
+        {/* Con destino es un viaje: vale solo ese día. */}
+        <Field label={destination ? "¿Qué día viajas?" : "¿Desde cuándo puedes trabajar?"}>
           <div className="grid grid-cols-3 gap-2">
             {todayOpen && <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />}
             <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
@@ -377,10 +378,18 @@ function CurrentWork({
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Un viaje con destino vale solo su día. Si ya pasó, se apagó solo y vuelve el
+  // formulario con sus datos; no hace falta preguntarle al servidor.
+  const tripPassed = Boolean(post.destination) && post.date < today;
+
   // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
   const fresh = initialPending !== null;
   useEffect(() => {
+    if (tripPassed) {
+      onEnd();
+      return;
+    }
     if (fresh) return;
     let cancelled = false;
     getMyAvailability({ id, editToken }).then(
@@ -405,9 +414,9 @@ function CurrentWork({
     return () => {
       cancelled = true;
     };
-    // Solo al montar o si cambia el trabajo guardado.
+    // Solo al montar, si cambia el trabajo guardado o si su viaje ya pasó.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, editToken, fresh]);
+  }, [id, editToken, fresh, tripPassed]);
 
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
@@ -448,9 +457,9 @@ function CurrentWork({
             </dd>
           </div>
           <div>
-            <dt className="sr-only">Desde cuándo</dt>
+            <dt className="sr-only">{post.destination ? "Día del viaje" : "Desde cuándo"}</dt>
             <dd>
-              Desde {whenText(post.date, today, tomorrow)}
+              {post.destination ? "Viajas" : "Desde"} {whenText(post.date, today, tomorrow)}
               {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
             </dd>
           </div>
