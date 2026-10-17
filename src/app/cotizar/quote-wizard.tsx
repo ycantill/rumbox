@@ -190,7 +190,6 @@ export function QuoteWizard() {
       {preview && (
         <div className="rounded-xl bg-surface-2 px-4 py-3 text-sm">
           Precio aproximado: <strong className="text-base">{formatCOP(preview.total)}</strong>
-          <span className="text-muted"> · {preview.distanceKm} km aprox.</span>
         </div>
       )}
 
@@ -275,7 +274,7 @@ function Results({
         <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-brand-ink/80">
           <dt>Precio base</dt>
           <dd className="text-right">{formatCOP(quote.base)}</dd>
-          <dt>Distancia ({quote.distanceKm} km)</dt>
+          <dt>Distancia</dt>
           <dd className="text-right">{formatCOP(quote.distance)}</dd>
           {quote.labor > 0 && (
             <>
