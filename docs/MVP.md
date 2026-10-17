@@ -25,8 +25,9 @@ publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
 de obra, número) para no volver a escribirlos.
 
 **Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
-escribiendo parte del nombre, con o sin tildes, y salen en orden alfabético.
-Antes de escribir no se sugiere nada, y ninguna región va primero.
+escribiendo parte del nombre, con o sin tildes, o en la lista completa que se
+despliega con la flecha, agrupada por departamento. Al tocar el campo no se
+sugiere nada, y ninguna región va primero.
 
 **Pantalla del transportista** (`/transportista`)
 - Origen con botón "Ubicarme" y destino opcional. Por debajo, con destino se

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CITIES, getCity, nearestCity, searchCities } from "../cities";
+import { CITIES, CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities } from "../cities";
 
 // Slugs que ya se guardaban en la base de datos antes de agregar todo el país.
 const SAVED_SLUGS = [
@@ -47,6 +47,21 @@ describe("CITIES", () => {
       expect(c.lng, c.slug).toBeGreaterThan(-81.8);
       expect(c.lng, c.slug).toBeLessThan(-66.8);
     }
+  });
+});
+
+describe("CITIES_BY_DEPARTMENT", () => {
+  it("la lista completa trae los 33 departamentos y los 1.122 municipios", () => {
+    expect(CITIES_BY_DEPARTMENT).toHaveLength(33);
+    expect(CITIES_BY_DEPARTMENT.flatMap((d) => d.cities)).toHaveLength(1122);
+  });
+
+  it("va en orden alfabético en español, sin preferir ninguna región", () => {
+    expect(CITIES_BY_DEPARTMENT[0].department).toBe("Amazonas");
+    const cordoba = CITIES_BY_DEPARTMENT.find((d) => d.department === "Córdoba")!.cities.map((c) => c.name);
+    expect(cordoba[0]).toBe("Ayapel");
+    // La ñ va después de la n: Montería antes que Moñitos.
+    expect(cordoba.indexOf("Montería")).toBeLessThan(cordoba.indexOf("Moñitos"));
   });
 });
 
