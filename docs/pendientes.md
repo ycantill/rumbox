@@ -121,5 +121,7 @@ se probó en un teléfono:
 - **PR #15:** sin destino, la disponibilidad dura una semana y se renueva
   (15); el botón de la tarjeta activa dice "Ya no voy a trabajar"; esta lista
   de pendientes.
-- **Rama `claude/municipios-colombia`:** todos los municipios de Colombia, con
-  un buscador en vez de la lista; en el cotizador ya no sale "Hoy" dos veces.
+- **PR #16:** todos los municipios de Colombia, con buscador; en el cotizador
+  ya no sale "Hoy" dos veces; la región del piloto queda sin definir.
+- **Rama `claude/lista-municipios`:** además de buscar, la flecha despliega la
+  lista completa de municipios, agrupada por departamento.

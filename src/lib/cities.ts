@@ -1228,6 +1228,14 @@ export function searchCities(query: string, limit = 50): City[] {
   return found.slice(0, limit).map((f) => f.city);
 }
 
+/** La lista completa para buscar al ojo: departamentos y municipios en orden alfabético. */
+export const CITIES_BY_DEPARTMENT = [...new Set(CITIES.map((c) => c.department))]
+  .sort((a, b) => a.localeCompare(b, "es"))
+  .map((department) => ({
+    department,
+    cities: CITIES.filter((c) => c.department === department).sort((a, b) => a.name.localeCompare(b.name, "es")),
+  }));
+
 export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371;
   const toRad = (d: number) => (d * Math.PI) / 180;

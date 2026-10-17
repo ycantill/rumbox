@@ -161,10 +161,12 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   DANE. Los que ya existían conservan su nombre corto (Cúcuta, Cali…). Si un
   nombre se repite en varios departamentos, lleva el departamento entre
   paréntesis: "La Unión (Sucre)".
-- Se eligen con un buscador (`CitySelect`), no con una lista: se escribe parte
-  del nombre, con o sin tildes, y se toca uno de los que coinciden. Salen en
-  orden alfabético, primero los que empiezan con lo escrito. Antes de escribir
-  no se sugiere nada, y ninguna región va primero.
+- Se eligen en `CitySelect` de dos formas: escribiendo parte del nombre, con o
+  sin tildes (salen en orden alfabético, primero los que empiezan con lo
+  escrito), o tocando la flecha para ver la lista completa, agrupada por
+  departamento, y buscar al ojo. Al tocar el campo no se sugiere nada, la
+  lista solo se abre con la flecha y no resalta ninguno si no hay uno elegido,
+  y ninguna región va primero.
 - Los slugs se guardan en la base de datos: no se cambian.
 
 **Precios**
