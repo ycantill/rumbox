@@ -103,6 +103,6 @@ src/lib/pricing.ts       Tarifa base + modificadores + descuento por ruta
 src/lib/matching.ts      Emparejamiento por cercanía y por ruta
 src/lib/cities.ts        Municipios del piloto con coordenadas
 supabase/migrations/     Esquema de base de datos
-docs/                    Alcance del MVP y base de conocimiento de negocio
+docs/                    Alcance del MVP, pendientes y base de conocimiento de negocio
 public/sw.js             Service worker (PWA)
 ```
