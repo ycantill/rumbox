@@ -3,7 +3,8 @@
 Plataforma web (PWA) de mudanzas, fletes y envíos que conecta clientes con
 transportistas que tienen espacio libre, ya sea porque están en su ciudad o
 porque ya van hacia otro lado. Sin registro, sin comisiones y con conexión
-directa por WhatsApp. El piloto es en Córdoba y la Costa (Colombia).
+directa por WhatsApp, en Colombia. Todavía no está definido dónde será el
+piloto.
 
 - **Cliente** (`/cotizar`): dice de dónde a dónde, qué va a mover, si necesita
   ayuda para cargar y su WhatsApp. Ve el precio estimado y los transportistas

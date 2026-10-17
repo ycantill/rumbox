@@ -2,8 +2,9 @@
 
 # Muvia · guía para Claude
 
-Muvia es una PWA de mudanzas, fletes y envíos para el piloto de Córdoba y la
-Costa (Colombia). Conecta clientes con transportistas que tienen espacio libre,
+Muvia es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
+definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
+clientes con transportistas que tienen espacio libre,
 ya sea en su ciudad o porque ya van hacia otro lado. Sin registro, sin
 comisiones y con contacto directo por WhatsApp. El alcance del MVP está en
 [docs/MVP.md](docs/MVP.md) y la visión de negocio completa (modelo, precios,

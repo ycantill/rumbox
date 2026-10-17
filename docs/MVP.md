@@ -2,8 +2,9 @@
 
 Basado en el documento de producto "Plataforma Web de Logística Inteligente:
 Mudanzas y Fletes Híbridos". El objetivo del MVP es validar que transportistas
-y clientes de la región piloto (Córdoba y la Costa) se conectan por la
-plataforma, con costo operativo cercano a cero.
+y clientes de la región piloto se conectan por la plataforma, con costo
+operativo cercano a cero. Todavía no está definido dónde será el piloto (el
+documento proponía Córdoba y la Costa).
 
 ## Qué incluye
 
