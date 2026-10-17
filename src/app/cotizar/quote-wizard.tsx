@@ -143,7 +143,9 @@ export function QuoteWizard() {
                 ["Mañana", tomorrow],
               ].map(([label, value]) => (
                 <button
-                  key={value}
+                  // Por el texto y no por la fecha: en el HTML del servidor las dos fechas
+                  // llegan vacías, y con la misma clave React duplicaba "Hoy".
+                  key={label}
                   type="button"
                   aria-pressed={date === value}
                   onClick={() => setDate(value)}
