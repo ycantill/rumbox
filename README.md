@@ -101,7 +101,7 @@ src/components/          Componentes compartidos y dibujos de vehículos
 src/lib/domain.ts        Vehículos, espacios, jornadas y sus textos
 src/lib/pricing.ts       Tarifa base + modificadores + descuento por ruta
 src/lib/matching.ts      Emparejamiento por cercanía y por ruta
-src/lib/cities.ts        Municipios del piloto con coordenadas
+src/lib/cities.ts        Todos los municipios de Colombia y su búsqueda
 supabase/migrations/     Esquema de base de datos
 docs/                    Alcance del MVP, pendientes y base de conocimiento de negocio
 public/sw.js             Service worker (PWA)

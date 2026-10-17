@@ -118,6 +118,8 @@ se probó en un teléfono:
   cuando "Ubicarme" falla (14); íconos PNG para instalar la app (12).
 - **PR #13:** un viaje con destino vale solo su día (7); las rutas que se
   repiten quedan anotadas como mejora futura.
-- **Rama `claude/disponibilidad-una-semana`:** sin destino, la disponibilidad
-  dura una semana y se renueva (15); el botón de la tarjeta activa dice "Ya no
-  voy a trabajar".
+- **PR #15:** sin destino, la disponibilidad dura una semana y se renueva
+  (15); el botón de la tarjeta activa dice "Ya no voy a trabajar"; esta lista
+  de pendientes.
+- **Rama `claude/municipios-colombia`:** todos los municipios de Colombia, con
+  un buscador en vez de la lista; en el cotizador ya no sale "Hoy" dos veces.
