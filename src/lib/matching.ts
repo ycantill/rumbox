@@ -10,8 +10,7 @@ import { getCity, haversineKm } from "./cities";
 import {
   LABOR_LEVEL,
   LABOR_NEED,
-  SPACE_CAPACITY,
-  VOLUME_LEVEL,
+  spaceFitsVolume,
   type ClientLabor,
   type DriverLabor,
   type DriverSpace,
@@ -48,7 +47,7 @@ export type MatchKind = "local" | "ruta";
 
 export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null {
   if (r.service_date < a.service_date) return null;
-  if (SPACE_CAPACITY[a.space] < VOLUME_LEVEL[r.volume]) return null;
+  if (!spaceFitsVolume(a.space, r.volume)) return null;
   if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return null;
 
   const driverFrom = getCity(a.origin_city);

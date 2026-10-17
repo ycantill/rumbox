@@ -24,6 +24,7 @@ import {
   DRIVER_SPACES,
   SPACE_CAPACITY,
   slotsLeftToday,
+  spaceFitsVolume,
   VEHICLE_SPACES,
   TIME_SLOTS,
   VEHICLE_TYPES,
@@ -406,7 +407,10 @@ function CurrentWork({
   }
 
   async function onlyPackages() {
-    if (await patch({ space: "solo_paquetes" })) onChange({ ...post, space: "solo_paquetes" });
+    if (!(await patch({ space: "solo_paquetes" }))) return;
+    onChange({ ...post, space: "solo_paquetes" });
+    // Los clientes que ya no caben dejan de salir en la lista.
+    setPending((list) => list && list.filter((r) => spaceFitsVolume("solo_paquetes", r.volume)));
   }
 
   async function end() {

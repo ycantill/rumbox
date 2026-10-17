@@ -90,6 +90,11 @@ export const VOLUME_LEVEL: Record<Volume, number> = {
   camion_entero: 4,
 };
 
+/** Si lo que el cliente va a mover cabe en el espacio que el transportista tiene libre. */
+export function spaceFitsVolume(space: DriverSpace, volume: Volume): boolean {
+  return SPACE_CAPACITY[space] >= VOLUME_LEVEL[volume];
+}
+
 /** Mano de obra que ofrece el transportista, ordenada de menos a más. */
 export const LABOR_LEVEL: Record<DriverLabor, number> = { solo_manejo: 0, yo_ayudo: 1, con_ayudante: 2 };
 export const LABOR_NEED: Record<ClientLabor, number> = { yo_cargo: 0, conductor: 1, ayudantes: 2 };
