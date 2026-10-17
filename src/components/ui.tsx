@@ -1,13 +1,7 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { CITIES } from "@/lib/cities";
-
-// Municipios por departamento, en orden alfabético para encontrar el pueblo rápido.
-const DEPARTMENTS = [...new Set(CITIES.map((c) => c.department))].map((department) => ({
-  department,
-  cities: CITIES.filter((c) => c.department === department).sort((a, b) => a.name.localeCompare(b.name, "es")),
-}));
+import { useId, useRef, useState, useSyncExternalStore } from "react";
+import { getCity, searchCities, simplify, type City } from "@/lib/cities";
 
 export function Field({
   label,
@@ -27,10 +21,17 @@ export function Field({
   );
 }
 
+/**
+ * Buscador de municipios. Con todos los de Colombia, una lista desplegable no
+ * sirve: la persona escribe parte del nombre, con o sin tildes, y toca uno de
+ * los que coinciden. Antes de escribir no se sugiere nada. Sigue el patrón
+ * "combobox" de WAI-ARIA, así que también funciona con teclado y con lector de
+ * pantalla.
+ */
 export function CitySelect({
   value,
   onChange,
-  placeholder = "Elige un municipio",
+  placeholder = "Escribe el municipio",
   allowEmpty,
   name,
 }: {
@@ -40,25 +41,138 @@ export function CitySelect({
   allowEmpty?: boolean;
   name: string;
 }) {
+  const listId = useId();
+  // null: no está escribiendo y el campo muestra el municipio elegido. El ref
+  // guarda lo mismo para leerlo al salir del campo sin esperar otro render.
+  const [query, setQueryState] = useState<string | null>(null);
+  const queryRef = useRef<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [active, setActive] = useState(0);
+  const selected = getCity(value);
+  const open = query !== null;
+  const results = query ? searchCities(query) : [];
+
+  function setQuery(q: string | null) {
+    queryRef.current = q;
+    setQueryState(q);
+    setActive(0);
+  }
+
+  function pick(city: City) {
+    onChange(city.slug);
+    setQuery(null);
+    // Se cierra el teclado del celular para que vea el resto del formulario.
+    inputRef.current?.blur();
+  }
+
+  function leave() {
+    const typed = queryRef.current;
+    if (typed === null) return;
+    setQuery(null);
+    if (!simplify(typed)) {
+      // Borró el texto: si el campo es opcional, queda sin municipio.
+      if (allowEmpty && value) onChange("");
+      return;
+    }
+    // Escribió el nombre completo y no lo tocó en la lista: se toma igual.
+    const exact = searchCities(typed).find((c) => simplify(c.name) === simplify(typed));
+    if (exact) onChange(exact.slug);
+  }
+
+  function onKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (!open) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (results.length === 0) return;
+      const next = (active + (e.key === "ArrowDown" ? 1 : -1) + results.length) % results.length;
+      setActive(next);
+      document.getElementById(`${listId}-${next}`)?.scrollIntoView({ block: "nearest" });
+    } else if (e.key === "Enter") {
+      // Enter elige de la lista en vez de enviar el formulario.
+      e.preventDefault();
+      if (results[active]) pick(results[active]);
+    } else if (e.key === "Escape") {
+      setQuery(null);
+    }
+  }
+
+  const showClear = allowEmpty && selected && !open;
   return (
-    <select
-      name={name}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      className="input"
-      required={!allowEmpty}
-    >
-      <option value="">{placeholder}</option>
-      {DEPARTMENTS.map(({ department, cities }) => (
-        <optgroup key={department} label={department}>
-          {cities.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.name}
-            </option>
+    <div className="relative w-full min-w-0">
+      <input
+        ref={inputRef}
+        name={name}
+        type="text"
+        role="combobox"
+        aria-expanded={open && results.length > 0}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={open && results[active] ? `${listId}-${active}` : undefined}
+        autoComplete="off"
+        autoCorrect="off"
+        spellCheck={false}
+        className={`input ${showClear ? "pr-20" : ""}`}
+        placeholder={placeholder}
+        value={query ?? selected?.name ?? ""}
+        required={!allowEmpty}
+        onFocus={(e) => {
+          setQuery(selected?.name ?? "");
+          e.currentTarget.select();
+          // En el celular el teclado tapa la parte de abajo: se sube el campo para ver la lista.
+          const input = e.currentTarget;
+          if (window.matchMedia("(max-width: 640px)").matches) {
+            setTimeout(() => input.scrollIntoView({ block: "start", behavior: "smooth" }), 300);
+          }
+        }}
+        onChange={(e) => setQuery(e.target.value)}
+        onBlur={leave}
+        onKeyDown={onKeyDown}
+      />
+      {showClear && (
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-1 text-sm text-muted"
+        >
+          Quitar
+        </button>
+      )}
+      {open && results.length > 0 && (
+        <ul
+          id={listId}
+          role="listbox"
+          className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-xl border border-line bg-surface py-1 shadow-lg"
+        >
+          {results.map((c, i) => (
+            <li
+              key={c.slug}
+              id={`${listId}-${i}`}
+              role="option"
+              aria-selected={i === active}
+              // Sin esto, el campo pierde el foco antes del toque y la lista se cierra.
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => pick(c)}
+              className={`flex cursor-pointer items-baseline justify-between gap-2 px-3 py-2.5 text-sm ${
+                i === active ? "bg-brand-soft text-brand-ink" : "text-ink"
+              }`}
+            >
+              <span className="font-medium">{c.name}</span>
+              {!c.name.endsWith(`(${c.department})`) && (
+                <span className="shrink-0 text-xs text-muted">{c.department}</span>
+              )}
+            </li>
           ))}
-        </optgroup>
-      ))}
-    </select>
+        </ul>
+      )}
+      {open && query.trim() !== "" && results.length === 0 && (
+        <p
+          role="status"
+          className="absolute z-20 mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-muted shadow-lg"
+        >
+          No encontramos ese municipio. Revisa cómo lo escribiste.
+        </p>
+      )}
+    </div>
   );
 }
 

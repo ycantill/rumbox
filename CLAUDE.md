@@ -2,8 +2,9 @@
 
 # Muvia · guía para Claude
 
-Muvia es una PWA de mudanzas, fletes y envíos para el piloto de Córdoba y la
-Costa (Colombia). Conecta clientes con transportistas que tienen espacio libre,
+Muvia es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
+definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
+clientes con transportistas que tienen espacio libre,
 ya sea en su ciudad o porque ya van hacia otro lado. Sin registro, sin
 comisiones y con contacto directo por WhatsApp. El alcance del MVP está en
 [docs/MVP.md](docs/MVP.md) y la visión de negocio completa (modelo, precios,
@@ -48,7 +49,7 @@ src/components/vehicle-icon.tsx  Dibujos de cada vehículo
 src/lib/domain.ts                Vocabulario: vehículos, espacios, jornadas, mano de obra
 src/lib/matching.ts              Emparejamiento por radio y por ruta
 src/lib/pricing.ts               Precios (tarifas provisionales)
-src/lib/cities.ts                Municipios del piloto con coordenadas
+src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 supabase/migrations/             Esquema: availabilities, requests, reviews
 public/sw.js                     Service worker
@@ -154,6 +155,17 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   espacio elegido.
 - Cada vehículo se muestra con un dibujo sencillo que toma el color del texto
   (tema claro y oscuro).
+
+**Municipios**
+- Están todos los de Colombia, con los nombres oficiales de la DIVIPOLA del
+  DANE. Los que ya existían conservan su nombre corto (Cúcuta, Cali…). Si un
+  nombre se repite en varios departamentos, lleva el departamento entre
+  paréntesis: "La Unión (Sucre)".
+- Se eligen con un buscador (`CitySelect`), no con una lista: se escribe parte
+  del nombre, con o sin tildes, y se toca uno de los que coinciden. Salen en
+  orden alfabético, primero los que empiezan con lo escrito. Antes de escribir
+  no se sugiere nada, y ninguna región va primero.
+- Los slugs se guardan en la base de datos: no se cambian.
 
 **Precios**
 - Las tarifas de `src/lib/pricing.ts` son provisionales y se calibrarán con

@@ -2,8 +2,9 @@
 
 Basado en el documento de producto "Plataforma Web de Logística Inteligente:
 Mudanzas y Fletes Híbridos". El objetivo del MVP es validar que transportistas
-y clientes de la región piloto (Córdoba y la Costa) se conectan por la
-plataforma, con costo operativo cercano a cero.
+y clientes de la región piloto se conectan por la plataforma, con costo
+operativo cercano a cero. Todavía no está definido dónde será el piloto (el
+documento proponía Córdoba y la Costa).
 
 ## Qué incluye
 
@@ -22,6 +23,10 @@ promete clientes: dice que está disponible, no que está recibiendo clientes.
 **Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
 publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
 de obra, número) para no volver a escribirlos.
+
+**Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
+escribiendo parte del nombre, con o sin tildes, y salen en orden alfabético.
+Antes de escribir no se sugiere nada, y ninguna región va primero.
 
 **Pantalla del transportista** (`/transportista`)
 - Origen con botón "Ubicarme" y destino opcional. Por debajo, con destino se
@@ -82,5 +87,6 @@ abran con mala señal.
   (la tabla `reviews` ya existe).
 - Formularios offline que se sincronizan al recuperar señal.
 - Monetización (el detalle está en el documento de negocio, que es privado).
-- Autocompletado de direcciones y barrios (hoy se elige municipio de una lista).
+- Autocompletado de direcciones y barrios (hoy se busca el municipio entre todos
+  los de Colombia).
 - Protección anti-spam (límite de publicaciones por número, captcha).
