@@ -73,6 +73,22 @@ export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null
   return onCorridor && pFrom.t <= pTo.t ? "ruta" : null;
 }
 
+/**
+ * Deja una sola fila por clave, la primera que aparece. Las filas deben venir de
+ * la más nueva a la más vieja dentro de cada clave, así que queda la última que
+ * se guardó. Sirve para no mostrar dos veces al mismo transportista, ni el mismo
+ * viaje de un cliente que pidió precio varias veces.
+ */
+export function newestBy<T>(rows: readonly T[], key: (row: T) => string): T[] {
+  const seen = new Set<string>();
+  return rows.filter((row) => {
+    const k = key(row);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+
 type Point = { lat: number; lng: number };
 
 /**

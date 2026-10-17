@@ -19,7 +19,7 @@ import {
   type VehicleType,
   type Volume,
 } from "@/lib/domain";
-import { matchKind, type MatchKind } from "@/lib/matching";
+import { matchKind, newestBy, type MatchKind } from "@/lib/matching";
 import { estimate, type Quote } from "@/lib/pricing";
 import { db } from "@/lib/supabase";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
@@ -227,7 +227,9 @@ export async function requestQuote(input: {
     if (qErr) throw qErr;
 
     const matches: DriverMatch[] = [];
-    for (const a of rows ?? []) {
+    // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
+    // disponible desde dos navegadores): vale lo último que guardó.
+    for (const a of newestBy(rows ?? [], (a) => a.whatsapp)) {
       const kind = matchKind(a, request as typeof request & { volume: Volume; labor: ClientLabor });
       if (kind) matches.push({ ...a, kind } as DriverMatch);
     }
@@ -258,7 +260,9 @@ async function findPendingRequests(a: {
     .limit(500);
   if (error) throw error;
   const out: PendingRequest[] = [];
-  for (const r of data ?? []) {
+  // Si el cliente pidió precio varias veces para el mismo viaje, vale la última.
+  const trips = newestBy(data ?? [], (r) => [r.whatsapp, r.origin_city, r.destination_city, r.service_date].join("|"));
+  for (const r of trips) {
     const kind = matchKind(a, r);
     if (kind) out.push({ ...r, kind } as PendingRequest);
   }

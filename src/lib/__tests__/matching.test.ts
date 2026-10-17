@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchKind, type AvailabilityLike, type RequestLike } from "../matching";
+import { matchKind, newestBy, type AvailabilityLike, type RequestLike } from "../matching";
 
 const date = "2026-11-01";
 
@@ -54,5 +54,24 @@ describe("matchKind", () => {
     expect(matchKind(driver({ labor: "solo_manejo" }), request({ labor: "conductor" }))).toBeNull();
     expect(matchKind(driver({ labor: "yo_ayudo" }), request({ labor: "conductor" }))).toBe("local");
     expect(matchKind(driver({ labor: "yo_ayudo" }), request({ labor: "ayudantes" }))).toBeNull();
+  });
+});
+
+describe("newestBy", () => {
+  it("un transportista que quedó dos veces sale una sola, con lo último que guardó", () => {
+    // Llegan de la más nueva a la más vieja, como en la consulta.
+    const rows = [
+      { id: "nueva", whatsapp: "573001112233" },
+      { id: "otro", whatsapp: "573004445566" },
+      { id: "vieja", whatsapp: "573001112233" },
+    ];
+    expect(newestBy(rows, (r) => r.whatsapp).map((r) => r.id)).toEqual(["nueva", "otro"]);
+  });
+
+  it("un cliente que pidió precio dos veces para el mismo viaje sale una vez; otro viaje suyo también sale", () => {
+    const trip = (id: string, service_date: string) => ({ id, whatsapp: "573001112233", service_date });
+    const rows = [trip("ultima", "2026-11-01"), trip("primera", "2026-11-01"), trip("otro-dia", "2026-11-05")];
+    const key = (r: { whatsapp: string; service_date: string }) => `${r.whatsapp}|${r.service_date}`;
+    expect(newestBy(rows, key).map((r) => r.id)).toEqual(["ultima", "otro-dia"]);
   });
 });
