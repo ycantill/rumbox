@@ -12,7 +12,7 @@ directa por WhatsApp. El piloto es en Córdoba y la Costa (Colombia).
 - **Transportista** (`/transportista`): se pone disponible desde una fecha con
   su vehículo, el espacio libre y si ayuda a cargar. Mientras está disponible
   (una semana, que puede renovar) ve los clientes que lo esperan, hasta que
-  toque "Ya no recibo más clientes".
+  toque "Ya no voy a trabajar".
 
 El alcance del MVP y lo que queda para después está en
 [docs/MVP.md](docs/MVP.md). La visión de negocio completa está en

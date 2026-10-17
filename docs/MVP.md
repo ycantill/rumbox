@@ -13,8 +13,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-desde una fecha por una semana, que puede renovar, hasta que diga "Ya no
-recibo más clientes" (si va de viaje, solo el día del viaje).
+desde una fecha por una semana, que puede renovar, hasta que diga "Ya no voy a
+trabajar" (si va de viaje, solo el día del viaje).
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -40,10 +40,10 @@ de obra, número) para no volver a escribirlos.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos, los clientes que lo
   están esperando (match diferido) y el día de cada uno, "Solo queda espacio
-  para paquetes" y "Ya no recibo más clientes". Ese último botón sirve tanto si
-  se llenó como si ya no va a trabajar: lo apaga y le devuelve el formulario
-  con los mismos datos para ponerse otra vez cuando quiera. Se controla con un
-  token que solo vive en su teléfono.
+  para paquetes" y "Ya no voy a trabajar". Ese último botón (que también sirve
+  si se llenó) lo apaga y le devuelve el formulario con los mismos datos para
+  ponerse otra vez cuando quiera. Se controla con un token que solo vive en su
+  teléfono.
 
 **Cotizador del cliente** (`/cotizar`), 4 pasos
 1. Ruta y fecha (Hoy, Mañana o calendario).

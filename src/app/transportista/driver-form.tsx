@@ -551,7 +551,7 @@ function CurrentWork({
           </div>
         ) : (
           <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya no recibo más clientes
+            Ya no voy a trabajar
           </button>
         )}
       </div>

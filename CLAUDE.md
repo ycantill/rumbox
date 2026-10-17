@@ -127,8 +127,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
   futura para el transportista: las "disponibilidades programadas". No van
   en el MVP: quien repite una ruta registra cada viaje.
-- Un solo botón para apagarla: "Ya no recibo más clientes" (sirve si se llenó
-  o si ya no va a trabajar). Pide confirmar y luego vuelve al formulario con
+- Un solo botón para apagarla: "Ya no voy a trabajar" (también sirve si se
+  llenó). Pide confirmar y luego vuelve al formulario con
   los mismos datos. También existe "Solo queda espacio para paquetes".
 
 **Destino y emparejamiento**
