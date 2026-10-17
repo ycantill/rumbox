@@ -39,9 +39,20 @@ describe("matchKind", () => {
     expect(matchKind(d, request({ destination_city: "medellin" }))).toBeNull();
   });
 
-  it("trabaja desde su fecha en adelante", () => {
+  it("sin destino trabaja desde su fecha en adelante", () => {
     expect(matchKind(driver(), request({ service_date: "2026-11-02" }))).toBe("local");
     expect(matchKind(driver(), request({ service_date: "2026-10-31" }))).toBeNull();
+  });
+
+  it("con destino es un viaje: vale solo ese día", () => {
+    const d = driver({ destination_city: "cartagena" });
+    const trip = request({ destination_city: "sincelejo" });
+    expect(matchKind(d, trip)).toBe("ruta");
+    // El día siguiente ya no va para allá, ni el anterior.
+    expect(matchKind(d, { ...trip, service_date: "2026-11-02" })).toBeNull();
+    expect(matchKind(d, { ...trip, service_date: "2026-10-31" })).toBeNull();
+    // Meses después, menos.
+    expect(matchKind(d, { ...trip, service_date: "2027-01-15" })).toBeNull();
   });
 
   it("respeta el espacio disponible", () => {

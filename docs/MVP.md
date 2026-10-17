@@ -13,7 +13,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-desde una fecha y lo sigue estando hasta que diga "Ya no recibo más clientes".
+desde una fecha y lo sigue estando hasta que diga "Ya no recibo más clientes"
+(o, si va de viaje, hasta que pase el día del viaje).
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -29,6 +30,10 @@ de obra, número) para no volver a escribirlos.
 - Desde cuándo trabaja (hoy, mañana u otro día) y jornada (mañana, tarde,
   noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
   WhatsApp. Queda disponible desde esa fecha en adelante; no hay fecha de fin.
+- Si pone destino, es un viaje: se le pregunta "¿Qué día viajas?", su tarjeta
+  dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y vuelve el
+  formulario con sus datos. Las rutas que se repiten quedan para después, como
+  mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos, los clientes que lo
   están esperando (match diferido) y el día de cada uno, "Solo queda espacio
@@ -58,8 +63,8 @@ tarifas son valores iniciales para calibrar con precios reales del piloto.
 - Ruta: origen y destino del cliente quedan cerca del corredor del
   transportista y en el mismo sentido de viaje.
 - Además: el cliente pide un día igual o posterior a la fecha desde la que
-  trabaja el transportista, el espacio alcanza para el volumen y la mano de
-  obra ofrecida cubre la pedida.
+  trabaja el transportista (con destino, el mismo día del viaje), el espacio
+  alcanza para el volumen y la mano de obra ofrecida cubre la pedida.
 
 **PWA**: manifest instalable y service worker que guarda las páginas para que
 abran con mala señal.

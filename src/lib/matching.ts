@@ -4,7 +4,9 @@
 //   solicitud que salga cerca de su ciudad base.
 // - Modo "Ruta": declaró un destino. Atiende solicitudes cuyo origen y destino
 //   quedan sobre su corredor vial y en el mismo sentido de viaje.
-// - En los dos casos trabaja desde su fecha en adelante, hasta que se apague.
+// - Sin destino trabaja desde su fecha en adelante, hasta que se apague. Con
+//   destino es un viaje: vale solo el día del viaje. Las rutas que se repiten
+//   (diarias o semanales) son una mejora futura para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
 import {
@@ -30,7 +32,7 @@ export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 export type AvailabilityLike = {
   origin_city: string;
   destination_city: string | null;
-  service_date: string; // YYYY-MM-DD: desde cuándo trabaja
+  service_date: string; // YYYY-MM-DD: desde cuándo trabaja, o el día del viaje si tiene destino
   space: DriverSpace;
   labor: DriverLabor;
 };
@@ -46,7 +48,7 @@ export type RequestLike = {
 export type MatchKind = "local" | "ruta";
 
 export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null {
-  if (r.service_date < a.service_date) return null;
+  if (a.destination_city ? r.service_date !== a.service_date : r.service_date < a.service_date) return null;
   if (!spaceFitsVolume(a.space, r.volume)) return null;
   if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return null;
 
