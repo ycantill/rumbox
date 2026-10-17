@@ -3,7 +3,11 @@
 import { useSyncExternalStore } from "react";
 import { CITIES } from "@/lib/cities";
 
-const DEPARTMENTS = [...new Set(CITIES.map((c) => c.department))];
+// Municipios por departamento, en orden alfabético para encontrar el pueblo rápido.
+const DEPARTMENTS = [...new Set(CITIES.map((c) => c.department))].map((department) => ({
+  department,
+  cities: CITIES.filter((c) => c.department === department).sort((a, b) => a.name.localeCompare(b.name, "es")),
+}));
 
 export function Field({
   label,
@@ -45,9 +49,9 @@ export function CitySelect({
       required={!allowEmpty}
     >
       <option value="">{placeholder}</option>
-      {DEPARTMENTS.map((d) => (
-        <optgroup key={d} label={d}>
-          {CITIES.filter((c) => c.department === d).map((c) => (
+      {DEPARTMENTS.map(({ department, cities }) => (
+        <optgroup key={department} label={department}>
+          {cities.map((c) => (
             <option key={c.slug} value={c.slug}>
               {c.name}
             </option>

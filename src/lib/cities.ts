@@ -1,6 +1,8 @@
-// Municipios soportados en el piloto. Coordenadas aproximadas del casco urbano.
-// Para ampliar cobertura basta con agregar filas; más adelante se puede
-// reemplazar por un servicio de geocodificación (Google Places, Mapbox).
+// Municipios soportados en el piloto. Coordenadas aproximadas del casco urbano;
+// las de los municipios agregados en octubre de 2026 vienen de la DIVIPOLA del
+// DANE (datos.gov.co). Para ampliar cobertura basta con agregar filas; más
+// adelante se puede reemplazar por un servicio de geocodificación (Google
+// Places, Mapbox).
 
 export type City = {
   slug: string;
@@ -11,22 +13,65 @@ export type City = {
 };
 
 export const CITIES: City[] = [
-  // Córdoba (región piloto)
-  { slug: "monteria", name: "Montería", department: "Córdoba", lat: 8.7479, lng: -75.8814 },
+  // Córdoba (región piloto): sus 30 municipios.
+  { slug: "ayapel", name: "Ayapel", department: "Córdoba", lat: 8.3138, lng: -75.146 },
+  { slug: "buenavista-cordoba", name: "Buenavista (Córdoba)", department: "Córdoba", lat: 8.2212, lng: -75.4809 },
+  { slug: "canalete", name: "Canalete", department: "Córdoba", lat: 8.7869, lng: -76.2415 },
   { slug: "cerete", name: "Cereté", department: "Córdoba", lat: 8.8854, lng: -75.7905 },
-  { slug: "lorica", name: "Lorica", department: "Córdoba", lat: 9.2366, lng: -75.8139 },
-  { slug: "sahagun", name: "Sahagún", department: "Córdoba", lat: 8.9463, lng: -75.4428 },
-  { slug: "planeta-rica", name: "Planeta Rica", department: "Córdoba", lat: 8.4089, lng: -75.5852 },
-  { slug: "montelibano", name: "Montelíbano", department: "Córdoba", lat: 7.9792, lng: -75.4203 },
-  { slug: "tierralta", name: "Tierralta", department: "Córdoba", lat: 8.1728, lng: -76.0594 },
+  { slug: "chima", name: "Chimá", department: "Córdoba", lat: 9.1497, lng: -75.6269 },
   { slug: "chinu", name: "Chinú", department: "Córdoba", lat: 9.1058, lng: -75.3983 },
   { slug: "cienaga-de-oro", name: "Ciénaga de Oro", department: "Córdoba", lat: 8.8753, lng: -75.6211 },
-  { slug: "san-pelayo", name: "San Pelayo", department: "Córdoba", lat: 8.9583, lng: -75.8381 },
+  { slug: "cotorra", name: "Cotorra", department: "Córdoba", lat: 9.0372, lng: -75.7992 },
+  { slug: "la-apartada", name: "La Apartada", department: "Córdoba", lat: 8.0501, lng: -75.336 },
+  { slug: "lorica", name: "Lorica", department: "Córdoba", lat: 9.2366, lng: -75.8139 },
+  { slug: "los-cordobas", name: "Los Córdobas", department: "Córdoba", lat: 8.8921, lng: -76.3552 },
+  { slug: "momil", name: "Momil", department: "Córdoba", lat: 9.2407, lng: -75.678 },
+  { slug: "montelibano", name: "Montelíbano", department: "Córdoba", lat: 7.9792, lng: -75.4203 },
+  { slug: "monteria", name: "Montería", department: "Córdoba", lat: 8.7479, lng: -75.8814 },
+  { slug: "monitos", name: "Moñitos", department: "Córdoba", lat: 9.2452, lng: -76.1291 },
+  { slug: "planeta-rica", name: "Planeta Rica", department: "Córdoba", lat: 8.4089, lng: -75.5852 },
+  { slug: "pueblo-nuevo", name: "Pueblo Nuevo", department: "Córdoba", lat: 8.5041, lng: -75.508 },
+  { slug: "puerto-escondido", name: "Puerto Escondido", department: "Córdoba", lat: 9.0054, lng: -76.2604 },
+  { slug: "puerto-libertador", name: "Puerto Libertador", department: "Córdoba", lat: 7.8889, lng: -75.6718 },
+  { slug: "purisima", name: "Purísima", department: "Córdoba", lat: 9.2393, lng: -75.725 },
+  { slug: "sahagun", name: "Sahagún", department: "Córdoba", lat: 8.9463, lng: -75.4428 },
+  { slug: "san-andres-de-sotavento", name: "San Andrés de Sotavento", department: "Córdoba", lat: 9.1454, lng: -75.5088 },
   { slug: "san-antero", name: "San Antero", department: "Córdoba", lat: 9.3742, lng: -75.7589 },
-  // Costa Caribe
-  { slug: "sincelejo", name: "Sincelejo", department: "Sucre", lat: 9.3047, lng: -75.3978 },
+  { slug: "san-bernardo-del-viento", name: "San Bernardo del Viento", department: "Córdoba", lat: 9.3525, lng: -75.9551 },
+  { slug: "san-carlos", name: "San Carlos", department: "Córdoba", lat: 8.7993, lng: -75.6988 },
+  { slug: "san-jose-de-ure", name: "San José de Uré", department: "Córdoba", lat: 7.7873, lng: -75.5335 },
+  { slug: "san-pelayo", name: "San Pelayo", department: "Córdoba", lat: 8.9583, lng: -75.8381 },
+  { slug: "tierralta", name: "Tierralta", department: "Córdoba", lat: 8.1728, lng: -76.0594 },
+  { slug: "tuchin", name: "Tuchín", department: "Córdoba", lat: 9.1866, lng: -75.554 },
+  { slug: "valencia", name: "Valencia", department: "Córdoba", lat: 8.255, lng: -76.1508 },
+  // Sucre: sus 26 municipios.
+  { slug: "buenavista-sucre", name: "Buenavista (Sucre)", department: "Sucre", lat: 9.3198, lng: -74.9728 },
+  { slug: "caimito", name: "Caimito", department: "Sucre", lat: 8.7893, lng: -75.1171 },
+  { slug: "chalan", name: "Chalán", department: "Sucre", lat: 9.5454, lng: -75.3127 },
+  { slug: "coloso", name: "Colosó", department: "Sucre", lat: 9.4942, lng: -75.3533 },
   { slug: "corozal", name: "Corozal", department: "Sucre", lat: 9.3183, lng: -75.2933 },
+  { slug: "covenas", name: "Coveñas", department: "Sucre", lat: 9.4028, lng: -75.6802 },
+  { slug: "el-roble", name: "El Roble", department: "Sucre", lat: 9.1006, lng: -75.1984 },
+  { slug: "galeras", name: "Galeras", department: "Sucre", lat: 9.1604, lng: -75.0496 },
+  { slug: "guaranda", name: "Guaranda", department: "Sucre", lat: 8.4686, lng: -74.5377 },
+  { slug: "la-union", name: "La Unión", department: "Sucre", lat: 8.854, lng: -75.2761 },
+  { slug: "los-palmitos", name: "Los Palmitos", department: "Sucre", lat: 9.3803, lng: -75.2687 },
+  { slug: "majagual", name: "Majagual", department: "Sucre", lat: 8.5412, lng: -74.6281 },
+  { slug: "morroa", name: "Morroa", department: "Sucre", lat: 9.3314, lng: -75.3059 },
+  { slug: "ovejas", name: "Ovejas", department: "Sucre", lat: 9.5272, lng: -75.229 },
+  { slug: "palmito", name: "Palmito", department: "Sucre", lat: 9.3332, lng: -75.5413 },
+  { slug: "sampues", name: "Sampués", department: "Sucre", lat: 9.1832, lng: -75.3802 },
+  { slug: "san-benito-abad", name: "San Benito Abad", department: "Sucre", lat: 8.9301, lng: -75.0311 },
+  { slug: "san-juan-de-betulia", name: "San Juan de Betulia", department: "Sucre", lat: 9.2731, lng: -75.2436 },
+  { slug: "san-marcos", name: "San Marcos", department: "Sucre", lat: 8.6618, lng: -75.1338 },
+  { slug: "san-onofre", name: "San Onofre", department: "Sucre", lat: 9.737, lng: -75.5224 },
+  { slug: "san-pedro", name: "San Pedro", department: "Sucre", lat: 9.3963, lng: -75.0636 },
   { slug: "tolu", name: "Santiago de Tolú", department: "Sucre", lat: 9.5244, lng: -75.5814 },
+  { slug: "since", name: "Sincé", department: "Sucre", lat: 9.2443, lng: -75.146 },
+  { slug: "sincelejo", name: "Sincelejo", department: "Sucre", lat: 9.3047, lng: -75.3978 },
+  { slug: "sucre", name: "Sucre", department: "Sucre", lat: 8.8117, lng: -74.7232 },
+  { slug: "toluviejo", name: "Toluviejo", department: "Sucre", lat: 9.4518, lng: -75.4408 },
+  // Resto de la Costa Caribe
   { slug: "cartagena", name: "Cartagena", department: "Bolívar", lat: 10.391, lng: -75.4794 },
   { slug: "magangue", name: "Magangué", department: "Bolívar", lat: 9.2414, lng: -74.7536 },
   { slug: "barranquilla", name: "Barranquilla", department: "Atlántico", lat: 10.9685, lng: -74.7813 },
