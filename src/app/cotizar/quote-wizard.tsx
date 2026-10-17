@@ -20,7 +20,12 @@ import { estimate, formatCOP, type Quote } from "@/lib/pricing";
 import { callServer } from "@/lib/server-call";
 import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
 
-const STEPS = ["De dónde a dónde", "Qué vas a mover", "Ayuda y escaleras", "Tu WhatsApp"] as const;
+const STEPS = [
+  { key: "ruta", title: "De dónde a dónde" },
+  { key: "volumen", title: "Qué vas a mover" },
+  { key: "ayuda", title: "Ayuda y escaleras" },
+  { key: "whatsapp", title: "Tu WhatsApp" },
+] as const;
 
 export function QuoteWizard() {
   const { today, tomorrow } = useBogotaDates();
@@ -50,12 +55,20 @@ export function QuoteWizard() {
     return estimate({ origin, destination, volume, labor, stairsOrigin, stairsDestination });
   }, [origin, destination, volume, labor, stairsOrigin, stairsDestination]);
 
-  const canContinue = [Boolean(origin && destination && date), Boolean(volume), true, whatsapp.trim().length >= 7][step];
+  // Para sobres no hay nada que preguntar de ayuda ni de escaleras: ese paso se salta.
+  const steps = volume === "sobres" ? STEPS.filter((s) => s.key !== "ayuda") : STEPS;
+  const current = steps[step].key;
+  const canContinue = {
+    ruta: Boolean(origin && destination && date),
+    volumen: Boolean(volume),
+    ayuda: true,
+    whatsapp: whatsapp.trim().length >= 7,
+  }[current];
 
   function next(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (step < STEPS.length - 1) {
+    if (step < steps.length - 1) {
       setStep(step + 1);
       return;
     }
@@ -101,21 +114,21 @@ export function QuoteWizard() {
   return (
     <form onSubmit={next} className="flex flex-col gap-6">
       <ol className="flex gap-1" aria-label="Pasos">
-        {STEPS.map((s, i) => (
+        {steps.map((s, i) => (
           <li
-            key={s}
+            key={s.key}
             aria-current={i === step ? "step" : undefined}
             className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-brand" : "bg-line"}`}
           >
-            <span className="sr-only">{s}</span>
+            <span className="sr-only">{s.title}</span>
           </li>
         ))}
       </ol>
       <h2 className="text-lg font-bold">
-        {step + 1}. {STEPS[step]}
+        {step + 1}. {steps[step].title}
       </h2>
 
-      {step === 0 && (
+      {current === "ruta" && (
         <>
           <Field label="¿Desde dónde?">
             <CitySelect name="origin" value={origin} onChange={setOrigin} />
@@ -154,25 +167,23 @@ export function QuoteWizard() {
         </>
       )}
 
-      {step === 1 && (
+      {current === "volumen" && (
         <Field label="¿Qué vas a mover?">
           <Choices options={VOLUMES} value={volume} onChange={setVolume} columns={1} />
         </Field>
       )}
 
-      {step === 2 && (
+      {current === "ayuda" && (
         <>
-          {volume !== "sobres" && (
-            <Field label="¿Necesitas ayuda para cargar?">
-              <Choices options={CLIENT_LABOR} value={labor} onChange={setLabor} columns={1} />
-            </Field>
-          )}
+          <Field label="¿Necesitas ayuda para cargar?">
+            <Choices options={CLIENT_LABOR} value={labor} onChange={setLabor} columns={1} />
+          </Field>
           <Stairs label="Escaleras en el origen" value={stairsOrigin} onChange={setStairsOrigin} />
           <Stairs label="Escaleras en el destino" value={stairsDestination} onChange={setStairsDestination} />
         </>
       )}
 
-      {step === 3 && (
+      {current === "whatsapp" && (
         <Field label="Tu WhatsApp" hint="El transportista te escribe a este número.">
           <input
             type="tel"
@@ -190,7 +201,6 @@ export function QuoteWizard() {
       {preview && (
         <div className="rounded-xl bg-surface-2 px-4 py-3 text-sm">
           Precio aproximado: <strong className="text-base">{formatCOP(preview.total)}</strong>
-          <span className="text-muted"> · {preview.distanceKm} km aprox.</span>
         </div>
       )}
 
@@ -202,7 +212,7 @@ export function QuoteWizard() {
           </button>
         )}
         <button type="submit" className="btn-primary flex-1" disabled={!canContinue || isPending}>
-          {step < STEPS.length - 1 ? "Continuar" : isPending ? "Buscando…" : "Ver precio"}
+          {step < steps.length - 1 ? "Continuar" : isPending ? "Buscando…" : "Ver precio"}
         </button>
       </div>
     </form>
@@ -275,7 +285,7 @@ function Results({
         <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-brand-ink/80">
           <dt>Precio base</dt>
           <dd className="text-right">{formatCOP(quote.base)}</dd>
-          <dt>Distancia ({quote.distanceKm} km)</dt>
+          <dt>Distancia</dt>
           <dd className="text-right">{formatCOP(quote.distance)}</dd>
           {quote.labor > 0 && (
             <>

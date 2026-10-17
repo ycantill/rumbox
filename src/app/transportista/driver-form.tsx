@@ -24,6 +24,7 @@ import {
   DRIVER_SPACES,
   SPACE_CAPACITY,
   slotsLeftToday,
+  spaceFitsVolume,
   VEHICLE_SPACES,
   TIME_SLOTS,
   VEHICLE_TYPES,
@@ -68,6 +69,7 @@ export function DriverForm() {
   const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [locating, setLocating] = useState(false);
+  const [locateFailed, setLocateFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingRequest[] | null>(null);
   const [posts, setPosts] = useState<MyPost[]>([]);
@@ -113,15 +115,28 @@ export function DriverForm() {
     if (space && !VEHICLE_SPACES[v].includes(space)) setSpace("");
   }
 
+  function pickOrigin(slug: string) {
+    setOrigin(slug);
+    setLocateFailed(false);
+  }
+
   function locate() {
-    if (!navigator.geolocation) return;
+    setLocateFailed(false);
+    if (!navigator.geolocation) {
+      setLocateFailed(true);
+      return;
+    }
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setOrigin(nearestCity(pos.coords.latitude, pos.coords.longitude).slug);
         setLocating(false);
       },
-      () => setLocating(false),
+      () => {
+        // No dio permiso, el teléfono no supo dónde está o se demoró: que elija de la lista.
+        setLocating(false);
+        setLocateFailed(true);
+      },
       { timeout: 10_000, maximumAge: 300_000 },
     );
   }
@@ -186,11 +201,12 @@ export function DriverForm() {
       <form onSubmit={submit} className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
           <div className="flex gap-2">
-            <CitySelect name="origin" value={origin} onChange={setOrigin} />
+            <CitySelect name="origin" value={origin} onChange={pickOrigin} />
             <button type="button" onClick={locate} className="btn-secondary shrink-0" disabled={locating}>
               {locating ? "…" : "Ubicarme"}
             </button>
           </div>
+          <ErrorNote message={locateFailed ? "No pudimos saber dónde estás. Elige tu pueblo en la lista." : null} />
         </Field>
 
         {/* Con destino el match va por el corredor (Modo Ruta); sin destino, por
@@ -406,7 +422,10 @@ function CurrentWork({
   }
 
   async function onlyPackages() {
-    if (await patch({ space: "solo_paquetes" })) onChange({ ...post, space: "solo_paquetes" });
+    if (!(await patch({ space: "solo_paquetes" }))) return;
+    onChange({ ...post, space: "solo_paquetes" });
+    // Los clientes que ya no caben dejan de salir en la lista.
+    setPending((list) => list && list.filter((r) => spaceFitsVolume("solo_paquetes", r.volume)));
   }
 
   async function end() {

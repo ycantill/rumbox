@@ -40,7 +40,8 @@ de obra, número) para no volver a escribirlos.
 **Cotizador del cliente** (`/cotizar`), 4 pasos
 1. Ruta y fecha (Hoy, Mañana o calendario).
 2. Volumen: sobres, carga parcial, medio camión, camión entero.
-3. Mano de obra y escaleras en origen y destino.
+3. Mano de obra y escaleras en origen y destino. Con sobres o paquetes
+   pequeños este paso se salta: no cambia el precio.
 4. WhatsApp.
 
 Muestra el precio estimado mientras llena el formulario, el desglose, y la

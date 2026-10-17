@@ -96,7 +96,7 @@ export async function publishAvailability(input: {
     edit_token_hash: hashToken(editToken),
   };
 
-  return withDb(async () => {
+  return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db().from("availabilities").insert(row).select("id").single();
     if (error) throw error;
     // Vía B (match diferido): solicitudes que estaban esperando un transportista.
@@ -116,7 +116,7 @@ export async function updateAvailability(input: {
   if (input.status !== undefined && input.status !== "activa" && input.status !== "llena") {
     return fail("Algo salió mal. Intenta de nuevo.");
   }
-  return withDb(async () => {
+  return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
       .select("edit_token_hash, vehicle_type")
@@ -147,7 +147,7 @@ export type MyAvailabilityResult =
  * base de datos (por si cambió) junto con los clientes que lo están esperando.
  */
 export async function getMyAvailability(input: { id: string; editToken: string }): Promise<MyAvailabilityResult> {
-  return withDb(async () => {
+  return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
       .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
@@ -202,7 +202,7 @@ export async function requestQuote(input: {
     labor: input.labor,
   };
 
-  return withDb(async () => {
+  return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
       .insert({
@@ -273,12 +273,17 @@ function fail(error: string): Fail {
   return { ok: false, error };
 }
 
-async function withDb<T>(fn: () => Promise<T>): Promise<T | Fail> {
+/** Lo que ve el cliente si falla la base de datos. */
+const CLIENT_DB_ERROR = "No pudimos guardar tu solicitud. Intenta de nuevo en un momento.";
+/** Lo que ve el transportista: él no hace solicitudes, y la palabra "disponible" no se repite. */
+const DRIVER_DB_ERROR = "No pudimos guardar tus datos. Intenta de nuevo en un momento.";
+
+async function withDb<T>(message: string, fn: () => Promise<T>): Promise<T | Fail> {
   try {
     return await fn();
   } catch (err) {
     console.error(err);
-    return fail("No pudimos guardar tu solicitud. Intenta de nuevo en un momento.");
+    return fail(message);
   }
 }
 

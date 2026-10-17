@@ -5,8 +5,23 @@ import {
   VEHICLE_TYPES,
   slotsLeftToday,
   spaceFitsVehicle,
+  spaceFitsVolume,
   type DriverSpace,
 } from "../domain";
+
+describe("spaceFitsVolume", () => {
+  it("con solo espacio para paquetes caben sobres, pero no muebles ni una mudanza", () => {
+    expect(spaceFitsVolume("solo_paquetes", "sobres")).toBe(true);
+    expect(spaceFitsVolume("solo_paquetes", "carga_parcial")).toBe(false);
+    expect(spaceFitsVolume("solo_paquetes", "medio_camion")).toBe(false);
+  });
+
+  it("un camión entero sirve para todo, y medio camión no lleva una casa completa", () => {
+    expect(spaceFitsVolume("camion_entero", "camion_entero")).toBe(true);
+    expect(spaceFitsVolume("medio_camion", "medio_camion")).toBe(true);
+    expect(spaceFitsVolume("medio_camion", "camion_entero")).toBe(false);
+  });
+});
 
 describe("spaceFitsVehicle", () => {
   it("un carro particular no ofrece camión entero ni medio camión", () => {
