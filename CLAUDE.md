@@ -9,7 +9,9 @@ comisiones y con contacto directo por WhatsApp. El alcance del MVP está en
 [docs/MVP.md](docs/MVP.md) y la visión de negocio completa (modelo, precios,
 emparejamiento, monetización, roadmap) en docs/negocio/.
 Léelos antes de proponer funciones nuevas. Si el documento de negocio y las
-decisiones de abajo no coinciden, mandan las decisiones de abajo.
+decisiones de abajo no coinciden, mandan las decisiones de abajo. Lo que falta
+por decidir o construir está en [docs/pendientes.md](docs/pendientes.md):
+cuando termines algo de esa lista, pásalo a "Hecho" con su PR.
 
 La dueña del producto es Yohany y escribe en español. Responde, nombra los
 commits y escribe los textos de la app en español.
