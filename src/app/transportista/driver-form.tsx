@@ -36,7 +36,7 @@ import {
 import { KEYS, load, save } from "@/lib/local-store";
 import { formatCOP } from "@/lib/pricing";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
-import { waLink } from "@/lib/whatsapp";
+import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
 
 type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
 
@@ -169,6 +169,7 @@ export function DriverForm() {
       <CurrentWork
         key={current.id}
         post={current}
+        phone={normalizeWhatsApp(whatsapp)}
         justPublished={pending !== null}
         pending={pending}
         onChange={updateCurrent}
@@ -340,12 +341,15 @@ function PendingList({ items }: { items: PendingRequest[] }) {
 
 function CurrentWork({
   post,
+  phone,
   justPublished,
   pending: initialPending,
   onChange,
   onEnd,
 }: {
   post: MyPost;
+  /** El WhatsApp con que se puso disponible, para que vea si quedó bien. */
+  phone: string | null;
   justPublished: boolean;
   pending: PendingRequest[] | null;
   onChange: (p: MyPost) => void;
@@ -437,7 +441,8 @@ function CurrentWork({
           </div>
         </dl>
         <p className="mt-4 text-sm text-brand-ink/80">
-          Los clientes que necesiten un servicio te escribirán por WhatsApp.
+          Los clientes que necesiten un servicio te escribirán por WhatsApp
+          {phone ? ` al ${formatWhatsApp(phone)}` : ""}.
         </p>
       </section>
 
