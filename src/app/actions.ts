@@ -38,6 +38,7 @@ export type PendingRequest = {
   origin_city: string;
   destination_city: string;
   service_date: string;
+  time_slot: TimeSlot | null; // null en las solicitudes de antes, sin jornada
   volume: Volume;
   labor: ClientLabor;
   whatsapp: string;
@@ -87,7 +88,12 @@ export async function publishAvailability(input: {
     const { data, error } = await db().from("availabilities").insert(row).select("id").single();
     if (error) throw error;
     // Vía B (match diferido): solicitudes que estaban esperando un transportista.
-    const pending = await findPendingRequests({ ...row, space: input.space as DriverSpace, labor: input.labor as DriverLabor });
+    const pending = await findPendingRequests({
+      ...row,
+      time_slot: input.timeSlot as TimeSlot,
+      space: input.space as DriverSpace,
+      labor: input.labor as DriverLabor,
+    });
     return { ok: true as const, id: data.id as string, editToken, pending };
   });
 }
@@ -134,7 +140,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, time_slot, space, labor, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -169,6 +175,7 @@ export async function createRequest(input: {
   origin: string;
   destination: string;
   date: string;
+  timeSlot: string;
   volume: string;
   labor: string;
   whatsapp: string;
@@ -177,6 +184,10 @@ export async function createRequest(input: {
   if (!getCity(input.origin) || !getCity(input.destination)) return fail("Elige origen y destino.");
   if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
+  if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si es por la mañana, la tarde o la noche.");
+  if (input.date === todayInBogota() && !slotsLeftToday(hourInBogota()).includes(input.timeSlot)) {
+    return fail("Esa jornada de hoy ya pasó. Elige otra.");
+  }
   if (!isKey(VOLUMES, input.volume)) return fail("Elige qué vas a mover.");
   if (!isKey(CLIENT_LABOR, input.labor)) return fail("Elige si necesitas ayuda para cargar.");
   if (!whatsapp) return fail("Revisa el número de teléfono.");
@@ -185,6 +196,7 @@ export async function createRequest(input: {
     origin_city: input.origin,
     destination_city: input.destination,
     service_date: input.date,
+    time_slot: input.timeSlot,
     volume: input.volume,
     labor: input.labor,
   };
@@ -214,7 +226,9 @@ export async function createRequest(input: {
     // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
     // disponible desde dos navegadores): vale lo último que guardó.
     for (const a of newestBy(rows ?? [], (a) => a.whatsapp)) {
-      if (matchesTrip(a, request as typeof request & { volume: Volume; labor: ClientLabor })) matches.push(a);
+      if (matchesTrip(a, request as typeof request & { time_slot: TimeSlot; volume: Volume; labor: ClientLabor })) {
+        matches.push(a);
+      }
     }
     return { ok: true as const, id: data.id as string, matches: matches.slice(0, 20) };
   });
@@ -226,13 +240,14 @@ async function findPendingRequests(a: {
   origin_city: string;
   destination_city: string;
   service_date: string;
+  time_slot: TimeSlot;
   space: DriverSpace;
   labor: DriverLabor;
 }): Promise<PendingRequest[]> {
-  // Solo los clientes del día del viaje.
+  // Solo los clientes del día del viaje; la jornada la revisa matchesTrip.
   const { data, error } = await db()
     .from("requests")
-    .select("id, origin_city, destination_city, service_date, volume, labor, whatsapp")
+    .select("id, origin_city, destination_city, service_date, time_slot, volume, labor, whatsapp")
     .eq("status", "abierta")
     .eq("service_date", a.service_date)
     .order("created_at", { ascending: false })

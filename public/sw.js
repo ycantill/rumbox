@@ -1,7 +1,7 @@
 // Service worker mínimo de Muvia: guarda las páginas visitadas para que la app
 // abra aunque la señal sea mala. Red primero; si falla, se usa la copia guardada.
 const CACHE = "muvia-v1";
-const SHELL = ["/", "/cotizar", "/transportista"];
+const SHELL = ["/", "/solicitar", "/transportista"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));

@@ -1,7 +1,8 @@
 // Motor de emparejamiento (documento de producto, sección 8).
 //
 // En el MVP el transportista siempre va de viaje (Modo Ruta): dice de dónde
-// sale, hacia dónde va y qué día. Atiende solicitudes de ese mismo día cuyo
+// sale, hacia dónde va, qué día y en qué jornada. Atiende solicitudes de ese
+// mismo día y de la misma jornada ("Todo el día" coincide con todas) cuyo
 // origen y destino quedan sobre su corredor vial y en el mismo sentido de
 // viaje. Las rutas que se repiten (diarias o semanales) son una mejora futura
 // para después del MVP.
@@ -10,10 +11,12 @@ import { getCity, haversineKm } from "./cities";
 import {
   LABOR_LEVEL,
   LABOR_NEED,
+  slotsMatch,
   spaceFitsVolume,
   type ClientLabor,
   type DriverLabor,
   type DriverSpace,
+  type TimeSlot,
   type Volume,
 } from "./domain";
 
@@ -29,6 +32,7 @@ export type AvailabilityLike = {
   origin_city: string;
   destination_city: string;
   service_date: string; // YYYY-MM-DD: el día del viaje
+  time_slot: TimeSlot;
   space: DriverSpace;
   labor: DriverLabor;
 };
@@ -37,6 +41,7 @@ export type RequestLike = {
   origin_city: string;
   destination_city: string;
   service_date: string;
+  time_slot: TimeSlot | null; // null en las solicitudes de antes, cuando el cliente no elegía jornada
   volume: Volume;
   labor: ClientLabor;
 };
@@ -44,6 +49,7 @@ export type RequestLike = {
 /** Si el servicio que pide el cliente le sirve al transportista en su viaje. */
 export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   if (r.service_date !== a.service_date) return false;
+  if (!slotsMatch(a.time_slot, r.time_slot)) return false;
   if (!spaceFitsVolume(a.space, r.volume)) return false;
   if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return false;
   // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas

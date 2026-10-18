@@ -6,10 +6,12 @@ import {
   CitySelect,
   Choices,
   ContactButtons,
+  DayPicker,
   ErrorNote,
   Field,
   OriginCitySelect,
   useBogotaDates,
+  useDayAndSlot,
 } from "@/components/ui";
 import { getCity } from "@/lib/cities";
 import { capitalize, whenText } from "@/lib/dates";
@@ -20,33 +22,32 @@ import {
   TIME_SLOTS,
   VOLUMES,
   spaceInSentence,
+  withSlot,
   type ClientLabor,
+  type TimeSlot,
   type Volume,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { callServer } from "@/lib/server-call";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
-const STEPS = [
-  { key: "ruta", title: "De dónde a dónde" },
-  { key: "volumen", title: "Qué vas a mover" },
-  { key: "ayuda", title: "Ayuda para cargar" },
-  { key: "whatsapp", title: "Tu teléfono" },
-] as const;
-
-export function QuoteWizard() {
+/** Todo en una sola pantalla, con las mismas preguntas y el mismo orden que el transportista. */
+export function ClientForm() {
   const { today, tomorrow } = useBogotaDates();
-  const [step, setStep] = useState(0);
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
-  const date = pickedDate || today;
+  // Solo le salen transportistas de la misma jornada; "Todo el día" coincide con todas.
+  const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
+  const { date, timeSlot, todayOpen, slotOptions } = useDayAndSlot(pickedDate, pickedSlot);
   const [volume, setVolume] = useState<Volume | "">("");
-  const [labor, setLabor] = useState<ClientLabor>("yo_cargo");
+  const [labor, setLabor] = useState<ClientLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [matches, setMatches] = useState<DriverMatch[] | null>(null);
   const [isPending, startTransition] = useTransition();
+  // Para paquetes o sobres no hay nada que preguntar de ayuda para cargar.
+  const asksLabor = volume !== "sobres";
 
   useEffect(() => {
     // localStorage solo existe en el navegador: se lee después de hidratar.
@@ -54,26 +55,21 @@ export function QuoteWizard() {
     setWhatsapp(load(KEYS.clientPhone, ""));
   }, []);
 
-  // Para sobres no hay nada que preguntar de ayuda para cargar: ese paso se salta.
-  const steps = volume === "sobres" ? STEPS.filter((s) => s.key !== "ayuda") : STEPS;
-  const current = steps[step].key;
-  const sameCity = Boolean(origin) && origin === destination;
-  const canContinue = {
-    ruta: Boolean(origin && destination && date) && !sameCity,
-    volumen: Boolean(volume),
-    ayuda: true,
-    whatsapp: whatsapp.trim().length >= 7,
-  }[current];
-
-  function next(e: React.FormEvent) {
+  function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (step < steps.length - 1) {
-      setStep(step + 1);
-      return;
-    }
     startTransition(async () => {
-      const res = await callServer(() => createRequest({ origin, destination, date, volume, labor, whatsapp }));
+      const res = await callServer(() =>
+        createRequest({
+          origin,
+          destination,
+          date,
+          timeSlot,
+          volume,
+          labor: asksLabor ? labor : "yo_cargo",
+          whatsapp,
+        }),
+      );
       if (!res.ok) {
         setError(res.error);
         return;
@@ -90,88 +86,49 @@ export function QuoteWizard() {
         matches={matches}
         route={`${getCity(origin)?.name} → ${getCity(destination)?.name}`}
         when={whenText(date, today, tomorrow)}
+        timeSlot={timeSlot as TimeSlot}
         phone={normalizeWhatsApp(whatsapp)}
         onRestart={() => {
+          // El formulario vuelve con los mismos datos, para cambiar solo lo que haga falta.
           setMatches(null);
-          setStep(0);
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }}
       />
     );
   }
 
   return (
-    <form onSubmit={next} className="flex flex-col gap-6">
-      <ol className="flex gap-1" aria-label="Pasos">
-        {steps.map((s, i) => (
-          <li
-            key={s.key}
-            aria-current={i === step ? "step" : undefined}
-            className={`h-1.5 flex-1 rounded-full ${i <= step ? "bg-brand" : "bg-line"}`}
-          >
-            <span className="sr-only">{s.title}</span>
-          </li>
-        ))}
-      </ol>
-      <h2 className="text-lg font-bold">
-        {step + 1}. {steps[step].title}
-      </h2>
+    <div className="flex flex-col gap-8">
+      <p className="-mt-4 text-sm text-muted">
+        Cuéntanos qué vas a mover, hacia dónde y qué día. No tienes que crear cuenta ni pagar comisiones.
+      </p>
+      <form onSubmit={submit} className="flex flex-col gap-6">
+        <Field label="¿Desde dónde?">
+          <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
+        </Field>
 
-      {current === "ruta" && (
-        <>
-          <Field label="¿Desde dónde?">
-            <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
-          </Field>
-          <Field label="¿Hacia dónde?">
-            {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
-            <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
-            <ErrorNote message={sameCity ? SAME_CITY_ERROR : null} />
-          </Field>
-          <Field label="¿Qué día?">
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                ["Hoy", today],
-                ["Mañana", tomorrow],
-              ].map(([label, value]) => (
-                <button
-                  // Por el texto y no por la fecha: en el HTML del servidor las dos fechas
-                  // llegan vacías, y con la misma clave React duplicaba "Hoy".
-                  key={label}
-                  type="button"
-                  aria-pressed={date === value}
-                  onClick={() => setDate(value)}
-                  className={`rounded-xl border px-3 py-3 text-sm ${
-                    date === value ? "border-brand bg-brand-soft font-semibold text-brand-ink" : "border-line bg-surface"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-              <input
-                type="date"
-                className="input"
-                min={today}
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                aria-label="Otra fecha"
-              />
-            </div>
-          </Field>
-        </>
-      )}
+        <Field label="¿Hacia dónde?">
+          {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
+          <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
+          <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
+        </Field>
 
-      {current === "volumen" && (
+        <Field label="¿Qué día?">
+          <DayPicker value={date} onChange={setDate} todayOpen={todayOpen} />
+          <Choices options={slotOptions} value={timeSlot} onChange={setTimeSlot} />
+        </Field>
+
+        {/* La misma lista de tamaños que elige el transportista. */}
         <Field label="¿Qué vas a mover?">
           <Choices options={VOLUMES} value={volume} onChange={setVolume} columns={1} />
         </Field>
-      )}
 
-      {current === "ayuda" && (
-        <Field label="¿Necesitas ayuda para cargar?">
-          <Choices options={CLIENT_LABOR} value={labor} onChange={setLabor} columns={1} />
-        </Field>
-      )}
+        {asksLabor && (
+          <Field label="¿Necesitas ayuda para cargar?">
+            <Choices options={CLIENT_LABOR} value={labor} onChange={setLabor} columns={1} />
+          </Field>
+        )}
 
-      {current === "whatsapp" && (
         <Field label="Tu teléfono" hint="El transportista te llama o te escribe por WhatsApp a este número.">
           <input
             type="tel"
@@ -184,20 +141,13 @@ export function QuoteWizard() {
             required
           />
         </Field>
-      )}
 
-      <ErrorNote message={error} />
-      <div className="flex gap-2">
-        {step > 0 && (
-          <button type="button" className="btn-secondary" onClick={() => setStep(step - 1)}>
-            Atrás
-          </button>
-        )}
-        <button type="submit" className="btn-primary flex-1" disabled={!canContinue || isPending}>
-          {step < steps.length - 1 ? "Continuar" : isPending ? "Buscando…" : "Buscar transportista"}
+        <ErrorNote message={error} />
+        <button type="submit" className="btn-primary" disabled={isPending}>
+          {isPending ? "Un momento…" : "Solicitar transportista"}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }
 
@@ -205,12 +155,14 @@ function Results({
   matches,
   route,
   when,
+  timeSlot,
   phone,
   onRestart,
 }: {
   matches: DriverMatch[];
   route: string;
   when: string;
+  timeSlot: TimeSlot;
   /** El teléfono del cliente como quedó guardado, para que vea si está bien. */
   phone: string | null;
   onRestart: () => void;
@@ -220,14 +172,16 @@ function Results({
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
         <p className="font-semibold">{route}</p>
-        <p className="text-sm">{capitalize(when)}</p>
+        <p className="text-sm">
+          {capitalize(when)} · {TIME_SLOTS[timeSlot]}
+        </p>
       </section>
 
       {matches.length === 0 ? (
         <section className="card">
           <h2 className="font-semibold">Guardamos tu solicitud</h2>
           <p className="mt-1 text-sm text-muted">
-            Ahora mismo no hay transportistas libres para ese viaje y ese día. Apenas aparezca uno, verá
+            Ahora mismo no hay transportistas libres para ese viaje en ese momento. Apenas aparezca uno, verá
             tu pedido y te llamará o te escribirá por WhatsApp{phone ? ` al ${formatWhatsApp(phone)}` : ""}. El
             precio lo acuerdan cuando hablen.
           </p>
@@ -248,7 +202,7 @@ function Results({
               <div className="mt-3">
                 <ContactButtons
                   phone={m.whatsapp}
-                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
+                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${withSlot(when, timeSlot)}. ¿Me puedes ayudar?`}
                 />
               </div>
             </article>
@@ -257,7 +211,7 @@ function Results({
       )}
 
       <button type="button" className="btn-secondary" onClick={onRestart}>
-        Buscar para otro viaje
+        Hacer otra solicitud
       </button>
     </div>
   );

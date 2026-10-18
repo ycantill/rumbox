@@ -8,6 +8,7 @@ const driver = (o: Partial<AvailabilityLike> = {}): AvailabilityLike => ({
   origin_city: "monteria",
   destination_city: "cartagena",
   service_date: date,
+  time_slot: "todo_el_dia",
   space: "camion_entero",
   labor: "con_ayudante",
   ...o,
@@ -18,6 +19,7 @@ const request = (o: Partial<RequestLike> = {}): RequestLike => ({
   origin_city: "monteria",
   destination_city: "sincelejo",
   service_date: date,
+  time_slot: "todo_el_dia",
   volume: "medio_camion",
   labor: "yo_cargo",
   ...o,
@@ -50,6 +52,21 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver(), request({ service_date: "2026-10-31" }))).toBe(false);
     // Meses después, menos.
     expect(matchesTrip(driver(), request({ service_date: "2027-01-15" }))).toBe(false);
+  });
+
+  it("la jornada tiene que coincidir, y \"Todo el día\" coincide con todas", () => {
+    expect(matchesTrip(driver({ time_slot: "manana" }), request({ time_slot: "manana" }))).toBe(true);
+    // Él pasa en la mañana y el cliente lo necesita en la tarde.
+    expect(matchesTrip(driver({ time_slot: "manana" }), request({ time_slot: "tarde" }))).toBe(false);
+    expect(matchesTrip(driver({ time_slot: "noche" }), request({ time_slot: "manana" }))).toBe(false);
+    // El cliente puede a cualquier hora, o el transportista va todo el día.
+    expect(matchesTrip(driver({ time_slot: "tarde" }), request({ time_slot: "todo_el_dia" }))).toBe(true);
+    expect(matchesTrip(driver({ time_slot: "todo_el_dia" }), request({ time_slot: "noche" }))).toBe(true);
+  });
+
+  it("las solicitudes de antes, sin jornada, coinciden con todas", () => {
+    expect(matchesTrip(driver({ time_slot: "manana" }), request({ time_slot: null }))).toBe(true);
+    expect(matchesTrip(driver({ time_slot: "noche" }), request({ time_slot: null }))).toBe(true);
   });
 
   it("respeta cuánto puede llevar", () => {
