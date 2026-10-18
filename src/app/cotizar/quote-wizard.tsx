@@ -273,7 +273,8 @@ function Results({
   phone: string | null;
   onRestart: () => void;
 }) {
-  const hasRoute = matches.some((m) => m.kind === "ruta");
+  // Todos los transportistas que salen ya van para allá: si hay alguno, el precio baja.
+  const hasRoute = matches.length > 0;
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
@@ -324,10 +325,8 @@ function Results({
                 {VEHICLE_TYPES[m.vehicle_type]} · {DRIVER_SPACES[m.space]}
               </p>
               <p className="text-sm text-muted">
-                {m.kind === "ruta"
-                  ? `Va de ${getCity(m.origin_city)?.name} a ${getCity(m.destination_city)?.name}`
-                  : `Está en ${getCity(m.origin_city)?.name}`}{" "}
-                · {TIME_SLOTS[m.time_slot]} · {DRIVER_LABOR[m.labor]}
+                Va de {getCity(m.origin_city)?.name} a {getCity(m.destination_city)?.name} ·{" "}
+                {TIME_SLOTS[m.time_slot]} · {DRIVER_LABOR[m.labor]}
               </p>
               <div className="mt-3">
                 <WhatsAppButton

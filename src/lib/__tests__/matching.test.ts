@@ -1,70 +1,65 @@
 import { describe, expect, it } from "vitest";
-import { matchKind, newestBy, type AvailabilityLike, type RequestLike } from "../matching";
+import { matchesTrip, newestBy, type AvailabilityLike, type RequestLike } from "../matching";
 
 const date = "2026-11-01";
 
+// Un transportista que va de Montería a Cartagena.
 const driver = (o: Partial<AvailabilityLike> = {}): AvailabilityLike => ({
   origin_city: "monteria",
-  destination_city: null,
+  destination_city: "cartagena",
   service_date: date,
   space: "camion_entero",
   labor: "con_ayudante",
   ...o,
 });
 
+// Un cliente que va de Montería a Sincelejo, que queda de camino a Cartagena.
 const request = (o: Partial<RequestLike> = {}): RequestLike => ({
   origin_city: "monteria",
-  destination_city: "monteria",
+  destination_city: "sincelejo",
   service_date: date,
   volume: "medio_camion",
   labor: "yo_cargo",
   ...o,
 });
 
-describe("matchKind", () => {
-  it("modo disponible: atiende salidas desde su ciudad y alrededores", () => {
-    expect(matchKind(driver(), request())).toBe("local");
-    expect(matchKind(driver(), request({ origin_city: "cerete", destination_city: "medellin" }))).toBe("local");
-    expect(matchKind(driver(), request({ origin_city: "cartagena" }))).toBeNull();
-  });
-
-  it("modo ruta: atiende cargas sobre el corredor y en el mismo sentido", () => {
-    const d = driver({ destination_city: "cartagena" });
-    // Montería → Sincelejo queda de camino a Cartagena.
-    expect(matchKind(d, request({ destination_city: "sincelejo" }))).toBe("ruta");
-    expect(matchKind(d, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe("ruta");
+describe("matchesTrip", () => {
+  it("atiende cargas sobre el corredor y en el mismo sentido", () => {
+    expect(matchesTrip(driver(), request())).toBe(true);
+    expect(matchesTrip(driver(), request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(true);
     // Sentido contrario.
-    expect(matchKind(d, request({ origin_city: "cartagena", destination_city: "monteria" }))).toBeNull();
+    expect(matchesTrip(driver(), request({ origin_city: "cartagena", destination_city: "monteria" }))).toBe(false);
     // Fuera del corredor.
-    expect(matchKind(d, request({ destination_city: "medellin" }))).toBeNull();
+    expect(matchesTrip(driver(), request({ destination_city: "medellin" }))).toBe(false);
   });
 
-  it("sin destino trabaja desde su fecha en adelante", () => {
-    expect(matchKind(driver(), request({ service_date: "2026-11-02" }))).toBe("local");
-    expect(matchKind(driver(), request({ service_date: "2026-10-31" }))).toBeNull();
+  it("un servicio dentro de una ciudad del corredor también vale", () => {
+    expect(matchesTrip(driver(), request({ destination_city: "monteria" }))).toBe(true);
   });
 
-  it("con destino es un viaje: vale solo ese día", () => {
-    const d = driver({ destination_city: "cartagena" });
-    const trip = request({ destination_city: "sincelejo" });
-    expect(matchKind(d, trip)).toBe("ruta");
+  it("ya no atiende por cercanía: estar cerca del origen no basta si no va para allá", () => {
+    // Cereté queda al lado de Montería, pero Medellín no está de camino a Cartagena.
+    expect(matchesTrip(driver(), request({ origin_city: "cerete", destination_city: "medellin" }))).toBe(false);
+  });
+
+  it("es un viaje: vale solo ese día", () => {
     // El día siguiente ya no va para allá, ni el anterior.
-    expect(matchKind(d, { ...trip, service_date: "2026-11-02" })).toBeNull();
-    expect(matchKind(d, { ...trip, service_date: "2026-10-31" })).toBeNull();
+    expect(matchesTrip(driver(), request({ service_date: "2026-11-02" }))).toBe(false);
+    expect(matchesTrip(driver(), request({ service_date: "2026-10-31" }))).toBe(false);
     // Meses después, menos.
-    expect(matchKind(d, { ...trip, service_date: "2027-01-15" })).toBeNull();
+    expect(matchesTrip(driver(), request({ service_date: "2027-01-15" }))).toBe(false);
   });
 
   it("respeta el espacio disponible", () => {
-    expect(matchKind(driver({ space: "baul" }), request())).toBeNull();
-    expect(matchKind(driver({ space: "baul" }), request({ volume: "sobres" }))).toBe("local");
-    expect(matchKind(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBeNull();
+    expect(matchesTrip(driver({ space: "baul" }), request())).toBe(false);
+    expect(matchesTrip(driver({ space: "baul" }), request({ volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBe(false);
   });
 
   it("respeta la mano de obra pedida", () => {
-    expect(matchKind(driver({ labor: "solo_manejo" }), request({ labor: "conductor" }))).toBeNull();
-    expect(matchKind(driver({ labor: "yo_ayudo" }), request({ labor: "conductor" }))).toBe("local");
-    expect(matchKind(driver({ labor: "yo_ayudo" }), request({ labor: "ayudantes" }))).toBeNull();
+    expect(matchesTrip(driver({ labor: "solo_manejo" }), request({ labor: "conductor" }))).toBe(false);
+    expect(matchesTrip(driver({ labor: "yo_ayudo" }), request({ labor: "conductor" }))).toBe(true);
+    expect(matchesTrip(driver({ labor: "yo_ayudo" }), request({ labor: "ayudantes" }))).toBe(false);
   });
 });
 

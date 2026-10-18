@@ -34,26 +34,17 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ### 9. Descuento por ruta
 
-Desde que un viaje con destino vale solo su día, el descuento ya solo aplica a
-viajes reales. Quedan tres detalles:
+Sin modo local, todos los transportistas van de viaje: el cliente que
+encuentra alguno siempre ve el precio con 25% de descuento. Quedan dos
+detalles:
 
-- En los resultados del cliente, el precio grande sale con descuento si hay al
-  menos un transportista que va de camino, aunque en la lista también salgan
-  otros que no van. Quedaría más claro el precio en cada tarjeta.
-- El transportista que va de camino ve, en su lista de clientes que esperan,
-  el precio sin descuento.
+- El transportista ve, en su lista de clientes que esperan, el precio sin
+  descuento, mientras que el cliente vio el precio con descuento.
 - Un trasteo dentro del mismo pueblo cuenta como "en ruta", con descuento, si
-  hay un transportista que sale de ese pueblo hacia otro lado. El código lo
-  hace a propósito; falta confirmarlo.
-
-### 8. "Todo el día" para hoy
-
-- **Problema:** para "Hoy", después de las 12 desaparecen "Por la mañana" y
-  "Todo el día". La regla viene de cuando la disponibilidad era de un solo
-  día. Ahora dura una semana, y quien quiere trabajar todo el día desde ya
-  queda con "Por la tarde" toda la semana.
-- **Opciones:** mostrar "Todo el día" siempre, o que "Todo el día" elegido
-  tarde empiece a contar desde mañana.
+  hay un transportista que sale de ese pueblo hacia otro lado. Ahora es la
+  única forma de que un trasteo dentro del pueblo encuentre transportista. El
+  cotizador todavía dice "Puede ser el mismo municipio si el trasteo es dentro
+  del pueblo o la ciudad": falta decidir si se deja.
 
 ## Propuestas
 
@@ -90,9 +81,10 @@ se probó en un teléfono:
   aviso de señal sin perder lo llenado.
 - Con sobres, el cotizador debe tener 3 pasos.
 - Negar el permiso de ubicación y tocar "Ubicarme": debe salir el aviso.
-- Un viaje con destino: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
-- Sin destino: "Se vence en 6 días" y, una semana después, "Pasó una semana"
-  con "Renovar una semana más" y "No por ahora".
+- Sin elegir hacia dónde va, no deja ponerse disponible.
+- Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
+- Un teléfono que tenía guardada una disponibilidad sin destino, de antes: al
+  abrir la pantalla vuelve el formulario con sus datos para elegir el destino.
 
 ## Menores
 
@@ -123,5 +115,9 @@ se probó en un teléfono:
   de pendientes.
 - **PR #16:** todos los municipios de Colombia, con buscador; en el cotizador
   ya no sale "Hoy" dos veces; la región del piloto queda sin definir.
-- **Rama `claude/lista-municipios`:** además de buscar, la flecha despliega la
-  lista completa de municipios, agrupada por departamento.
+- **PR #17:** además de buscar, la flecha despliega la lista completa de
+  municipios, agrupada por departamento.
+- **Rama `claude/solo-viajes`:** sin modo local. El transportista siempre dice
+  hacia dónde va y el match es solo por ruta; se quitan el radio de 40 km, la
+  semana y "Renovar una semana más". Con eso "Todo el día" para hoy (8) ya no
+  aplica: un viaje vale un solo día.

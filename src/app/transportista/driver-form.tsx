@@ -1,13 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import {
-  getMyAvailability,
-  publishAvailability,
-  renewAvailability,
-  updateAvailability,
-  type PendingRequest,
-} from "@/app/actions";
+import { getMyAvailability, publishAvailability, updateAvailability, type PendingRequest } from "@/app/actions";
 import {
   CitySelect,
   Choices,
@@ -19,12 +13,11 @@ import {
 } from "@/components/ui";
 import { VehicleIcon } from "@/components/vehicle-icon";
 import { getCity, nearestCity } from "@/lib/cities";
-import { capitalize, expiresText, whenText } from "@/lib/dates";
+import { capitalize, whenText } from "@/lib/dates";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SPACE_CAPACITY,
-  lastAvailableDay,
   slotsLeftToday,
   spaceFitsVolume,
   VEHICLE_SPACES,
@@ -47,8 +40,8 @@ export type MyPost = {
   id: string;
   editToken: string;
   origin: string;
-  destination: string | null;
-  date: string; // desde cuándo trabaja
+  destination: string | null; // null en los guardados cuando el destino era opcional
+  date: string; // el día del viaje
   timeSlot?: TimeSlot; // los guardados antes no lo traen
   space: DriverSpace;
 };
@@ -150,7 +143,7 @@ export function DriverForm() {
       const res = await callServer(() =>
         publishAvailability({
           origin,
-          destination: destination || null,
+          destination,
           date,
           timeSlot,
           vehicleType,
@@ -168,7 +161,7 @@ export function DriverForm() {
         id: res.id,
         editToken: res.editToken,
         origin,
-        destination: destination || null,
+        destination,
         date,
         timeSlot: timeSlot as TimeSlot,
         space: space as DriverSpace,
@@ -198,7 +191,7 @@ export function DriverForm() {
   return (
     <div className="flex flex-col gap-8">
       <p className="-mt-4 text-sm text-muted">
-        Cuéntanos dónde estás y desde cuándo puedes trabajar. No tienes que crear cuenta ni pagar comisiones.
+        Cuéntanos hacia dónde vas y qué día viajas. No tienes que crear cuenta ni pagar comisiones.
       </p>
       <form onSubmit={submit} className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
@@ -211,20 +204,14 @@ export function DriverForm() {
           <ErrorNote message={locateFailed ? "No pudimos saber dónde estás. Elige tu pueblo en la lista." : null} />
         </Field>
 
-        {/* Con destino el match va por el corredor (Modo Ruta); sin destino, por
-            cercanía al origen. Es lógica interna: el transportista no la ve. */}
-        <Field label="¿Vas a algún lado? (opcional)">
-          <CitySelect
-            name="destination"
-            value={destination}
-            onChange={setDestination}
-            placeholder="Sin destino"
-            allowEmpty
-          />
+        {/* El match va por el corredor del viaje (Modo Ruta). Es lógica
+            interna: el transportista no la ve. */}
+        <Field label="¿Hacia dónde vas?">
+          <CitySelect name="destination" value={destination} onChange={setDestination} />
         </Field>
 
-        {/* Con destino es un viaje: vale solo ese día. */}
-        <Field label={destination ? "¿Qué día viajas?" : "¿Desde cuándo puedes trabajar?"}>
+        {/* Es un viaje: vale solo ese día. */}
+        <Field label="¿Qué día viajas?">
           <div className="grid grid-cols-3 gap-2">
             {todayOpen && <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />}
             <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
@@ -379,16 +366,11 @@ function CurrentWork({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [serverExpired, setServerExpired] = useState(false);
 
-  // Un viaje con destino vale solo su día. Si ya pasó, se apagó solo y vuelve el
-  // formulario con sus datos; no hace falta preguntarle al servidor.
-  const tripPassed = Boolean(post.destination) && post.date < today;
-
-  // Sin destino dura una semana: la tarjeta cuenta los días que faltan y, cuando
-  // se vence, ofrece "Renovar una semana más" o "No por ahora".
-  const lastDay = post.destination ? null : lastAvailableDay(post.date);
-  const expired = serverExpired || (lastDay !== null && lastDay < today);
+  // Un viaje vale solo su día. Si ya pasó, se apagó solo y vuelve el formulario
+  // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
+  // guardado sin destino, de cuando era opcional: ahora tiene que elegirlo.
+  const tripPassed = !post.destination || post.date < today;
 
   // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
@@ -409,10 +391,6 @@ function CurrentWork({
         }
         if (res.status === "llena") {
           onEnd();
-          return;
-        }
-        if (res.status === "vencida") {
-          setServerExpired(true);
           return;
         }
         setPending(res.pending);
@@ -454,34 +432,18 @@ function CurrentWork({
     if (await patch({ status: "llena" })) onEnd();
   }
 
-  async function renew() {
-    setBusy(true);
-    setError(null);
-    const res = await callServer(() => renewAvailability({ id, editToken }));
-    setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
-      return;
-    }
-    // Vuelve a salirles a los clientes desde hoy, por otra semana.
-    setServerExpired(false);
-    setPending(res.pending);
-    onChange({ ...post, date: res.date });
-  }
-
   const details = (
     <dl className="mt-3 grid gap-1 text-sm">
       <div>
         <dt className="sr-only">Lugar</dt>
         <dd className="font-semibold">
-          {getCity(post.origin)?.name}
-          {post.destination && ` → ${getCity(post.destination)?.name}`}
+          {getCity(post.origin)?.name} → {getCity(post.destination)?.name}
         </dd>
       </div>
       <div>
-        <dt className="sr-only">{post.destination ? "Día del viaje" : "Desde cuándo"}</dt>
+        <dt className="sr-only">Día del viaje</dt>
         <dd>
-          {post.destination ? "Viajas" : "Desde"} {whenText(post.date, today, tomorrow)}
+          Viajas {whenText(post.date, today, tomorrow)}
           {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
         </dd>
       </div>
@@ -492,30 +454,6 @@ function CurrentWork({
     </dl>
   );
 
-  if (expired) {
-    // Ya no les sale a los clientes. "No por ahora" la retira y vuelve el formulario
-    // con sus datos; como ya no lo mostramos, no pide confirmar.
-    return (
-      <div className="flex flex-col gap-5">
-        <section className="rounded-2xl border border-line bg-surface p-5">
-          <h2 className="text-lg font-bold">Pasó una semana</h2>
-          {details}
-          <p className="mt-4 text-sm">Ya no te mostramos a los clientes. ¿Sigues trabajando?</p>
-        </section>
-
-        <ErrorNote message={error} />
-        <div className="flex flex-col gap-2">
-          <button type="button" className="btn-primary" disabled={busy} onClick={renew}>
-            Renovar una semana más
-          </button>
-          <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
-            No por ahora
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
@@ -523,7 +461,6 @@ function CurrentWork({
           {justPublished ? "¡Listo! Ya estás disponible para este servicio." : "Estás disponible para este servicio"}
         </h2>
         {details}
-        {lastDay && <p className="mt-3 text-sm font-semibold">{expiresText(lastDay, today)}</p>}
         <p className="mt-4 text-sm text-brand-ink/80">
           Los clientes que necesiten un servicio te escribirán por WhatsApp
           {phone ? ` al ${formatWhatsApp(phone)}` : ""}.

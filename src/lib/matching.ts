@@ -1,12 +1,10 @@
 // Motor de emparejamiento (documento de producto, sección 8).
 //
-// - Modo "Disponible": el transportista no declaró destino. Atiende cualquier
-//   solicitud que salga cerca de su ciudad base.
-// - Modo "Ruta": declaró un destino. Atiende solicitudes cuyo origen y destino
-//   quedan sobre su corredor vial y en el mismo sentido de viaje.
-// - Sin destino trabaja desde su fecha en adelante, hasta que se apague. Con
-//   destino es un viaje: vale solo el día del viaje. Las rutas que se repiten
-//   (diarias o semanales) son una mejora futura para después del MVP.
+// En el MVP el transportista siempre va de viaje (Modo Ruta): dice de dónde
+// sale, hacia dónde va y qué día. Atiende solicitudes de ese mismo día cuyo
+// origen y destino quedan sobre su corredor vial y en el mismo sentido de
+// viaje. Las rutas que se repiten (diarias o semanales) son una mejora futura
+// para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
 import {
@@ -19,20 +17,18 @@ import {
   type Volume,
 } from "./domain";
 
-/** Radio en km alrededor de la ciudad base de un transportista disponible. */
-export const LOCAL_RADIUS_KM = 40;
 /**
- * Desvío máximo respecto a la línea recta del corredor en Modo Ruta. Las
- * carreteras se alejan más de la línea recta en trayectos largos, así que la
- * tolerancia crece con la longitud del corredor.
+ * Desvío máximo respecto a la línea recta del corredor. Las carreteras se
+ * alejan más de la línea recta en trayectos largos, así que la tolerancia
+ * crece con la longitud del corredor.
  */
 export const CORRIDOR_MIN_TOLERANCE_KM = 35;
 export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 
 export type AvailabilityLike = {
   origin_city: string;
-  destination_city: string | null;
-  service_date: string; // YYYY-MM-DD: desde cuándo trabaja, o el día del viaje si tiene destino
+  destination_city: string;
+  service_date: string; // YYYY-MM-DD: el día del viaje
   space: DriverSpace;
   labor: DriverLabor;
 };
@@ -45,25 +41,18 @@ export type RequestLike = {
   labor: ClientLabor;
 };
 
-export type MatchKind = "local" | "ruta";
-
-export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null {
-  if (a.destination_city ? r.service_date !== a.service_date : r.service_date < a.service_date) return null;
-  if (!spaceFitsVolume(a.space, r.volume)) return null;
-  if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return null;
+/** Si el servicio que pide el cliente le sirve al transportista en su viaje. */
+export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
+  if (r.service_date !== a.service_date) return false;
+  if (!spaceFitsVolume(a.space, r.volume)) return false;
+  if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return false;
 
   const driverFrom = getCity(a.origin_city);
+  const driverTo = getCity(a.destination_city);
   const from = getCity(r.origin_city);
   const to = getCity(r.destination_city);
-  if (!driverFrom || !from || !to) return null;
+  if (!driverFrom || !driverTo || !from || !to) return false;
 
-  if (!a.destination_city) {
-    const km = haversineKm(driverFrom.lat, driverFrom.lng, from.lat, from.lng);
-    return km <= LOCAL_RADIUS_KM ? "local" : null;
-  }
-
-  const driverTo = getCity(a.destination_city);
-  if (!driverTo) return null;
   const corridorKm = haversineKm(driverFrom.lat, driverFrom.lng, driverTo.lat, driverTo.lng);
   const tolerance = Math.max(CORRIDOR_MIN_TOLERANCE_KM, corridorKm * CORRIDOR_TOLERANCE_RATIO);
   const pFrom = projectOnSegment(driverFrom, driverTo, from);
@@ -71,7 +60,7 @@ export function matchKind(a: AvailabilityLike, r: RequestLike): MatchKind | null
   const onCorridor = pFrom.offKm <= tolerance && pTo.offKm <= tolerance;
   // Mismo sentido: la recogida va antes que la entrega sobre el trayecto.
   // Un servicio dentro de una sola ciudad del corredor también vale.
-  return onCorridor && pFrom.t <= pTo.t ? "ruta" : null;
+  return onCorridor && pFrom.t <= pTo.t;
 }
 
 /**
