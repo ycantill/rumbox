@@ -167,7 +167,7 @@ se probó en un teléfono:
   transportistas del momento, y "Hacer otra solicitud" reemplaza la de antes
   (requiere la migración `0005_cerrar_solicitud.sql`). Las listas del
   transportista y del cliente se actualizan al volver a la app y cada minuto.
-- **Rama `claude/project-thread-1s9lef`:** sin jornadas en las dos pantallas,
+- **PR #23:** sin jornadas en las dos pantallas,
   solo el día; las solicitudes y disponibilidades valen el día del servicio y
   24 horas más (una para mañana se vence pasado mañana). El emparejamiento
   sigue siendo del mismo día. No necesita migración.
