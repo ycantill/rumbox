@@ -14,8 +14,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-para un viaje, y vale hasta el día del viaje o hasta que diga "Ya no voy a
-trabajar".
+para un viaje, y vale hasta el día siguiente al viaje o hasta que diga "Ya no
+voy a trabajar".
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -45,11 +45,12 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   ("¿Hacia dónde vas?"). No hay modo local: Yohany lo quitó en octubre de 2026
   para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
   el Modo Ruta; la pantalla no le explica esa lógica al transportista.
-- Qué día viaja (hoy, mañana u otro día) y jornada (mañana, tarde, noche o
-  todo el día), cuánto puede llevar (la lista de tamaños), mano de obra y
-  teléfono.
-  Su tarjeta dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y
-  vuelve el formulario con sus datos. Las rutas que se repiten quedan para
+- Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
+  tamaños), mano de obra y teléfono. No hay jornadas: Yohany las quitó en
+  octubre de 2026.
+  Su tarjeta dice "Viajas…" y vale ese día y 24 horas más: una para mañana se
+  vence pasado mañana. Cuando se vence, se apaga solo y vuelve el formulario
+  con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos, los clientes que lo
@@ -69,8 +70,7 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 - La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
-  municipio; qué día (Hoy, Mañana o calendario) y en qué jornada, con las
-  mismas reglas del transportista para hoy; qué va a mover, con la lista de tamaños; si
+  municipio; qué día (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; si
   necesita ayuda para cargar, que no sale con paquetes o sobres; y teléfono.
 
 Al tocar "Solicitar transportista" ve la lista de transportistas compatibles con
@@ -90,7 +90,7 @@ a la app y cada minuto. Tiene dos botones:
   Al enviarla, la nueva reemplaza la de antes, que deja de salirles a los
   transportistas.
 
-Cuando pasa el día del viaje, la solicitud se olvida y vuelve el formulario.
+Vale el día del viaje y 24 horas más: después se olvida y vuelve el formulario.
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
@@ -106,9 +106,7 @@ preguntan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.
-- Además: el cliente pide el mismo día del viaje y la misma jornada ("Todo el
-  día" coincide con todas; las solicitudes de antes no tienen jornada y
-  también), lo que mueve es igual o más
+- Además: el cliente pide el mismo día del viaje, lo que mueve es igual o más
   chico que lo que el transportista puede llevar y la mano de obra ofrecida
   cubre la pedida.
 

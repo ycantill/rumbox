@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { capitalize, formatDay, whenText } from "../dates";
+import { addDays, capitalize, formatDay, isStillValid, whenText } from "../dates";
 
 describe("whenText", () => {
   const today = "2026-10-16";
@@ -14,5 +14,30 @@ describe("whenText", () => {
     expect(formatDay("2026-10-18")).toBe("domingo 18 de octubre");
     expect(whenText("2026-10-18", today, tomorrow)).toBe("el domingo 18 de octubre");
     expect(capitalize(whenText(today, today, tomorrow))).toBe("Hoy");
+  });
+});
+
+describe("addDays", () => {
+  it("suma y resta días, también al cambiar de mes y de año", () => {
+    expect(addDays("2026-10-18", 1)).toBe("2026-10-19");
+    expect(addDays("2026-10-31", 1)).toBe("2026-11-01");
+    expect(addDays("2026-12-31", 1)).toBe("2027-01-01");
+    expect(addDays("2026-11-01", -1)).toBe("2026-10-31");
+  });
+});
+
+describe("isStillValid", () => {
+  it("vale el día del servicio y 24 horas más", () => {
+    expect(isStillValid("2026-10-18", "2026-10-18")).toBe(true);
+    expect(isStillValid("2026-10-18", "2026-10-19")).toBe(true);
+    expect(isStillValid("2026-10-18", "2026-10-20")).toBe(false);
+  });
+
+  it("un servicio para mañana se vence pasado mañana", () => {
+    const today = "2026-10-18";
+    const tomorrow = "2026-10-19";
+    expect(isStillValid(tomorrow, today)).toBe(true);
+    expect(isStillValid(tomorrow, "2026-10-20")).toBe(true);
+    expect(isStillValid(tomorrow, "2026-10-21")).toBe(false);
   });
 });

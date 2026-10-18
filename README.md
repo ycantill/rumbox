@@ -5,14 +5,14 @@ transportistas que ya van hacia otro lado y tienen espacio libre. Sin
 registro, sin comisiones y con contacto directo por llamada o WhatsApp, en
 Colombia. Todavía no está definido dónde será el piloto.
 
-- **Cliente** (`/solicitar`): dice de dónde a dónde, qué día y en qué
-  jornada, qué va a mover, si necesita ayuda para cargar y su teléfono. Ve los
+- **Cliente** (`/solicitar`): dice de dónde a dónde, qué día, qué va a
+  mover, si necesita ayuda para cargar y su teléfono. Ve los
   transportistas que le sirven, los llama o les escribe por WhatsApp y
   acuerdan el precio.
 - **Transportista** (`/transportista`): se pone disponible para un viaje (de
-  dónde sale, hacia dónde va, qué día y en qué jornada) con cuánto puede
-  llevar y si ayuda a cargar. Hasta el día del viaje ve los clientes que lo
-  esperan, o hasta que toque "Ya no voy a trabajar".
+  dónde sale, hacia dónde va y qué día) con cuánto puede llevar y si ayuda a
+  cargar. Hasta el día siguiente al viaje ve los clientes que lo esperan, o
+  hasta que toque "Ya no voy a trabajar".
 
 El alcance del MVP y lo que queda para después está en
 [docs/MVP.md](docs/MVP.md). La visión de negocio completa está en
@@ -98,7 +98,7 @@ que producción salvo que configures otra.
 src/app/                 Páginas: inicio, /solicitar (cliente), /transportista
 src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicitar
 src/components/          Componentes compartidos
-src/lib/domain.ts        Tamaños de carga, jornadas, ayuda para cargar y sus textos
+src/lib/domain.ts        Tamaños de carga, ayuda para cargar y sus textos
 src/lib/matching.ts      Emparejamiento por ruta
 src/lib/cities.ts        Todos los municipios de Colombia y su búsqueda
 supabase/migrations/     Esquema de base de datos

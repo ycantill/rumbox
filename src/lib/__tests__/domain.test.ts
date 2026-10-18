@@ -2,10 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   DRIVER_SPACES,
   VOLUMES,
-  slotsLeftToday,
   spaceFitsVolume,
   spaceInSentence,
-  withSlot,
   type DriverSpace,
   type Volume,
 } from "../domain";
@@ -51,33 +49,5 @@ describe("tamaños de carga", () => {
   it("la etiqueta se puede poner dentro de una frase", () => {
     expect(spaceInSentence("camion_entero")).toBe("una casa de 2 habitaciones o más");
     expect(spaceInSentence("solo_paquetes")).toBe("paquetes o sobres");
-  });
-});
-
-describe("slotsLeftToday", () => {
-  it("temprano se puede ofrecer cualquier jornada", () => {
-    expect(slotsLeftToday(7)).toEqual(["manana", "tarde", "noche", "todo_el_dia"]);
-  });
-
-  it("pasada la mañana ya no aparecen la mañana ni todo el día", () => {
-    expect(slotsLeftToday(12)).toEqual(["tarde", "noche"]);
-    expect(slotsLeftToday(17)).toEqual(["tarde", "noche"]);
-  });
-
-  it("de tarde-noche solo queda la noche, y después de las 10 no queda nada", () => {
-    expect(slotsLeftToday(18)).toEqual(["noche"]);
-    expect(slotsLeftToday(22)).toEqual([]);
-  });
-});
-
-describe("withSlot", () => {
-  it("pone la jornada después del día, dentro de una frase", () => {
-    expect(withSlot("mañana", "manana")).toBe("mañana por la mañana");
-    expect(withSlot("hoy", "tarde")).toBe("hoy por la tarde");
-  });
-
-  it("no dice \"todo el día\", ni nada si la solicitud es de antes y no tiene jornada", () => {
-    expect(withSlot("hoy", "todo_el_dia")).toBe("hoy");
-    expect(withSlot("el sábado 18 de octubre", null)).toBe("el sábado 18 de octubre");
   });
 });

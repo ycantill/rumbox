@@ -2,7 +2,6 @@
 
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
-import { TIME_SLOTS, slotsLeftToday, type TimeSlot } from "@/lib/domain";
 import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
@@ -377,48 +376,26 @@ export function Choices<K extends string>({
   );
 }
 
-const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
-
 /**
- * El día y la jornada que se ven elegidos, a partir de lo que tocó la persona.
- * Para hoy solo quedan las jornadas que no han pasado en hora de Colombia, y
- * ya de noche "Hoy" desaparece y queda mañana. Si la jornada que tocó ya pasó,
- * queda sin elegir.
+ * El día que se ve elegido: el que tocó la persona o, si no tocó ninguno o el
+ * que tenía guardado ya pasó, hoy.
  */
-export function useDayAndSlot(pickedDate: string, pickedSlot: TimeSlot | "") {
-  const { today, tomorrow } = useBogotaDates();
-  const hour = useBogotaHour();
-  const todayLeft = hour === null ? ALL_SLOTS : slotsLeftToday(hour);
-  const todayOpen = todayLeft.length > 0;
-  const date = pickedDate && (pickedDate !== today || todayOpen) ? pickedDate : todayOpen ? today : tomorrow;
-  const slots = date === today ? todayLeft : ALL_SLOTS;
-  const timeSlot: TimeSlot | "" = pickedSlot && slots.includes(pickedSlot) ? pickedSlot : "";
-  const slotOptions = Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;
-  return { date, timeSlot, todayOpen, slotOptions };
+export function useServiceDay(pickedDate: string): string {
+  const { today } = useBogotaDates();
+  return pickedDate && pickedDate >= today ? pickedDate : today;
 }
 
-/**
- * El día: "Hoy", "Mañana" u otro en el calendario. Ya de noche (`todayOpen` en
- * falso) "Hoy" no sale y el calendario empieza mañana.
- */
-export function DayPicker({
-  value,
-  onChange,
-  todayOpen,
-}: {
-  value: string;
-  onChange: (date: string) => void;
-  todayOpen: boolean;
-}) {
+/** El día: "Hoy", "Mañana" u otro en el calendario. No hay jornadas. */
+export function DayPicker({ value, onChange }: { value: string; onChange: (date: string) => void }) {
   const { today, tomorrow } = useBogotaDates();
   return (
     <div className="grid grid-cols-3 gap-2">
-      {todayOpen && <QuickDate label="Hoy" value={today} current={value} onPick={onChange} />}
+      <QuickDate label="Hoy" value={today} current={value} onPick={onChange} />
       <QuickDate label="Mañana" value={tomorrow} current={value} onPick={onChange} />
       <input
         type="date"
         className="input"
-        min={todayOpen ? today : tomorrow}
+        min={today}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Otra fecha"
@@ -487,22 +464,6 @@ export function ContactButtons({ phone, message }: { phone: string; message: str
 const noopSubscribe = () => () => {};
 const bogotaToday = () =>
   new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
-
-const everyMinute = (cb: () => void) => {
-  const id = setInterval(cb, 60_000);
-  return () => clearInterval(id);
-};
-const bogotaHour = () =>
-  Number(
-    new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", hour: "numeric", hourCycle: "h23" }).format(
-      new Date(),
-    ),
-  );
-
-/** Hora actual en Colombia (0-23), o null en el HTML prerenderizado. Se refresca cada minuto. */
-export function useBogotaHour(): number | null {
-  return useSyncExternalStore(everyMinute, bogotaHour, () => null);
-}
 
 /**
  * Fecha de hoy y mañana en hora de Colombia (YYYY-MM-DD). Se calcula solo en el

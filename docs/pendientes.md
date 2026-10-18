@@ -29,7 +29,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 Contar cuántas veces se tocan los botones de WhatsApp y de llamar, del cliente
 al transportista y al revés. Es el número que dice si el piloto funciona: el
 objetivo del MVP es validar que clientes y transportistas se conectan. Necesita
-una tabla nueva, en una migración (`supabase/migrations/0005_...sql`) que
+una tabla nueva, en una migración (`supabase/migrations/0006_...sql`) que
 Yohany corre en Supabase antes de desplegar.
 
 ### 18. Compartir por WhatsApp o con código QR
@@ -61,8 +61,9 @@ se probó en un teléfono:
   mismos datos y el cliente ya no le sale a ningún transportista.
 - "Hacer otra solicitud" y enviarla cambiando el día: al transportista del
   día de antes ya no le sale ese cliente.
-- Al pasar el día del viaje, `/solicitar` muestra el formulario con los datos
-  de la solicitud vieja, sin el día.
+- Un día después del viaje, "Tu solicitud" y "Estás disponible para este
+  servicio" todavía se ven; dos días después vuelve el formulario con los
+  datos de antes, sin el día.
 
 - Instalar la app en Android y en iPhone y ver el logo de Muvia.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
@@ -75,12 +76,8 @@ se probó en un teléfono:
 - El cliente llena todo en una sola pantalla, como el transportista. Con
   paquetes o sobres no sale "¿Necesitas ayuda para cargar?"; con lo demás,
   si no elige, sale "Elige si necesitas ayuda para cargar.".
-- El cliente elige la jornada debajo del día, como el transportista. Para
-  hoy solo salen las que no han pasado, y después de las 10 pm no sale "Hoy".
-- Un transportista que va "Por la mañana" no le sale a un cliente que eligió
-  "Por la tarde", ni el cliente a él. Con "Todo el día" salen todos.
-- La lista del transportista y el mensaje de WhatsApp dicen la jornada del
-  cliente ("hoy por la tarde").
+- Ninguna de las dos pantallas pregunta la jornada: solo "Hoy", "Mañana" u
+  otra fecha. "Hoy" sale también de noche.
 - "Hacer otra solicitud" devuelve el formulario con lo que había llenado.
 - Abrir un enlace viejo a `/cotizar`: debe llevar a `/solicitar`. También con
   la app instalada.
@@ -164,9 +161,13 @@ se probó en un teléfono:
   día" coincide con todas (requiere la migración
   `0004_jornada_del_cliente.sql`). La pantalla pasa a `/solicitar` (`/cotizar`
   lleva ahí) y el botón dice "Solicitar transportista".
-- **Rama `claude/formulario-cliente`, después del PR #21:** botón "Ya conseguí
+- **PR #22:** botón "Ya conseguí
   transportista" para el cliente (16): una solicitud a la vez, controlada con
   un token en su teléfono; al volver a `/solicitar` ve su solicitud con los
   transportistas del momento, y "Hacer otra solicitud" reemplaza la de antes
   (requiere la migración `0005_cerrar_solicitud.sql`). Las listas del
   transportista y del cliente se actualizan al volver a la app y cada minuto.
+- **Rama `claude/project-thread-1s9lef`:** sin jornadas en las dos pantallas,
+  solo el día; las solicitudes y disponibilidades valen el día del servicio y
+  24 horas más (una para mañana se vence pasado mañana). El emparejamiento
+  sigue siendo del mismo día. No necesita migración.

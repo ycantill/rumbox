@@ -46,7 +46,7 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
                                  getMyAvailability, createRequest, getMyRequest,
                                  closeRequest)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
-src/lib/domain.ts                Vocabulario: tamaños de carga, jornadas, mano de obra
+src/lib/domain.ts                Vocabulario: tamaños de carga, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
@@ -131,8 +131,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   "Estás disponible para este servicio" con sus datos ("Viajas…"), los
   clientes que lo esperan y al final el aviso de que lo pueden llamar o
   escribir por WhatsApp, en vez del formulario. No hay lista de varios días.
-- Vale solo el día del viaje (`service_date`): solo le salen clientes de ese
-  mismo día. Cuando pasa ese día se apaga sola y vuelve el formulario con sus
+- Vale el día del viaje (`service_date`) y 24 horas más: una para mañana se
+  vence pasado mañana (Yohany, octubre de 2026). Solo le salen clientes de ese
+  mismo día. Cuando se vence, se apaga sola y vuelve el formulario con sus
   datos. Lo que quedó guardado sin destino, de cuando era opcional, también
   se apaga y vuelve el formulario para que elija hacia dónde va.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
@@ -145,9 +146,6 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
   cuyo origen y destino quedan sobre el corredor y en el mismo sentido.
-- La jornada también tiene que coincidir, y "Todo el día" coincide con todas
-  (Yohany, octubre de 2026). Las solicitudes de antes, sin jornada, coinciden
-  con todas.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
@@ -161,14 +159,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   ni opción Local/Nacional.
 - El transportista no debe ver esta lógica en la pantalla.
 
-**Jornadas**
-- Jornadas sin horas: "Por la mañana", "Por la tarde", "Por la noche" y "Todo
-  el día". El prefijo "Por la" evita confundir "mañana" con el día siguiente.
-- Las eligen los dos, debajo del día: el transportista en "¿Qué día viajas?"
-  y el cliente en "¿Qué día?". Viene marcado "Todo el día".
-- Para "Hoy" solo se muestran las jornadas que no han pasado en hora de
-  Colombia (cortes a las 12, 18 y 22 h); después de las 10 pm desaparece
-  "Hoy".
+**El día, sin jornadas**
+- Los dos eligen solo el día: "Hoy", "Mañana" u otra fecha en el calendario.
+  Yohany quitó las jornadas (mañana, tarde, noche) en octubre de 2026. "Hoy"
+  sale a cualquier hora.
+- La columna `time_slot` queda en la base: las disponibilidades nuevas guardan
+  `todo_el_dia` (la columna no puede quedar vacía) y las solicitudes nuevas la
+  dejan vacía. El emparejamiento ya no la mira.
 
 **Carga por tamaño de casa**
 - La carga se mide por tamaño de casa, con cuatro opciones: "Paquetes o
@@ -211,7 +208,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **El cliente llena una sola pantalla**
 - El formulario del cliente es casi igual al del transportista: todo en una
   pantalla, sin pasos, con las mismas preguntas en el mismo orden ("¿Desde
-  dónde?", "¿Hacia dónde?", "¿Qué día?" con la jornada, "¿Qué vas a mover?",
+  dónde?", "¿Hacia dónde?", "¿Qué día?", "¿Qué vas a mover?",
   "¿Necesitas ayuda para cargar?" y "Tu teléfono"). Yohany lo pidió en
   octubre de 2026.
 - Con paquetes o sobres no sale "¿Necesitas ayuda para cargar?".
@@ -228,7 +225,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   tu solicitud a los transportistas?") y vuelve el formulario con los mismos
   datos. "Hacer otra solicitud" devuelve el formulario; al enviarla, la nueva
   reemplaza la de antes.
-- Vale hasta el día del viaje: después se olvida y vuelve el formulario.
+- Vale el día del viaje y 24 horas más, como la del transportista: después se
+  olvida y vuelve el formulario.
 
 **Las listas se actualizan solas**
 - Los clientes que esperan al transportista y los transportistas que le

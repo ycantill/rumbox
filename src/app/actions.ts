@@ -2,19 +2,17 @@
 
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getCity } from "@/lib/cities";
+import { addDays } from "@/lib/dates";
 import {
   CLIENT_LABOR,
   DRIVER_LABOR,
   DRIVER_SPACES,
   SAME_CITY_ERROR,
-  TIME_SLOTS,
   VOLUMES,
   isKey,
-  slotsLeftToday,
   type ClientLabor,
   type DriverLabor,
   type DriverSpace,
-  type TimeSlot,
   type Volume,
 } from "@/lib/domain";
 import { matchesTrip, newestBy } from "@/lib/matching";
@@ -27,7 +25,6 @@ export type DriverMatch = {
   id: string;
   origin_city: string;
   destination_city: string;
-  time_slot: TimeSlot;
   space: DriverSpace;
   labor: DriverLabor;
   whatsapp: string;
@@ -38,7 +35,6 @@ export type PendingRequest = {
   origin_city: string;
   destination_city: string;
   service_date: string;
-  time_slot: TimeSlot | null; // null en las solicitudes de antes, sin jornada
   volume: Volume;
   labor: ClientLabor;
   whatsapp: string;
@@ -54,7 +50,6 @@ export async function publishAvailability(input: {
   origin: string;
   destination: string;
   date: string;
-  timeSlot: string;
   space: string;
   labor: string;
   whatsapp: string;
@@ -64,10 +59,6 @@ export async function publishAvailability(input: {
   if (!getCity(input.destination)) return fail("Elige hacia dónde vas.");
   if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
-  if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si trabajas en la mañana, la tarde o la noche.");
-  if (input.date === todayInBogota() && !slotsLeftToday(hourInBogota()).includes(input.timeSlot)) {
-    return fail("Esa jornada de hoy ya pasó. Elige otra.");
-  }
   if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto puedes llevar.");
   if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige si ayudas a cargar.");
   if (!whatsapp) return fail("Revisa el número de teléfono.");
@@ -77,7 +68,8 @@ export async function publishAvailability(input: {
     origin_city: input.origin,
     destination_city: input.destination,
     service_date: input.date,
-    time_slot: input.timeSlot,
+    // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
+    time_slot: "todo_el_dia",
     space: input.space,
     labor: input.labor,
     whatsapp,
@@ -90,7 +82,6 @@ export async function publishAvailability(input: {
     // Vía B (match diferido): solicitudes que estaban esperando un transportista.
     const pending = await findPendingRequests({
       ...row,
-      time_slot: input.timeSlot as TimeSlot,
       space: input.space as DriverSpace,
       labor: input.labor as DriverLabor,
     });
@@ -140,21 +131,21 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, time_slot, space, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
-    // Un viaje vale solo su día: si ya pasó, se apagó solo. Las de antes, sin
+    // Vale el día del viaje y 24 horas más: después se apagó sola. Las de antes, sin
     // destino o en carro particular (baúl o asientos), ya no les salen a los
     // clientes: también quedan apagadas.
     const active =
       data.status === "activa" &&
       Boolean(data.destination_city) &&
       isKey(DRIVER_SPACES, data.space) &&
-      data.service_date >= todayInBogota();
+      data.service_date >= yesterdayInBogota();
     const status = active ? "activa" : "llena";
     const pending = status === "activa" ? await findPendingRequests(data) : [];
     return { ok: true as const, status, space: data.space, pending };
@@ -179,7 +170,6 @@ export async function createRequest(input: {
   origin: string;
   destination: string;
   date: string;
-  timeSlot: string;
   volume: string;
   labor: string;
   whatsapp: string;
@@ -189,10 +179,6 @@ export async function createRequest(input: {
   if (!getCity(input.origin) || !getCity(input.destination)) return fail("Elige origen y destino.");
   if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
-  if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si es por la mañana, la tarde o la noche.");
-  if (input.date === todayInBogota() && !slotsLeftToday(hourInBogota()).includes(input.timeSlot)) {
-    return fail("Esa jornada de hoy ya pasó. Elige otra.");
-  }
   if (!isKey(VOLUMES, input.volume)) return fail("Elige qué vas a mover.");
   if (!isKey(CLIENT_LABOR, input.labor)) return fail("Elige si necesitas ayuda para cargar.");
   if (!whatsapp) return fail("Revisa el número de teléfono.");
@@ -201,7 +187,6 @@ export async function createRequest(input: {
     origin_city: input.origin,
     destination_city: input.destination,
     service_date: input.date,
-    time_slot: input.timeSlot as TimeSlot,
     volume: input.volume as Volume,
     labor: input.labor as ClientLabor,
   };
@@ -242,15 +227,15 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
   return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
-      .select("origin_city, destination_city, service_date, time_slot, volume, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, volume, labor, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
     }
-    // Vale hasta el día del viaje: después ya no les sale a los transportistas.
-    const open = data.status === "abierta" && data.service_date >= todayInBogota();
+    // Vale el día del viaje y 24 horas más: después ya no les sale a los transportistas.
+    const open = data.status === "abierta" && data.service_date >= yesterdayInBogota();
     const matches = open ? await findDrivers(data) : [];
     return { ok: true as const, status: open ? "abierta" : "cerrada", matches };
   });
@@ -286,14 +271,13 @@ async function findDrivers(r: {
   origin_city: string;
   destination_city: string;
   service_date: string;
-  time_slot: TimeSlot | null;
   volume: Volume;
   labor: ClientLabor;
 }): Promise<DriverMatch[]> {
   // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
   const { data, error } = await db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, time_slot, space, labor, whatsapp")
+    .select("id, origin_city, destination_city, service_date, space, labor, whatsapp")
     .eq("service_date", r.service_date)
     .not("destination_city", "is", null)
     .in("space", Object.keys(DRIVER_SPACES))
@@ -315,14 +299,13 @@ async function findPendingRequests(a: {
   origin_city: string;
   destination_city: string;
   service_date: string;
-  time_slot: TimeSlot;
   space: DriverSpace;
   labor: DriverLabor;
 }): Promise<PendingRequest[]> {
-  // Solo los clientes del día del viaje; la jornada la revisa matchesTrip.
+  // Solo los clientes del día del viaje.
   const { data, error } = await db()
     .from("requests")
-    .select("id, origin_city, destination_city, service_date, time_slot, volume, labor, whatsapp")
+    .select("id, origin_city, destination_city, service_date, volume, labor, whatsapp")
     .eq("status", "abierta")
     .eq("service_date", a.service_date)
     .order("created_at", { ascending: false })
@@ -380,10 +363,7 @@ function todayInBogota(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
 }
 
-function hourInBogota(): number {
-  return Number(
-    new Intl.DateTimeFormat("en-US", { timeZone: "America/Bogota", hour: "numeric", hourCycle: "h23" }).format(
-      new Date(),
-    ),
-  );
+/** Ayer en hora Colombia: lo de ayer todavía está dentro de sus 24 horas. */
+function yesterdayInBogota(): string {
+  return addDays(todayInBogota(), -1);
 }
