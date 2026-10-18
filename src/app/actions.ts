@@ -164,12 +164,16 @@ export async function getMyAvailability(input: { id: string; editToken: string }
 // ---------------------------------------------------------------------- Cliente
 
 export type RequestResult =
-  | { ok: true; id: string; matches: DriverMatch[] }
+  | { ok: true; id: string; editToken: string; matches: DriverMatch[] }
   | Fail;
 
 /**
  * Guarda lo que el cliente necesita mover y le devuelve los transportistas que
  * le sirven. No se calcula precio: lo acuerdan al hablar.
+ *
+ * Una solicitud a la vez: si el cliente tocó "Hacer otra solicitud", la nueva
+ * reemplaza la que tenía en el teléfono (`replaces`), y esa deja de salirles a
+ * los transportistas.
  */
 export async function createRequest(input: {
   origin: string;
@@ -179,6 +183,7 @@ export async function createRequest(input: {
   volume: string;
   labor: string;
   whatsapp: string;
+  replaces?: { id: string; editToken: string };
 }): Promise<RequestResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   if (!getCity(input.origin) || !getCity(input.destination)) return fail("Elige origen y destino.");
@@ -196,45 +201,115 @@ export async function createRequest(input: {
     origin_city: input.origin,
     destination_city: input.destination,
     service_date: input.date,
-    time_slot: input.timeSlot,
-    volume: input.volume,
-    labor: input.labor,
+    time_slot: input.timeSlot as TimeSlot,
+    volume: input.volume as Volume,
+    labor: input.labor as ClientLabor,
   };
 
+  const editToken = randomBytes(24).toString("base64url");
   return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
-      .insert({ ...request, whatsapp })
+      .insert({ ...request, whatsapp, edit_token_hash: hashToken(editToken) })
       .select("id")
       .single();
     if (error) throw error;
 
-    // Vía A (match inmediato): transportistas que viajan justo ese día. Las de
-    // antes, sin destino o en carro particular (baúl o asientos), ya no salen.
-    const { data: rows, error: qErr } = await db()
-      .from("availabilities")
-      .select("id, origin_city, destination_city, service_date, time_slot, space, labor, whatsapp")
-      .eq("service_date", input.date)
-      .not("destination_city", "is", null)
-      .in("space", Object.keys(DRIVER_SPACES))
-      .eq("status", "activa")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (qErr) throw qErr;
-
-    const matches: DriverMatch[] = [];
-    // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
-    // disponible desde dos navegadores): vale lo último que guardó.
-    for (const a of newestBy(rows ?? [], (a) => a.whatsapp)) {
-      if (matchesTrip(a, request as typeof request & { time_slot: TimeSlot; volume: Volume; labor: ClientLabor })) {
-        matches.push(a);
+    if (input.replaces) {
+      // La nueva ya quedó guardada: si cerrar la de antes falla, no se pierde.
+      try {
+        await closeOwnRequest(input.replaces);
+      } catch (err) {
+        console.error(err);
       }
     }
-    return { ok: true as const, id: data.id as string, matches: matches.slice(0, 20) };
+
+    // Vía A (match inmediato): transportistas que viajan justo ese día.
+    const matches = await findDrivers(request);
+    return { ok: true as const, id: data.id as string, editToken, matches };
+  });
+}
+
+export type MyRequestResult =
+  | { ok: true; status: "abierta" | "cerrada"; matches: DriverMatch[] }
+  | (Fail & { gone?: true });
+
+/**
+ * La solicitud que el cliente tiene guardada en este teléfono, con los
+ * transportistas que le sirven ahora. Así ve los que aparecieron después.
+ */
+export async function getMyRequest(input: { id: string; editToken: string }): Promise<MyRequestResult> {
+  return withDb(CLIENT_DB_ERROR, async () => {
+    const { data, error } = await db()
+      .from("requests")
+      .select("origin_city, destination_city, service_date, time_slot, volume, labor, status, edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
+    }
+    // Vale hasta el día del viaje: después ya no les sale a los transportistas.
+    const open = data.status === "abierta" && data.service_date >= todayInBogota();
+    const matches = open ? await findDrivers(data) : [];
+    return { ok: true as const, status: open ? "abierta" : "cerrada", matches };
+  });
+}
+
+/** "Ya conseguí transportista": la solicitud deja de salirles a los transportistas. */
+export async function closeRequest(input: {
+  id: string;
+  editToken: string;
+}): Promise<{ ok: true } | (Fail & { gone?: true })> {
+  return withDb("Algo salió mal. Intenta de nuevo en un momento.", async () => {
+    if (!(await closeOwnRequest(input))) {
+      return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
+    }
+    return { ok: true as const };
   });
 }
 
 // ---------------------------------------------------------------------- Helpers
+
+/** Cierra la solicitud si el token es el suyo. Devuelve si la encontró. */
+async function closeOwnRequest(input: { id: string; editToken: string }): Promise<boolean> {
+  const { data, error } = await db().from("requests").select("edit_token_hash").eq("id", input.id).maybeSingle();
+  if (error) throw error;
+  if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) return false;
+  const { error: upErr } = await db().from("requests").update({ status: "cerrada" }).eq("id", input.id);
+  if (upErr) throw upErr;
+  return true;
+}
+
+/** Los transportistas que viajan el día de la solicitud y le sirven. */
+async function findDrivers(r: {
+  origin_city: string;
+  destination_city: string;
+  service_date: string;
+  time_slot: TimeSlot | null;
+  volume: Volume;
+  labor: ClientLabor;
+}): Promise<DriverMatch[]> {
+  // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
+  const { data, error } = await db()
+    .from("availabilities")
+    .select("id, origin_city, destination_city, service_date, time_slot, space, labor, whatsapp")
+    .eq("service_date", r.service_date)
+    .not("destination_city", "is", null)
+    .in("space", Object.keys(DRIVER_SPACES))
+    .eq("status", "activa")
+    .order("created_at", { ascending: false })
+    .limit(500);
+  if (error) throw error;
+
+  const matches: DriverMatch[] = [];
+  // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
+  // disponible desde dos navegadores): vale lo último que guardó.
+  for (const a of newestBy(data ?? [], (a) => a.whatsapp)) {
+    if (matchesTrip(a, r)) matches.push(a);
+  }
+  return matches.slice(0, 20);
+}
 
 async function findPendingRequests(a: {
   origin_city: string;
@@ -284,7 +359,9 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
-function tokenMatches(token: string, hash: string): boolean {
+/** Las solicitudes de antes no tienen token (`hash` vacío): no las controla nadie. */
+function tokenMatches(token: string, hash: string | null): boolean {
+  if (!hash) return false;
   const a = Buffer.from(hashToken(token ?? ""), "hex");
   const b = Buffer.from(hash, "hex");
   return a.length === b.length && timingSafeEqual(a, b);

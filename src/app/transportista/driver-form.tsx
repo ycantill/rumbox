@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { getMyAvailability, publishAvailability, updateAvailability, type PendingRequest } from "@/app/actions";
 import {
   CitySelect,
@@ -32,6 +32,7 @@ import {
   type TimeSlot,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
+import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
@@ -208,7 +209,8 @@ function PendingList({ items }: { items: PendingRequest[] }) {
   if (items.length === 0) {
     return (
       <p className="text-sm text-muted">
-        Por ahora nadie está buscando transportista. Cuando alguien busque, le mostramos tu número.
+        Por ahora nadie está buscando transportista. Cuando alguien busque, le mostramos tu número y también te
+        sale aquí.
       </p>
     );
   }
@@ -267,37 +269,49 @@ function CurrentWork({
   // (baúl o asientos): ahora tiene que elegir otra vez.
   const ended = !post.destination || post.date < today || !isKey(DRIVER_SPACES, post.space);
 
-  // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
+  // Espacio al día y clientes que esperan, desde el servidor: al abrir la
+  // pantalla, al volver a la app y cada minuto mientras la tiene abierta. Así
+  // ve a los clientes que solicitan después de que él se puso disponible.
   const { id, editToken } = post;
   const fresh = initialPending !== null;
+  // Número de la última consulta: una respuesta vieja no pisa una más nueva ni
+  // lo que acaba de cambiar con los botones.
+  const latest = useRef(0);
   useEffect(() => {
     if (ended) {
       onEnd();
       return;
     }
-    if (fresh) return;
     let cancelled = false;
-    getMyAvailability({ id, editToken }).then(
-      (res) => {
-        if (cancelled) return;
-        if (!res.ok) {
-          if (res.gone) onEnd();
-          return;
-        }
-        if (res.status === "llena") {
-          onEnd();
-          return;
-        }
-        setPending(res.pending);
-        onChange({ ...post, space: res.space });
-      },
-      () => {
-        // Sin señal se queda lo guardado en el teléfono, con el aviso.
-        if (!cancelled) setError(NO_CONNECTION);
-      },
-    );
+    function refresh(quiet: boolean) {
+      const n = ++latest.current;
+      getMyAvailability({ id, editToken }).then(
+        (res) => {
+          if (cancelled || n !== latest.current) return;
+          if (!res.ok) {
+            if (res.gone) onEnd();
+            return;
+          }
+          if (res.status === "llena") {
+            onEnd();
+            return;
+          }
+          setError((e) => (e === NO_CONNECTION ? null : e));
+          setPending(res.pending);
+          onChange({ ...post, space: res.space });
+        },
+        () => {
+          // Sin señal se queda lo guardado en el teléfono, con el aviso. Si
+          // falla una de las que se hacen solas, no se avisa.
+          if (!cancelled && !quiet && n === latest.current) setError(NO_CONNECTION);
+        },
+      );
+    }
+    if (!fresh) refresh(false);
+    const stop = refreshWhileOpen(() => refresh(true));
     return () => {
       cancelled = true;
+      stop();
     };
     // Solo al montar, si cambia el trabajo guardado o si ya se apagó.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -306,7 +320,10 @@ function CurrentWork({
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
     setError(null);
+    // Lo que traiga una consulta que salió antes o durante el cambio ya no sirve.
+    latest.current++;
     const res = await callServer(() => updateAvailability({ id, editToken, ...change }));
+    latest.current++;
     setBusy(false);
     if (!res.ok) {
       setError(res.error);
