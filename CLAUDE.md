@@ -40,15 +40,13 @@ PR. Corre los cuatro antes de dar un cambio por terminado.
 
 ```
 src/app/page.tsx                 Inicio
-src/app/cotizar/                 Cliente: asistente de 4 pasos con precio y transportistas
+src/app/cotizar/                 Cliente: asistente de 4 pasos que busca transportistas
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
-                                 getMyAvailability, requestQuote)
+                                 getMyAvailability, createRequest)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
-src/components/vehicle-icon.tsx  Dibujos de cada vehículo
-src/lib/domain.ts                Vocabulario: vehículos, espacios, jornadas, mano de obra
+src/lib/domain.ts                Vocabulario: tamaños de carga, jornadas, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
-src/lib/pricing.ts               Precios (tarifas provisionales)
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 supabase/migrations/             Esquema: availabilities, requests, reviews
@@ -73,8 +71,8 @@ public/sw.js                     Service worker
   `supabase/migrations/` (por ejemplo `0002_...sql`), nunca editando
   `0001_init.sql`. Avisa a Yohany que debe correrla en Supabase antes de
   desplegar.
-- La lógica de precios y emparejamiento tiene pruebas en `src/lib/__tests__`;
-  si la cambias, actualiza o agrega pruebas.
+- La lógica de emparejamiento y del vocabulario tiene pruebas en
+  `src/lib/__tests__`; si la cambias, actualiza o agrega pruebas.
 - Los comentarios y las descripciones de las pruebas van en español. Los
   nombres de funciones, variables, tipos, componentes y archivos van en inglés,
   como ya está todo el código (`publishAvailability`, `matchesTrip`,
@@ -89,7 +87,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Audiencia y tono**
 - La app es para personas que no manejan mucho el celular. Textos cortos, que
   suenen a una persona hablando, y preguntas simples ("¿Desde dónde?",
-  "¿Hacia dónde?", "¿Qué vehículo tienes?").
+  "¿Hacia dónde?", "¿Cuánto puedes llevar?").
 - Nada de jerga técnica en pantalla: no "cotizar", "ruta programada", "mano de
   obra", "tarifa", "GPS", "Modo Ruta", "local", "zona" ni distancias en km.
 - Los errores usan el mismo tono, por ejemplo "Elige si ayudas a cargar".
@@ -142,31 +140,45 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
-  cuyo origen y destino quedan sobre el corredor y en el mismo sentido. Un
-  servicio dentro de una ciudad del corredor también vale.
+  cuyo origen y destino quedan sobre el corredor y en el mismo sentido.
+- Origen y destino nunca son el mismo municipio, ni para el cliente ni para
+  el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
+  de 2026). El municipio elegido en un campo no sale en la lista del otro
+  (`exclude` de `CitySelect`); si lo escribe, sale "Ese municipio ya lo
+  elegiste. Elige otro.". Como "Ubicarme" sí puede dejar los dos iguales,
+  queda el aviso "Elige otro municipio: no puede ser el mismo de salida."
+  (`SAME_CITY_ERROR`) debajo del destino: el cliente no puede continuar y el
+  servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
+  salen a ningún transportista.
 - No hay match por cercanía (el antiguo radio de 40 km alrededor del origen)
   ni opción Local/Nacional.
-- El cliente recibe un 25% de descuento cuando hay un transportista
-  compatible; como todos van de viaje, sale siempre que hay alguno.
 - El transportista no debe ver esta lógica en la pantalla.
 
-**Jornadas, vehículos y espacio**
+**Jornadas**
 - Jornadas sin horas: "Por la mañana", "Por la tarde", "Por la noche" y "Todo
   el día". El prefijo "Por la" evita confundir "mañana" con el día siguiente.
 - Para "Hoy" solo se muestran las jornadas que no han pasado en hora de
   Colombia (cortes a las 12, 18 y 22 h); después de las 10 pm desaparece
   "Hoy".
-- Los vehículos son furgón, estacas y pick-up. El espacio libre depende del
-  vehículo (`VEHICLE_SPACES`): furgón y estacas hasta camión entero, pick-up
-  hasta medio camión. Si cambia a un vehículo donde no cabe, se borra el
-  espacio elegido.
+
+**Carga por tamaño de casa**
+- La carga se mide por tamaño de casa, con cuatro opciones: "Paquetes o
+  sobres", "Algunas cosas", "Una habitación o apartaestudio" y "Una casa de 2
+  habitaciones o más", cada una con una pista corta de lo que incluye.
+- Es la misma lista para los dos: el cliente responde "¿Qué vas a mover?" y el
+  transportista "¿Cuánto puedes llevar?". Al transportista le salen los
+  clientes cuya carga es igual o más chica que la suya.
+- No se pregunta el vehículo (Yohany lo quitó en octubre de 2026): importa
+  cuánto puede llevar, no en qué. La columna `vehicle_type` queda en la base
+  para lo guardado antes y lo nuevo la deja vacía.
+- Las claves vienen de cuando se medía en camiones y no se cambian: el cliente
+  guarda `sobres`, `carga_parcial`, `medio_camion` y `camion_entero`, y el
+  transportista lo mismo, salvo `solo_paquetes` en vez de `sobres`.
 - El carro particular (con "Espacio en el baúl" y "Asientos traseros libres")
   salió del MVP en octubre de 2026 y queda anotado para después en
   [docs/MVP.md](docs/MVP.md). Sus claves (`carro`, `baul`, `asientos`) siguen
   permitidas en la base; lo que quedó guardado con carro ya no les sale a los
   clientes y al transportista le vuelve el formulario.
-- Cada vehículo se muestra con un dibujo sencillo que toma el color del texto
-  (tema claro y oscuro).
 
 **Municipios**
 - Están todos los de Colombia, con los nombres oficiales de la DIVIPOLA del
@@ -179,13 +191,28 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   departamento, y buscar al ojo. Al tocar el campo no se sugiere nada, la
   lista solo se abre con la flecha y no resalta ninguno si no hay uno elegido,
   y ninguna región va primero.
+- El campo vacío dice "Escribe o elige", para invitar a las dos formas. Es
+  corto a propósito: con "Ubicarme" al lado, un texto más largo no cabe en un
+  celular de 360 px.
+- El origen de las dos pantallas ("¿Dónde estás?" del transportista y
+  "¿Desde dónde?" del cliente) tiene el botón "Ubicarme", que elige el
+  municipio más cercano según la ubicación del teléfono (`OriginCitySelect`).
 - Los slugs se guardan en la base de datos: no se cambian.
 
-**Precios**
-- Las tarifas de `src/lib/pricing.ts` son provisionales y se calibrarán con
-  precios reales del piloto.
+**Sin precio**
+- En el MVP no se calcula ningún precio: el cliente y el transportista lo
+  acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
+  la carga por tamaño de casa hace menos preciso cualquier cálculo. Tampoco
+  hay descuento por ruta.
+- El cliente busca transportista ("Buscar transportista") y la pantalla le
+  dice que acuerden el precio. Al transportista, en la lista de clientes que
+  esperan, le sale la ayuda que pide cada uno (`CLIENT_LABOR_FOR_DRIVER`) para
+  que sepa qué cobrar.
+- No se preguntan las escaleras: solo servían para el precio. Las columnas
+  `stairs_origin` y `stairs_destination` quedan en 0 y `estimated_price` queda
+  vacía en las solicitudes nuevas.
 
-**Fuera del MVP** (ver docs/MVP.md): carros particulares, fotos, API oficial
-de WhatsApp y notificaciones, reseñas automáticas, formularios offline,
-monetización (incluidas las disponibilidades programadas), autocompletado de
-direcciones y anti-spam.
+**Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
+fotos, API oficial de WhatsApp y notificaciones, reseñas automáticas,
+formularios offline, monetización (incluidas las disponibilidades
+programadas), autocompletado de direcciones y anti-spam.

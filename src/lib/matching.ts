@@ -46,6 +46,9 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   if (r.service_date !== a.service_date) return false;
   if (!spaceFitsVolume(a.space, r.volume)) return false;
   if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return false;
+  // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas
+  // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.
+  if (r.origin_city === r.destination_city) return false;
 
   const driverFrom = getCity(a.origin_city);
   const driverTo = getCity(a.destination_city);
@@ -59,7 +62,6 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   const pTo = projectOnSegment(driverFrom, driverTo, to);
   const onCorridor = pFrom.offKm <= tolerance && pTo.offKm <= tolerance;
   // Mismo sentido: la recogida va antes que la entrega sobre el trayecto.
-  // Un servicio dentro de una sola ciudad del corredor también vale.
   return onCorridor && pFrom.t <= pTo.t;
 }
 
@@ -67,7 +69,7 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
  * Deja una sola fila por clave, la primera que aparece. Las filas deben venir de
  * la más nueva a la más vieja dentro de cada clave, así que queda la última que
  * se guardó. Sirve para no mostrar dos veces al mismo transportista, ni el mismo
- * viaje de un cliente que pidió precio varias veces.
+ * viaje de un cliente que buscó varias veces.
  */
 export function newestBy<T>(rows: readonly T[], key: (row: T) => string): T[] {
   const seen = new Set<string>();

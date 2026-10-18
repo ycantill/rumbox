@@ -1246,17 +1246,3 @@ export function haversineKm(lat1: number, lng1: number, lat2: number, lng2: numb
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(a));
 }
-
-/** Factor para pasar de distancia en línea recta a distancia aproximada por carretera. */
-export const ROAD_FACTOR = 1.3;
-/** Distancia asumida para un servicio dentro de la misma ciudad. */
-export const URBAN_TRIP_KM = 8;
-
-/** Distancia estimada por carretera entre dos municipios. */
-export function roadDistanceKm(fromSlug: string, toSlug: string): number {
-  const a = getCity(fromSlug);
-  const b = getCity(toSlug);
-  if (!a || !b) throw new Error(`Ciudad desconocida: ${!a ? fromSlug : toSlug}`);
-  if (a.slug === b.slug) return URBAN_TRIP_KM;
-  return Math.round(haversineKm(a.lat, a.lng, b.lat, b.lng) * ROAD_FACTOR);
-}
