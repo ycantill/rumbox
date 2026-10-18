@@ -1,42 +1,41 @@
 // Vocabulario compartido del negocio (ver documento de producto, secciones 6-8).
 
+// La carga se mide por tamaño de casa, con la misma lista para lo que el
+// cliente va a mover y para lo que el transportista puede llevar. No se
+// pregunta el vehículo: la columna `vehicle_type` de la base queda para lo
+// guardado antes. Las claves vienen de cuando se medía en camiones (`medio_camion`,
+// `camion_entero`) y no se cambian porque se guardan en la base.
+//
 // El carro particular, con "Espacio en el baúl" y "Asientos traseros libres",
 // salió del MVP y queda para después (ver docs/MVP.md). Sus claves (`carro`,
 // `baul`, `asientos`) siguen permitidas en la base de datos.
-export const VEHICLE_TYPES = {
-  furgon: "Furgón",
-  estacas: "Estacas",
-  pickup: "Pick-up",
-} as const;
-export type VehicleType = keyof typeof VEHICLE_TYPES;
 
-/** Espacio que el transportista declara libre. */
+/** Origen y destino nunca son el mismo municipio, ni para el cliente ni para el transportista. */
+export const SAME_CITY_ERROR = "Elige otro municipio: no puede ser el mismo de salida.";
+
+/** Lo que el cliente necesita mover. */
+export const VOLUMES = {
+  sobres: { label: "Paquetes o sobres", hint: "Documentos o envíos pequeños" },
+  carga_parcial: { label: "Algunas cosas", hint: "Un mueble, una nevera o unas cajas" },
+  medio_camion: { label: "Una habitación o apartaestudio", hint: "Cama, clóset, nevera y lavadora" },
+  camion_entero: { label: "Una casa de 2 habitaciones o más", hint: "Casa o apartamento completo" },
+} as const;
+export type Volume = keyof typeof VOLUMES;
+
+/** Lo que el transportista puede llevar: la misma lista del cliente. */
 export const DRIVER_SPACES = {
-  camion_entero: "Camión entero",
-  medio_camion: "Medio camión",
-  solo_paquetes: "Solo paquetes",
+  solo_paquetes: VOLUMES.sobres,
+  carga_parcial: VOLUMES.carga_parcial,
+  medio_camion: VOLUMES.medio_camion,
+  camion_entero: VOLUMES.camion_entero,
 } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
 
-/** Espacios que tienen sentido para cada vehículo: un pick-up no lleva un camión entero. */
-export const VEHICLE_SPACES: Record<VehicleType, readonly DriverSpace[]> = {
-  furgon: ["camion_entero", "medio_camion", "solo_paquetes"],
-  estacas: ["camion_entero", "medio_camion", "solo_paquetes"],
-  pickup: ["medio_camion", "solo_paquetes"],
-};
-
-export function spaceFitsVehicle(vehicle: VehicleType, space: DriverSpace): boolean {
-  return VEHICLE_SPACES[vehicle].includes(space);
+/** La etiqueta dentro de una frase: "Puedes llevar una casa de 2 habitaciones o más". */
+export function spaceInSentence(space: DriverSpace): string {
+  const { label } = DRIVER_SPACES[space];
+  return label.charAt(0).toLowerCase() + label.slice(1);
 }
-
-/** Volumen que el cliente necesita mover. */
-export const VOLUMES = {
-  sobres: { label: "Paquetes pequeños o sobres", hint: "Documentos o envíos ligeros" },
-  carga_parcial: { label: "Algunas cosas", hint: "Un par de muebles, nevera o cajas grandes" },
-  medio_camion: { label: "Medio camión", hint: "Apartaestudio: cama, nevera, lavadora" },
-  camion_entero: { label: "Camión entero", hint: "Casa o apartamento de 2+ habitaciones" },
-} as const;
-export type Volume = keyof typeof VOLUMES;
 
 export const DRIVER_LABOR = {
   solo_manejo: "Solo manejo (el cliente carga)",
@@ -51,6 +50,13 @@ export const CLIENT_LABOR = {
   ayudantes: "Necesito ayudantes extra",
 } as const;
 export type ClientLabor = keyof typeof CLIENT_LABOR;
+
+/** La ayuda que pidió el cliente, contada al transportista. */
+export const CLIENT_LABOR_FOR_DRIVER: Record<ClientLabor, string> = {
+  yo_cargo: "El cliente carga",
+  conductor: "Necesita que ayudes a cargar",
+  ayudantes: "Necesita ayudantes extra",
+};
 
 export const TIME_SLOTS = {
   manana: "Por la mañana",
@@ -78,6 +84,7 @@ export function slotsLeftToday(hour: number): TimeSlot[] {
 export const SPACE_CAPACITY: Record<DriverSpace, number> = {
   camion_entero: 4,
   medio_camion: 3,
+  carga_parcial: 2,
   solo_paquetes: 1,
 };
 export const VOLUME_LEVEL: Record<Volume, number> = {
@@ -87,7 +94,7 @@ export const VOLUME_LEVEL: Record<Volume, number> = {
   camion_entero: 4,
 };
 
-/** Si lo que el cliente va a mover cabe en el espacio que el transportista tiene libre. */
+/** Si lo que el cliente va a mover cabe en lo que el transportista puede llevar. */
 export function spaceFitsVolume(space: DriverSpace, volume: Volume): boolean {
   return SPACE_CAPACITY[space] >= VOLUME_LEVEL[volume];
 }

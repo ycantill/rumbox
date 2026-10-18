@@ -8,34 +8,33 @@ import {
   ContactButtons,
   ErrorNote,
   Field,
+  OriginCitySelect,
   useBogotaDates,
   useBogotaHour,
 } from "@/components/ui";
-import { VehicleIcon } from "@/components/vehicle-icon";
-import { getCity, nearestCity } from "@/lib/cities";
+import { getCity } from "@/lib/cities";
 import { capitalize, whenText } from "@/lib/dates";
 import {
+  CLIENT_LABOR_FOR_DRIVER,
   DRIVER_LABOR,
   DRIVER_SPACES,
+  SAME_CITY_ERROR,
   SPACE_CAPACITY,
   isKey,
   slotsLeftToday,
   spaceFitsVolume,
-  VEHICLE_SPACES,
+  spaceInSentence,
   TIME_SLOTS,
-  VEHICLE_TYPES,
   VOLUMES,
   type DriverLabor,
   type DriverSpace,
   type TimeSlot,
-  type VehicleType,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
-import { formatCOP } from "@/lib/pricing";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
-type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
+type Profile = { labor: DriverLabor | ""; whatsapp: string };
 
 export type MyPost = {
   id: string;
@@ -60,12 +59,9 @@ export function DriverForm() {
   const slots = date === today ? todayLeft : ALL_SLOTS;
   const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
   const timeSlot = pickedSlot && slots.includes(pickedSlot) ? pickedSlot : "";
-  const [vehicleType, setVehicleType] = useState<VehicleType | "">("");
   const [space, setSpace] = useState<DriverSpace | "">("");
   const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
-  const [locating, setLocating] = useState(false);
-  const [locateFailed, setLocateFailed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<PendingRequest[] | null>(null);
   const [posts, setPosts] = useState<MyPost[]>([]);
@@ -74,13 +70,12 @@ export function DriverForm() {
   // Un trabajo a la vez: si ya hay uno, se muestra ese en vez del formulario.
   const current = posts[0];
 
-  // Precarga desde el teléfono: tipo de vehículo, mano de obra y número.
+  // Precarga desde el teléfono: mano de obra y número. Lo guardado antes puede
+  // traer también el vehículo, que ya no se pregunta.
   useEffect(() => {
-    const p = load<Profile>(KEYS.driverProfile, { vehicleType: "", labor: "", whatsapp: "" });
-    // localStorage solo existe en el navegador: se lee después de hidratar. Un
-    // carro particular guardado de antes ya no está entre las opciones.
+    const p = load<Profile>(KEYS.driverProfile, { labor: "", whatsapp: "" });
+    // localStorage solo existe en el navegador: se lee después de hidratar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVehicleType(isKey(VEHICLE_TYPES, p.vehicleType) ? p.vehicleType : "");
     setLabor(p.labor);
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []));
@@ -98,44 +93,13 @@ export function DriverForm() {
       setOrigin(current.origin);
       setDestination(current.destination ?? "");
       if (current.timeSlot) setTimeSlot(current.timeSlot);
-      if (vehicleType && VEHICLE_SPACES[vehicleType].includes(current.space)) setSpace(current.space);
+      // El baúl o los asientos de un carro particular ya no son una opción.
+      if (isKey(DRIVER_SPACES, current.space)) setSpace(current.space);
     }
     setPosts([]);
     setPending(null);
     save(KEYS.driverPosts, []);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function pickVehicle(v: VehicleType) {
-    setVehicleType(v);
-    // Si el espacio elegido no le cabe al vehículo nuevo, se borra para que elija otra vez.
-    if (space && !VEHICLE_SPACES[v].includes(space)) setSpace("");
-  }
-
-  function pickOrigin(slug: string) {
-    setOrigin(slug);
-    setLocateFailed(false);
-  }
-
-  function locate() {
-    setLocateFailed(false);
-    if (!navigator.geolocation) {
-      setLocateFailed(true);
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setOrigin(nearestCity(pos.coords.latitude, pos.coords.longitude).slug);
-        setLocating(false);
-      },
-      () => {
-        // No dio permiso, el teléfono no supo dónde está o se demoró: que elija de la lista.
-        setLocating(false);
-        setLocateFailed(true);
-      },
-      { timeout: 10_000, maximumAge: 300_000 },
-    );
   }
 
   function submit(e: React.FormEvent) {
@@ -148,7 +112,6 @@ export function DriverForm() {
           destination,
           date,
           timeSlot,
-          vehicleType,
           space,
           labor,
           whatsapp,
@@ -158,7 +121,7 @@ export function DriverForm() {
         setError(res.error);
         return;
       }
-      save(KEYS.driverProfile, { vehicleType, labor, whatsapp } satisfies Profile);
+      save(KEYS.driverProfile, { labor, whatsapp } satisfies Profile);
       const post: MyPost = {
         id: res.id,
         editToken: res.editToken,
@@ -197,19 +160,15 @@ export function DriverForm() {
       </p>
       <form onSubmit={submit} className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
-          <div className="flex gap-2">
-            <CitySelect name="origin" value={origin} onChange={pickOrigin} />
-            <button type="button" onClick={locate} className="btn-secondary shrink-0" disabled={locating}>
-              {locating ? "…" : "Ubicarme"}
-            </button>
-          </div>
-          <ErrorNote message={locateFailed ? "No pudimos saber dónde estás. Elige tu pueblo en la lista." : null} />
+          <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
         </Field>
 
         {/* El match va por el corredor del viaje (Modo Ruta). Es lógica
             interna: el transportista no la ve. */}
         <Field label="¿Hacia dónde vas?">
-          <CitySelect name="destination" value={destination} onChange={setDestination} />
+          {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
+          <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
+          <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
 
         {/* Es un viaje: vale solo ese día. */}
@@ -229,16 +188,9 @@ export function DriverForm() {
           <Choices options={slotOptions(slots)} value={timeSlot} onChange={setTimeSlot} />
         </Field>
 
-        <Field label="¿Qué vehículo tienes?">
-          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} columns={3} />
-        </Field>
-
-        <Field label="¿Cuánto espacio tienes libre?">
-          {vehicleType ? (
-            <Choices options={spaceOptions(vehicleType)} value={space} onChange={setSpace} />
-          ) : (
-            <p className="text-sm text-muted">Primero elige qué vehículo tienes.</p>
-          )}
+        {/* La misma lista de tamaños que elige el cliente. */}
+        <Field label="¿Cuánto puedes llevar?">
+          <Choices options={DRIVER_SPACES} value={space} onChange={setSpace} columns={1} />
         </Field>
 
         <Field label="¿Ayudas a cargar?">
@@ -269,19 +221,8 @@ export function DriverForm() {
 
 const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
 
-const VEHICLE_OPTIONS = Object.fromEntries(
-  (Object.keys(VEHICLE_TYPES) as VehicleType[]).map((v) => [
-    v,
-    { label: VEHICLE_TYPES[v], icon: <VehicleIcon type={v} className="h-10 w-16" /> },
-  ]),
-) as Record<VehicleType, { label: string; icon: React.ReactNode }>;
-
 function slotOptions(slots: TimeSlot[]) {
   return Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;
-}
-
-function spaceOptions(vehicle: VehicleType) {
-  return Object.fromEntries(VEHICLE_SPACES[vehicle].map((s) => [s, DRIVER_SPACES[s]])) as Record<DriverSpace, string>;
 }
 
 function QuickDate({
@@ -328,8 +269,9 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             {getCity(r.origin_city)?.name} → {getCity(r.destination_city)?.name}
           </p>
           <p className="text-sm text-muted">
-            {capitalize(whenText(r.service_date, today, tomorrow))} · {VOLUMES[r.volume].label} · aprox.{" "}
-            {formatCOP(r.estimated_price)}
+            {capitalize(whenText(r.service_date, today, tomorrow))} · {VOLUMES[r.volume].label}
+            {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
+            {r.volume !== "sobres" && ` · ${CLIENT_LABOR_FOR_DRIVER[r.labor]}`}
           </p>
           <div className="mt-3">
             <ContactButtons
@@ -447,8 +389,8 @@ function CurrentWork({
         </dd>
       </div>
       <div>
-        <dt className="sr-only">Espacio</dt>
-        <dd>{DRIVER_SPACES[post.space]}</dd>
+        <dt className="sr-only">Cuánto puedes llevar</dt>
+        <dd>Puedes llevar {spaceInSentence(post.space)}</dd>
       </div>
     </dl>
   );

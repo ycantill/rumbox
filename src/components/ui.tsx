@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
-import { CITIES_BY_DEPARTMENT, getCity, searchCities, simplify, type City } from "@/lib/cities";
+import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
 import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
@@ -29,17 +29,23 @@ export function Field({
  * departamento. Al tocar el campo no se sugiere nada. Sigue el patrón
  * "combobox" de WAI-ARIA, así que también funciona con teclado y con lector de
  * pantalla.
+ *
+ * El texto de ayuda invita a las dos formas y es corto para que quepa entero
+ * en un celular angosto, también con el botón "Ubicarme" al lado.
  */
 export function CitySelect({
   value,
   onChange,
-  placeholder = "Escribe el municipio",
+  placeholder = "Escribe o elige",
   name,
+  exclude,
 }: {
   value: string;
   onChange: (slug: string) => void;
   placeholder?: string;
   name: string;
+  /** Municipio que no sale en la lista porque ya está elegido en el otro campo. */
+  exclude?: string;
 }) {
   const listId = useId();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -56,7 +62,14 @@ export function CitySelect({
   const selected = getCity(value);
 
   const searching = typed !== null && simplify(typed) !== "";
-  const options = searching ? searchCities(typed) : browsing ? ALL_CITIES : [];
+  const found = searching ? searchCities(typed) : [];
+  const groups = exclude ? withoutCity(exclude) : CITIES_BY_DEPARTMENT;
+  // En el orden en que se ven, para moverse con el teclado.
+  const options = searching
+    ? found.filter((c) => c.slug !== exclude)
+    : browsing
+      ? groups.flatMap((d) => d.cities)
+      : [];
   const open = searching || browsing;
 
   function setTyped(text: string | null) {
@@ -76,7 +89,7 @@ export function CitySelect({
     setTyped(null);
     setBrowsing(true);
     // Sin municipio elegido no se resalta ninguno: nada de sugerir.
-    const index = selected ? ALL_CITIES.indexOf(selected) : -1;
+    const index = selected ? groups.flatMap((d) => d.cities).indexOf(selected) : -1;
     setActive(index);
     // Si ya había uno elegido, la lista abre mostrándolo.
     requestAnimationFrame(() => {
@@ -93,7 +106,7 @@ export function CitySelect({
     setBrowsing(false);
     if (text === null || !simplify(text)) return;
     // Escribió el nombre completo y no lo tocó en la lista: se toma igual.
-    const exact = searchCities(text).find((c) => simplify(c.name) === simplify(text));
+    const exact = searchCities(text).find((c) => c.slug !== exclude && simplify(c.name) === simplify(text));
     if (exact) onChange(exact.slug);
   }
 
@@ -227,7 +240,7 @@ export function CitySelect({
         >
           {searching
             ? options.map((c, i) => option(c, i, c.name, c.name.endsWith(`(${c.department})`) ? undefined : c.department))
-            : CITIES_BY_DEPARTMENT.map(({ department, cities }, g) => (
+            : groups.map(({ department, cities }, g) => (
                 <li key={department} role="group" aria-labelledby={`${listId}-g${g}`}>
                   <div
                     id={`${listId}-g${g}`}
@@ -248,15 +261,78 @@ export function CitySelect({
           role="status"
           className="absolute z-20 mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-muted shadow-lg"
         >
-          No encontramos ese municipio. Revisa cómo lo escribiste.
+          {/* Si lo único que coincide es el que está fuera de la lista, no es que no exista. */}
+          {found.length > 0 ? "Ese municipio ya lo elegiste. Elige otro." : "No encontramos ese municipio. Revisa cómo lo escribiste."}
         </p>
       )}
     </div>
   );
 }
 
-/** El orden en que se ve la lista completa, para moverse en ella con el teclado. */
-const ALL_CITIES = CITIES_BY_DEPARTMENT.flatMap((d) => d.cities);
+/**
+ * Municipio de origen con el botón "Ubicarme", que elige el municipio más
+ * cercano según la ubicación del teléfono.
+ */
+export function OriginCitySelect({
+  value,
+  onChange,
+  name,
+  exclude,
+}: {
+  value: string;
+  onChange: (slug: string) => void;
+  name: string;
+  /** El destino ya elegido, que no sale en la lista. "Ubicarme" sí lo puede elegir. */
+  exclude?: string;
+}) {
+  const [locating, setLocating] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  function pick(slug: string) {
+    onChange(slug);
+    setFailed(false);
+  }
+
+  function locate() {
+    setFailed(false);
+    if (!navigator.geolocation) {
+      setFailed(true);
+      return;
+    }
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        onChange(nearestCity(pos.coords.latitude, pos.coords.longitude).slug);
+        setLocating(false);
+      },
+      () => {
+        // No dio permiso, el teléfono no supo dónde está o se demoró: que elija de la lista.
+        setLocating(false);
+        setFailed(true);
+      },
+      { timeout: 10_000, maximumAge: 300_000 },
+    );
+  }
+
+  return (
+    <>
+      <div className="flex gap-2">
+        <CitySelect name={name} value={value} onChange={pick} exclude={exclude} />
+        <button type="button" onClick={locate} className="btn-secondary shrink-0" disabled={locating}>
+          {locating ? "…" : "Ubicarme"}
+        </button>
+      </div>
+      <ErrorNote message={failed ? "No pudimos saber dónde estás. Elige tu pueblo en la lista." : null} />
+    </>
+  );
+}
+
+/** La lista completa sin un municipio; si su departamento queda vacío, tampoco sale. */
+function withoutCity(slug: string) {
+  return CITIES_BY_DEPARTMENT.map((d) => ({ ...d, cities: d.cities.filter((c) => c.slug !== slug) })).filter(
+    (d) => d.cities.length > 0,
+  );
+}
 
 // Clases completas para que Tailwind las encuentre al compilar.
 const GRID_COLUMNS = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" } as const;
@@ -267,7 +343,7 @@ export function Choices<K extends string>({
   onChange,
   columns = 2,
 }: {
-  options: Record<K, string | { label: string; hint?: string; icon?: React.ReactNode }>;
+  options: Record<K, string | { label: string; hint?: string }>;
   value: K | "";
   onChange: (key: K) => void;
   columns?: 1 | 2 | 3;
@@ -278,7 +354,6 @@ export function Choices<K extends string>({
         const opt = options[key];
         const label = typeof opt === "string" ? opt : opt.label;
         const hint = typeof opt === "string" ? undefined : opt.hint;
-        const icon = typeof opt === "string" ? undefined : opt.icon;
         const selected = value === key;
         return (
           <button
@@ -286,15 +361,12 @@ export function Choices<K extends string>({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(key)}
-            className={`rounded-xl border px-3 py-3 text-sm transition ${
-              icon ? "flex flex-col items-center gap-1.5 text-center" : "text-left"
-            } ${
+            className={`rounded-xl border px-3 py-3 text-left text-sm transition ${
               selected
                 ? "border-brand bg-brand-soft font-semibold text-brand-ink"
                 : "border-line bg-surface text-ink hover:border-brand/50"
             }`}
           >
-            {icon}
             {label}
             {hint && <span className="mt-0.5 block text-xs font-normal text-muted">{hint}</span>}
           </button>

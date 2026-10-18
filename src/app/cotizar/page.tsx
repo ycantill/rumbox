@@ -3,7 +3,7 @@ import Link from "next/link";
 import { QuoteWizard } from "./quote-wizard";
 
 export const metadata: Metadata = {
-  title: "Precio de mudanza o envío",
+  title: "Buscar transportista",
 };
 
 export default function QuotePage() {
@@ -12,7 +12,7 @@ export default function QuotePage() {
       <Link href="/" className="text-sm text-muted">
         ← Inicio
       </Link>
-      <h1 className="mt-3 text-2xl font-bold">¿Cuánto cuesta tu mudanza o envío?</h1>
+      <h1 className="mt-3 text-2xl font-bold">Busca transportista para tu mudanza o envío</h1>
       <p className="mb-6 mt-1 text-sm text-muted">Son 4 pasos cortos y no tienes que crear cuenta.</p>
       <QuoteWizard />
     </main>

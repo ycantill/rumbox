@@ -14,7 +14,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
   90 días). La app no tiene aviso de privacidad. En Colombia, la Ley 1581 de
   2012 (habeas data) pide autorización previa y una política de tratamiento de
   datos.
-- **Propuesta:** una frase antes de "Ver precio" ("Los transportistas verán tu
+- **Propuesta:** una frase antes de "Buscar transportista" ("Los transportistas verán tu
   número para llamarte o escribirte"), una parecida para el transportista y
   una página de privacidad enlazada desde ahí.
 - **Falta:** el nombre del responsable (persona o empresa) y un correo de
@@ -32,20 +32,6 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 - **Falta decidir:** dónde lo ve el cliente. Por ejemplo, al volver a
   `/cotizar` vería su solicitud con el botón.
 
-### 9. Descuento por ruta
-
-Sin modo local, todos los transportistas van de viaje: el cliente que
-encuentra alguno siempre ve el precio con 25% de descuento. Quedan dos
-detalles:
-
-- El transportista ve, en su lista de clientes que esperan, el precio sin
-  descuento, mientras que el cliente vio el precio con descuento.
-- Un trasteo dentro del mismo pueblo cuenta como "en ruta", con descuento, si
-  hay un transportista que sale de ese pueblo hacia otro lado. Ahora es la
-  única forma de que un trasteo dentro del pueblo encuentre transportista. El
-  cotizador todavía dice "Puede ser el mismo municipio si el trasteo es dentro
-  del pueblo o la ciudad": falta decidir si se deja.
-
 ## Propuestas
 
 ### 17. Medir los contactos
@@ -53,7 +39,7 @@ detalles:
 Contar cuántas veces se tocan los botones de WhatsApp y de llamar, del cliente
 al transportista y al revés. Es el número que dice si el piloto funciona: el
 objetivo del MVP es validar que clientes y transportistas se conectan. Necesita
-una tabla nueva, en una migración (`supabase/migrations/0002_...sql`) que
+una tabla nueva, en una migración (`supabase/migrations/0004_...sql`) que
 Yohany corre en Supabase antes de desplegar.
 
 ### 18. Compartir por WhatsApp o con código QR
@@ -77,18 +63,37 @@ Lo construido en octubre de 2026 pasó lint, typecheck, pruebas y build, pero no
 se probó en un teléfono:
 
 - Instalar la app en Android y en iPhone y ver el logo de Muvia.
-- Con el modo avión, tocar "Ver precio" o "Ponerme disponible": debe salir el
-  aviso de señal sin perder lo llenado.
+- Con el modo avión, tocar "Buscar transportista" o "Ponerme disponible": debe
+  salir el aviso de señal sin perder lo llenado.
+- El cliente no ve ningún precio ni le preguntan por escaleras. Al final ve
+  "Llama o escribe por WhatsApp y acuerden el precio", o "Guardamos tu
+  solicitud" si no hay transportistas.
+- En la lista del transportista, cada cliente dice si necesita ayuda para
+  cargar, menos los de paquetes o sobres.
 - Con sobres, el cotizador debe tener 3 pasos.
-- Negar el permiso de ubicación y tocar "Ubicarme": debe salir el aviso.
+- Negar el permiso de ubicación y tocar "Ubicarme": debe salir el aviso. Ahora
+  también en "¿Desde dónde?" del cliente.
+- Los campos de municipio vacíos dicen "Escribe o elige" y el texto se ve
+  entero, también al lado de "Ubicarme".
+- El municipio elegido en un campo no sale en la lista del otro, y si lo
+  escribe sale "Ese municipio ya lo elegiste. Elige otro." (se probó en el
+  navegador del computador).
+- Con un destino elegido, tocar "Ubicarme" estando en ese mismo municipio:
+  sale "Elige otro municipio: no puede ser el mismo de salida." debajo del
+  destino. El cliente no puede continuar y el transportista no puede ponerse
+  disponible.
 - Sin elegir hacia dónde va, no deja ponerse disponible.
 - Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
 - Un teléfono que tenía guardada una disponibilidad sin destino, de antes: al
   abrir la pantalla vuelve el formulario con sus datos para elegir el destino.
 - Tocar "Llamar" en un transportista o en un cliente: debe abrir el marcador
   con el número.
-- Un teléfono que tenía guardado un carro particular: el vehículo sale sin
-  elegir y, si estaba disponible, vuelve el formulario con sus datos.
+- Un teléfono que tenía guardado un carro particular: si estaba disponible,
+  vuelve el formulario con sus datos y sin elegir cuánto puede llevar.
+- El transportista ya no ve "¿Qué vehículo tienes?": elige en "¿Cuánto puedes
+  llevar?" entre los cuatro tamaños, y su tarjeta dice "Puedes llevar…".
+- Un transportista que puede llevar "Algunas cosas" le sale a un cliente que
+  mueve algunas cosas, pero no a uno que mueve una habitación.
 
 ## Menores
 
@@ -130,4 +135,13 @@ se probó en un teléfono:
   aplica: un viaje vale un solo día.
 - **Rama `claude/llamada-o-whatsapp`:** se pide "Tu teléfono" en vez de "Tu
   WhatsApp", y cada tarjeta tiene "Escribir por WhatsApp" y "Llamar". El carro
-  particular sale del MVP y queda anotado para después.
+  particular sale del MVP y queda anotado para después. La carga se mide por
+  tamaño de casa, con la misma lista para el cliente y el transportista, y ya
+  no se pregunta el vehículo (requiere la migración `0002_carga_por_tamano.sql`).
+  No se calcula precio: lo acuerdan al hablar, sin descuento por ruta ni
+  escaleras, y con eso el precio distinto que veían el cliente y el
+  transportista (9) ya no aplica (requiere la migración `0003_sin_precio.sql`).
+  Los campos de municipio dicen "Escribe o elige", y el cliente también tiene
+  "Ubicarme". Origen y destino ya no pueden ser el mismo municipio, tampoco
+  para el cliente: el elegido en un campo no sale en la lista del otro. No hay
+  trasteos dentro del mismo pueblo, y con eso se cierra (9).

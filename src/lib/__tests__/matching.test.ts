@@ -33,8 +33,10 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver(), request({ destination_city: "medellin" }))).toBe(false);
   });
 
-  it("un servicio dentro de una ciudad del corredor también vale", () => {
-    expect(matchesTrip(driver(), request({ destination_city: "monteria" }))).toBe(true);
+  it("no atiende servicios dentro del mismo municipio, aunque quede en el corredor", () => {
+    // Las solicitudes nuevas ya no lo permiten; estas quedaron guardadas de antes.
+    expect(matchesTrip(driver(), request({ destination_city: "monteria" }))).toBe(false);
+    expect(matchesTrip(driver(), request({ origin_city: "sincelejo", destination_city: "sincelejo" }))).toBe(false);
   });
 
   it("ya no atiende por cercanía: estar cerca del origen no basta si no va para allá", () => {
@@ -50,9 +52,11 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver(), request({ service_date: "2027-01-15" }))).toBe(false);
   });
 
-  it("respeta el espacio disponible", () => {
+  it("respeta cuánto puede llevar", () => {
     expect(matchesTrip(driver({ space: "solo_paquetes" }), request())).toBe(false);
     expect(matchesTrip(driver({ space: "solo_paquetes" }), request({ volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(driver({ space: "carga_parcial" }), request({ volume: "carga_parcial" }))).toBe(true);
+    expect(matchesTrip(driver({ space: "carga_parcial" }), request())).toBe(false);
     expect(matchesTrip(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBe(false);
   });
 
@@ -74,7 +78,7 @@ describe("newestBy", () => {
     expect(newestBy(rows, (r) => r.whatsapp).map((r) => r.id)).toEqual(["nueva", "otro"]);
   });
 
-  it("un cliente que pidió precio dos veces para el mismo viaje sale una vez; otro viaje suyo también sale", () => {
+  it("un cliente que buscó dos veces para el mismo viaje sale una vez; otro viaje suyo también sale", () => {
     const trip = (id: string, service_date: string) => ({ id, whatsapp: "573001112233", service_date });
     const rows = [trip("ultima", "2026-11-01"), trip("primera", "2026-11-01"), trip("otro-dia", "2026-11-05")];
     const key = (r: { whatsapp: string; service_date: string }) => `${r.whatsapp}|${r.service_date}`;

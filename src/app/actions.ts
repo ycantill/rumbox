@@ -6,21 +6,18 @@ import {
   CLIENT_LABOR,
   DRIVER_LABOR,
   DRIVER_SPACES,
+  SAME_CITY_ERROR,
   TIME_SLOTS,
-  VEHICLE_TYPES,
   VOLUMES,
   isKey,
   slotsLeftToday,
-  spaceFitsVehicle,
   type ClientLabor,
   type DriverLabor,
   type DriverSpace,
   type TimeSlot,
-  type VehicleType,
   type Volume,
 } from "@/lib/domain";
 import { matchesTrip, newestBy } from "@/lib/matching";
-import { estimate, type Quote } from "@/lib/pricing";
 import { db } from "@/lib/supabase";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 
@@ -31,7 +28,6 @@ export type DriverMatch = {
   origin_city: string;
   destination_city: string;
   time_slot: TimeSlot;
-  vehicle_type: VehicleType;
   space: DriverSpace;
   labor: DriverLabor;
   whatsapp: string;
@@ -44,7 +40,6 @@ export type PendingRequest = {
   service_date: string;
   volume: Volume;
   labor: ClientLabor;
-  estimated_price: number;
   whatsapp: string;
 };
 
@@ -59,7 +54,6 @@ export async function publishAvailability(input: {
   destination: string;
   date: string;
   timeSlot: string;
-  vehicleType: string;
   space: string;
   labor: string;
   whatsapp: string;
@@ -67,16 +61,13 @@ export async function publishAvailability(input: {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   if (!getCity(input.origin)) return fail("Elige la ciudad donde estás.");
   if (!getCity(input.destination)) return fail("Elige hacia dónde vas.");
-  if (input.destination === input.origin) return fail("El destino debe ser distinto al origen.");
+  if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
   if (!isKey(TIME_SLOTS, input.timeSlot)) return fail("Elige si trabajas en la mañana, la tarde o la noche.");
   if (input.date === todayInBogota() && !slotsLeftToday(hourInBogota()).includes(input.timeSlot)) {
     return fail("Esa jornada de hoy ya pasó. Elige otra.");
   }
-  if (!isKey(VEHICLE_TYPES, input.vehicleType)) return fail("Elige qué vehículo tienes.");
-  if (!isKey(DRIVER_SPACES, input.space) || !spaceFitsVehicle(input.vehicleType, input.space)) {
-    return fail("Elige cuánto espacio tienes libre.");
-  }
+  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto puedes llevar.");
   if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige si ayudas a cargar.");
   if (!whatsapp) return fail("Revisa el número de teléfono.");
 
@@ -86,7 +77,6 @@ export async function publishAvailability(input: {
     destination_city: input.destination,
     service_date: input.date,
     time_slot: input.timeSlot,
-    vehicle_type: input.vehicleType,
     space: input.space,
     labor: input.labor,
     whatsapp,
@@ -116,15 +106,12 @@ export async function updateAvailability(input: {
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("edit_token_hash, vehicle_type")
+      .select("edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos tus datos en este teléfono.");
-    }
-    if (input.space && !spaceFitsVehicle(data.vehicle_type, input.space as DriverSpace)) {
-      return fail("Algo salió mal. Intenta de nuevo.");
     }
     const patch: Record<string, string> = {};
     if (input.status) patch.status = input.status;
@@ -147,7 +134,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, vehicle_type, space, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -155,12 +142,12 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
     // Un viaje vale solo su día: si ya pasó, se apagó solo. Las de antes, sin
-    // destino o en carro particular, ya no les salen a los clientes: también
-    // quedan apagadas.
+    // destino o en carro particular (baúl o asientos), ya no les salen a los
+    // clientes: también quedan apagadas.
     const active =
       data.status === "activa" &&
       Boolean(data.destination_city) &&
-      isKey(VEHICLE_TYPES, data.vehicle_type) &&
+      isKey(DRIVER_SPACES, data.space) &&
       data.service_date >= todayInBogota();
     const status = active ? "activa" : "llena";
     const pending = status === "activa" ? await findPendingRequests(data) : [];
@@ -170,35 +157,29 @@ export async function getMyAvailability(input: { id: string; editToken: string }
 
 // ---------------------------------------------------------------------- Cliente
 
-export type QuoteResult =
-  | { ok: true; id: string; quote: Quote; matches: DriverMatch[] }
+export type RequestResult =
+  | { ok: true; id: string; matches: DriverMatch[] }
   | Fail;
 
-export async function requestQuote(input: {
+/**
+ * Guarda lo que el cliente necesita mover y le devuelve los transportistas que
+ * le sirven. No se calcula precio: lo acuerdan al hablar.
+ */
+export async function createRequest(input: {
   origin: string;
   destination: string;
   date: string;
   volume: string;
   labor: string;
-  stairsOrigin: number;
-  stairsDestination: number;
   whatsapp: string;
-}): Promise<QuoteResult> {
+}): Promise<RequestResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   if (!getCity(input.origin) || !getCity(input.destination)) return fail("Elige origen y destino.");
+  if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
   if (!isKey(VOLUMES, input.volume)) return fail("Elige qué vas a mover.");
   if (!isKey(CLIENT_LABOR, input.labor)) return fail("Elige si necesitas ayuda para cargar.");
   if (!whatsapp) return fail("Revisa el número de teléfono.");
-
-  const quote = estimate({
-    origin: input.origin,
-    destination: input.destination,
-    volume: input.volume,
-    labor: input.labor,
-    stairsOrigin: Number(input.stairsOrigin) || 0,
-    stairsDestination: Number(input.stairsDestination) || 0,
-  });
 
   const request = {
     origin_city: input.origin,
@@ -211,25 +192,19 @@ export async function requestQuote(input: {
   return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
-      .insert({
-        ...request,
-        stairs_origin: Math.max(0, Math.min(30, Math.floor(Number(input.stairsOrigin) || 0))),
-        stairs_destination: Math.max(0, Math.min(30, Math.floor(Number(input.stairsDestination) || 0))),
-        whatsapp,
-        estimated_price: quote.total,
-      })
+      .insert({ ...request, whatsapp })
       .select("id")
       .single();
     if (error) throw error;
 
     // Vía A (match inmediato): transportistas que viajan justo ese día. Las de
-    // antes, sin destino o en carro particular, ya no salen.
+    // antes, sin destino o en carro particular (baúl o asientos), ya no salen.
     const { data: rows, error: qErr } = await db()
       .from("availabilities")
-      .select("id, origin_city, destination_city, service_date, time_slot, vehicle_type, space, labor, whatsapp")
+      .select("id, origin_city, destination_city, service_date, time_slot, space, labor, whatsapp")
       .eq("service_date", input.date)
       .not("destination_city", "is", null)
-      .in("vehicle_type", Object.keys(VEHICLE_TYPES))
+      .in("space", Object.keys(DRIVER_SPACES))
       .eq("status", "activa")
       .order("created_at", { ascending: false })
       .limit(500);
@@ -241,7 +216,7 @@ export async function requestQuote(input: {
     for (const a of newestBy(rows ?? [], (a) => a.whatsapp)) {
       if (matchesTrip(a, request as typeof request & { volume: Volume; labor: ClientLabor })) matches.push(a);
     }
-    return { ok: true as const, id: data.id as string, quote, matches: matches.slice(0, 20) };
+    return { ok: true as const, id: data.id as string, matches: matches.slice(0, 20) };
   });
 }
 
@@ -257,14 +232,14 @@ async function findPendingRequests(a: {
   // Solo los clientes del día del viaje.
   const { data, error } = await db()
     .from("requests")
-    .select("id, origin_city, destination_city, service_date, volume, labor, estimated_price, whatsapp")
+    .select("id, origin_city, destination_city, service_date, volume, labor, whatsapp")
     .eq("status", "abierta")
     .eq("service_date", a.service_date)
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
   const out: PendingRequest[] = [];
-  // Si el cliente pidió precio varias veces para el mismo viaje, vale la última.
+  // Si el cliente buscó varias veces para el mismo viaje, vale la última.
   const trips = newestBy(data ?? [], (r) => [r.whatsapp, r.origin_city, r.destination_city, r.service_date].join("|"));
   for (const r of trips) {
     if (matchesTrip(a, r)) out.push(r);

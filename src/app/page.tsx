@@ -15,7 +15,7 @@ export default function Home() {
           Mudanzas, fletes y envíos con transportistas que ya van para donde tú vas.
         </h1>
         <p className="mt-3 text-muted">
-          Mira cuánto cuesta, llama o escríbele al transportista por WhatsApp y paga menos si ya va para allá.
+          Encuentra un transportista que ya va para allá, llámalo o escríbele por WhatsApp y acuerden el precio.
           Sin registro y sin comisiones.
         </p>
       </section>
@@ -31,16 +31,16 @@ export default function Home() {
 
       <ul className="mt-12 grid gap-4 text-sm">
         <li className="card">
-          <strong>Precio claro antes de hablar.</strong>
-          <span className="block text-muted">Te mostramos el precio según la distancia y lo que vas a mover.</span>
+          <strong>Transportistas que ya van para allá.</strong>
+          <span className="block text-muted">Aprovechas el espacio libre de un viaje que ya iban a hacer.</span>
         </li>
         <li className="card">
-          <strong>Hasta 25% más barato.</strong>
-          <span className="block text-muted">Si un transportista ya va para allá, el precio baja.</span>
+          <strong>El precio lo acuerdan ustedes.</strong>
+          <span className="block text-muted">Muvia no pone precios: lo hablan entre los dos.</span>
         </li>
         <li className="card">
           <strong>Directo por llamada o WhatsApp.</strong>
-          <span className="block text-muted">Hablas directo con el transportista y se ponen de acuerdo.</span>
+          <span className="block text-muted">Hablas directo con el transportista, sin intermediarios.</span>
         </li>
       </ul>
     </main>
