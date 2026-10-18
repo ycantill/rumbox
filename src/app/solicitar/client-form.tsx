@@ -11,20 +11,17 @@ import {
   Field,
   OriginCitySelect,
   useBogotaDates,
-  useDayAndSlot,
+  useServiceDay,
 } from "@/components/ui";
 import { getCity } from "@/lib/cities";
-import { capitalize, whenText } from "@/lib/dates";
+import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
   CLIENT_LABOR,
   DRIVER_LABOR,
   SAME_CITY_ERROR,
-  TIME_SLOTS,
   VOLUMES,
   spaceInSentence,
-  withSlot,
   type ClientLabor,
-  type TimeSlot,
   type Volume,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -39,7 +36,6 @@ export type MyRequest = {
   origin: string;
   destination: string;
   date: string;
-  timeSlot: TimeSlot;
   volume: Volume;
   labor: ClientLabor;
 };
@@ -50,9 +46,7 @@ export function ClientForm() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
-  // Solo le salen transportistas de la misma jornada; "Todo el día" coincide con todas.
-  const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
-  const { date, timeSlot, todayOpen, slotOptions } = useDayAndSlot(pickedDate, pickedSlot);
+  const date = useServiceDay(pickedDate);
   const [volume, setVolume] = useState<Volume | "">("");
   const [labor, setLabor] = useState<ClientLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -79,11 +73,10 @@ export function ClientForm() {
       // El formulario queda con sus datos, para cambiar solo lo que haga falta.
       setOrigin(saved.origin);
       setDestination(saved.destination);
-      setTimeSlot(saved.timeSlot);
       setVolume(saved.volume);
       if (saved.volume !== "sobres") setLabor(saved.labor);
-      // Vale hasta el día del viaje: si ya pasó, se olvida y vuelve el formulario.
-      if (saved.date >= today) {
+      // Vale el día del viaje y 24 horas más: después se olvida y vuelve el formulario.
+      if (isStillValid(saved.date, today)) {
         setDate(saved.date);
         setCurrent(saved);
       } else {
@@ -103,7 +96,6 @@ export function ClientForm() {
           origin,
           destination,
           date,
-          timeSlot,
           volume,
           labor: sentLabor,
           whatsapp,
@@ -122,7 +114,6 @@ export function ClientForm() {
         origin,
         destination,
         date,
-        timeSlot: timeSlot as TimeSlot,
         volume: volume as Volume,
         labor: sentLabor as ClientLabor,
       };
@@ -176,8 +167,7 @@ export function ClientForm() {
         </Field>
 
         <Field label="¿Qué día?">
-          <DayPicker value={date} onChange={setDate} todayOpen={todayOpen} />
-          <Choices options={slotOptions} value={timeSlot} onChange={setTimeSlot} />
+          <DayPicker value={date} onChange={setDate} />
         </Field>
 
         {/* La misma lista de tamaños que elige el transportista. */}
@@ -302,9 +292,7 @@ function MyRequestView({
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
         <p className="text-sm">Tu solicitud</p>
         <p className="font-semibold">{route}</p>
-        <p className="text-sm">
-          {capitalize(when)} · {TIME_SLOTS[request.timeSlot]}
-        </p>
+        <p className="text-sm">{capitalize(when)}</p>
       </section>
 
       {matches &&
@@ -312,7 +300,7 @@ function MyRequestView({
           <section className="card">
             <h2 className="font-semibold">Guardamos tu solicitud</h2>
             <p className="mt-1 text-sm text-muted">
-              Ahora mismo no hay transportistas libres para ese viaje en ese momento. Apenas aparezca uno, verá
+              Ahora mismo no hay transportistas libres para ese viaje. Apenas aparezca uno, verá
               tu pedido y te llamará o te escribirá por WhatsApp{phone ? ` al ${formatWhatsApp(phone)}` : ""}.
               También puedes volver aquí para ver si apareció alguno. El precio lo acuerdan cuando hablen.
             </p>
@@ -328,12 +316,12 @@ function MyRequestView({
                 <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
                 <p className="text-sm text-muted">
                   Va de {getCity(m.origin_city)?.name} a {getCity(m.destination_city)?.name} ·{" "}
-                  {TIME_SLOTS[m.time_slot]} · {DRIVER_LABOR[m.labor]}
+                  {DRIVER_LABOR[m.labor]}
                 </p>
                 <div className="mt-3">
                   <ContactButtons
                     phone={m.whatsapp}
-                    message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${withSlot(when, request.timeSlot)}. ¿Me puedes ayudar?`}
+                    message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
                   />
                 </div>
               </article>

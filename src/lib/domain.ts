@@ -58,41 +58,6 @@ export const CLIENT_LABOR_FOR_DRIVER: Record<ClientLabor, string> = {
   ayudantes: "Necesita ayudantes extra",
 };
 
-export const TIME_SLOTS = {
-  manana: "Por la mañana",
-  tarde: "Por la tarde",
-  noche: "Por la noche",
-  todo_el_dia: "Todo el día",
-} as const;
-export type TimeSlot = keyof typeof TIME_SLOTS;
-
-/**
- * Si la jornada del cliente y la del transportista coinciden. "Todo el día"
- * coincide con todas, y también las solicitudes de antes, que no tienen jornada.
- */
-export function slotsMatch(driver: TimeSlot, client: TimeSlot | null): boolean {
-  return !client || driver === "todo_el_dia" || client === "todo_el_dia" || driver === client;
-}
-
-/** El día con la jornada, para armar frases: "mañana por la tarde". "Todo el día" no se dice. */
-export function withSlot(when: string, slot: TimeSlot | null): string {
-  return slot && slot !== "todo_el_dia" ? `${when} ${TIME_SLOTS[slot].toLowerCase()}` : when;
-}
-
-/** Hora (0-23, hora Colombia) en que termina cada jornada. No se muestra en pantalla. */
-export const TIME_SLOT_ENDS = { manana: 12, tarde: 18, noche: 22 } as const;
-
-/**
- * Jornadas que todavía se pueden ofrecer hoy a esta hora. "Todo el día" solo
- * aparece mientras no haya pasado la mañana; después ya no es todo el día.
- */
-export function slotsLeftToday(hour: number): TimeSlot[] {
-  const left = (Object.keys(TIME_SLOT_ENDS) as (keyof typeof TIME_SLOT_ENDS)[]).filter(
-    (s) => hour < TIME_SLOT_ENDS[s],
-  );
-  return left.length === 3 ? [...left, "todo_el_dia"] : left;
-}
-
 /** Capacidad relativa: un espacio sirve para volúmenes de nivel igual o menor. */
 export const SPACE_CAPACITY: Record<DriverSpace, number> = {
   camion_entero: 4,

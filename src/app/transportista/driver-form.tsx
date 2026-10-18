@@ -11,10 +11,10 @@ import {
   Field,
   OriginCitySelect,
   useBogotaDates,
-  useDayAndSlot,
+  useServiceDay,
 } from "@/components/ui";
 import { getCity } from "@/lib/cities";
-import { capitalize, whenText } from "@/lib/dates";
+import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
   CLIENT_LABOR_FOR_DRIVER,
   DRIVER_LABOR,
@@ -24,12 +24,9 @@ import {
   isKey,
   spaceFitsVolume,
   spaceInSentence,
-  TIME_SLOTS,
   VOLUMES,
-  withSlot,
   type DriverLabor,
   type DriverSpace,
-  type TimeSlot,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
@@ -44,7 +41,6 @@ export type MyPost = {
   origin: string;
   destination: string | null; // null en los guardados cuando el destino era opcional
   date: string; // el día del viaje
-  timeSlot?: TimeSlot; // los guardados antes no lo traen
   space: DriverSpace;
 };
 
@@ -53,8 +49,7 @@ export function DriverForm() {
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
-  const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
-  const { date, timeSlot, todayOpen, slotOptions } = useDayAndSlot(pickedDate, pickedSlot);
+  const date = useServiceDay(pickedDate);
   const [space, setSpace] = useState<DriverSpace | "">("");
   const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -88,7 +83,6 @@ export function DriverForm() {
     if (current) {
       setOrigin(current.origin);
       setDestination(current.destination ?? "");
-      if (current.timeSlot) setTimeSlot(current.timeSlot);
       // El baúl o los asientos de un carro particular ya no son una opción.
       if (isKey(DRIVER_SPACES, current.space)) setSpace(current.space);
     }
@@ -107,7 +101,6 @@ export function DriverForm() {
           origin,
           destination,
           date,
-          timeSlot,
           space,
           labor,
           whatsapp,
@@ -124,7 +117,6 @@ export function DriverForm() {
         origin,
         destination,
         date,
-        timeSlot: timeSlot as TimeSlot,
         space: space as DriverSpace,
       };
       updateCurrent(post);
@@ -167,10 +159,9 @@ export function DriverForm() {
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
 
-        {/* Es un viaje: vale solo ese día. */}
+        {/* Es un viaje: vale ese día y 24 horas más. */}
         <Field label="¿Qué día viajas?">
-          <DayPicker value={date} onChange={setDate} todayOpen={todayOpen} />
-          <Choices options={slotOptions} value={timeSlot} onChange={setTimeSlot} />
+          <DayPicker value={date} onChange={setDate} />
         </Field>
 
         {/* La misma lista de tamaños que elige el cliente. */}
@@ -224,15 +215,15 @@ function PendingList({ items }: { items: PendingRequest[] }) {
           </p>
           <p className="text-sm text-muted">
             {capitalize(whenText(r.service_date, today, tomorrow))}
-            {/* Las solicitudes de antes no tienen jornada. */}
-            {r.time_slot && ` · ${TIME_SLOTS[r.time_slot]}`} · {VOLUMES[r.volume].label}
+            {" · "}
+            {VOLUMES[r.volume].label}
             {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
             {r.volume !== "sobres" && ` · ${CLIENT_LABOR_FOR_DRIVER[r.labor]}`}
           </p>
           <div className="mt-3">
             <ContactButtons
               phone={r.whatsapp}
-              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${withSlot(whenText(r.service_date, today, tomorrow), r.time_slot)}. Puedo hacerte el viaje.`}
+              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`}
             />
           </div>
         </article>
@@ -263,11 +254,11 @@ function CurrentWork({
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Un viaje vale solo su día. Si ya pasó, se apagó solo y vuelve el formulario
+  // Un viaje vale su día y 24 horas más. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
   // guardado de antes sin destino o con el espacio de un carro particular
   // (baúl o asientos): ahora tiene que elegir otra vez.
-  const ended = !post.destination || post.date < today || !isKey(DRIVER_SPACES, post.space);
+  const ended = !post.destination || !isStillValid(post.date, today) || !isKey(DRIVER_SPACES, post.space);
 
   // Espacio al día y clientes que esperan, desde el servidor: al abrir la
   // pantalla, al volver a la app y cada minuto mientras la tiene abierta. Así
@@ -356,7 +347,6 @@ function CurrentWork({
         <dt className="sr-only">Día del viaje</dt>
         <dd>
           Viajas {whenText(post.date, today, tomorrow)}
-          {post.timeSlot && ` · ${TIME_SLOTS[post.timeSlot]}`}
         </dd>
       </div>
       <div>

@@ -20,3 +20,18 @@ export function whenText(date: string, today: string, tomorrow: string): string 
 export function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** "2026-10-18" más n días, en YYYY-MM-DD. */
+export function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Una solicitud o disponibilidad vale el día del servicio y 24 horas más: una
+ * para mañana se vence pasado mañana. Después se apaga sola.
+ */
+export function isStillValid(serviceDate: string, today: string): boolean {
+  return addDays(serviceDate, 1) >= today;
+}
