@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatWhatsApp, normalizeWhatsApp } from "../whatsapp";
+import { formatWhatsApp, normalizeWhatsApp, telLink } from "../whatsapp";
 
 describe("normalizeWhatsApp", () => {
   it("agrega el indicativo de Colombia a celulares locales", () => {
@@ -35,5 +35,13 @@ describe("formatWhatsApp", () => {
   });
   it("los de otro país quedan con + y el indicativo", () => {
     expect(formatWhatsApp("584121234567")).toBe("+584121234567");
+  });
+});
+
+describe("telLink", () => {
+  it("llama al número con el indicativo, también a un fijo o a otro país", () => {
+    expect(telLink("573001234567")).toBe("tel:+573001234567");
+    expect(telLink("576041234567")).toBe("tel:+576041234567");
+    expect(telLink("584121234567")).toBe("tel:+584121234567");
   });
 });

@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, searchCities, simplify, type City } from "@/lib/cities";
+import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
   label,
@@ -309,16 +310,25 @@ export function ErrorNote({ message }: { message: string | null }) {
   );
 }
 
-export function WhatsAppButton({ href, children }: { href: string; children: React.ReactNode }) {
+/** Las dos formas de contactar a alguien: escribirle por WhatsApp, con el mensaje listo, o llamarlo. */
+export function ContactButtons({ phone, message }: { phone: string; message: string }) {
   return (
-    <a
-      href={href}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center justify-center rounded-xl bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
-    >
-      {children}
-    </a>
+    <div className="flex flex-wrap gap-2">
+      <a
+        href={waLink(phone, message)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center justify-center rounded-xl border border-transparent bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
+      >
+        Escribir por WhatsApp
+      </a>
+      <a
+        href={telLink(phone)}
+        className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink"
+      >
+        Llamar
+      </a>
+    </div>
   );
 }
 

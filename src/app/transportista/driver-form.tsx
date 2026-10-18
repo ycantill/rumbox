@@ -5,9 +5,9 @@ import { getMyAvailability, publishAvailability, updateAvailability, type Pendin
 import {
   CitySelect,
   Choices,
+  ContactButtons,
   ErrorNote,
   Field,
-  WhatsAppButton,
   useBogotaDates,
   useBogotaHour,
 } from "@/components/ui";
@@ -32,7 +32,7 @@ import {
 import { KEYS, load, save } from "@/lib/local-store";
 import { formatCOP } from "@/lib/pricing";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
-import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
+import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
 type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
 
@@ -73,7 +73,7 @@ export function DriverForm() {
   // Un trabajo a la vez: si ya hay uno, se muestra ese en vez del formulario.
   const current = posts[0];
 
-  // Precarga desde el teléfono: tipo de vehículo, mano de obra y WhatsApp.
+  // Precarga desde el teléfono: tipo de vehículo, mano de obra y número.
   useEffect(() => {
     const p = load<Profile>(KEYS.driverProfile, { vehicleType: "", labor: "", whatsapp: "" });
     // localStorage solo existe en el navegador: se lee después de hidratar.
@@ -243,7 +243,7 @@ export function DriverForm() {
           <Choices options={DRIVER_LABOR} value={labor} onChange={setLabor} columns={1} />
         </Field>
 
-        <Field label="Tu WhatsApp" hint="Los clientes te escriben directo a este número.">
+        <Field label="Tu teléfono" hint="Los clientes te pueden llamar o escribir por WhatsApp a este número.">
           <input
             type="tel"
             inputMode="tel"
@@ -330,14 +330,10 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             {formatCOP(r.estimated_price)}
           </p>
           <div className="mt-3">
-            <WhatsAppButton
-              href={waLink(
-                r.whatsapp,
-                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`,
-              )}
-            >
-              Escribir al cliente
-            </WhatsAppButton>
+            <ContactButtons
+              phone={r.whatsapp}
+              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`}
+            />
           </div>
         </article>
       ))}
@@ -354,7 +350,7 @@ function CurrentWork({
   onEnd,
 }: {
   post: MyPost;
-  /** El WhatsApp con que se puso disponible, para que vea si quedó bien. */
+  /** El teléfono con que se puso disponible, para que vea si quedó bien. */
   phone: string | null;
   justPublished: boolean;
   pending: PendingRequest[] | null;
@@ -462,7 +458,7 @@ function CurrentWork({
         </h2>
         {details}
         <p className="mt-4 text-sm text-brand-ink/80">
-          Los clientes que necesiten un servicio te escribirán por WhatsApp
+          Los clientes que necesiten un servicio te llamarán o te escribirán por WhatsApp
           {phone ? ` al ${formatWhatsApp(phone)}` : ""}.
         </p>
       </section>

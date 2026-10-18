@@ -78,7 +78,7 @@ export async function publishAvailability(input: {
     return fail("Elige cuánto espacio tienes libre.");
   }
   if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige si ayudas a cargar.");
-  if (!whatsapp) return fail("Revisa el número de WhatsApp.");
+  if (!whatsapp) return fail("Revisa el número de teléfono.");
 
   const editToken = randomBytes(24).toString("base64url");
   const row = {
@@ -184,7 +184,7 @@ export async function requestQuote(input: {
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
   if (!isKey(VOLUMES, input.volume)) return fail("Elige qué vas a mover.");
   if (!isKey(CLIENT_LABOR, input.labor)) return fail("Elige si necesitas ayuda para cargar.");
-  if (!whatsapp) return fail("Revisa el número de WhatsApp.");
+  if (!whatsapp) return fail("Revisa el número de teléfono.");
 
   const quote = estimate({
     origin: input.origin,

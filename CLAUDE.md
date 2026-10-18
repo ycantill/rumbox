@@ -5,9 +5,9 @@
 Muvia es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
 definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
 clientes con transportistas que ya van hacia otro lado y tienen espacio libre.
-Sin registro, sin comisiones y con contacto directo por WhatsApp. El alcance
-del MVP está en [docs/MVP.md](docs/MVP.md) y la visión de negocio completa
-(modelo, precios, emparejamiento, monetización, roadmap) en
+Sin registro, sin comisiones y con contacto directo por llamada o WhatsApp. El
+alcance del MVP está en [docs/MVP.md](docs/MVP.md) y la visión de negocio
+completa (modelo, precios, emparejamiento, monetización, roadmap) en
 docs/negocio/. Léelos antes de proponer funciones
 nuevas. Si el documento de negocio y las decisiones de abajo no coinciden,
 mandan las decisiones de abajo. Lo que falta por decidir o construir está en
@@ -95,11 +95,23 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Los errores usan el mismo tono, por ejemplo "Elige si ayudas a cargar".
 
 **Sin cuentas**
-- No hay login ni contraseñas ("Cero registros"). El WhatsApp identifica cada
-  disponibilidad y el contacto es por enlaces `wa.me`.
+- No hay login ni contraseñas ("Cero registros"). El número de teléfono
+  identifica cada disponibilidad.
 - El transportista controla su disponibilidad con un token que vive en su
   teléfono (localStorage); en la base solo se guarda el hash. Por eso "uno a la
   vez" vale por teléfono.
+
+**Llamada o WhatsApp**
+- Se pide "Tu teléfono", no "Tu WhatsApp": el número sirve para llamar y para
+  escribir por WhatsApp. Al transportista se le dice que los clientes lo
+  pueden llamar o escribir por WhatsApp, y al cliente, que el transportista lo
+  llama o le escribe por WhatsApp.
+- Cada tarjeta para contactar (los transportistas en los resultados del
+  cliente y los clientes que esperan al transportista) tiene "Escribir por
+  WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
+  `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
+- La columna `whatsapp` de la base y los campos que guarda el navegador
+  conservan ese nombre aunque guardan el teléfono: no se renombran.
 
 **El transportista se pone disponible, no publica**
 - En el sistema cada registro es una publicación (`availabilities`), pero en la
@@ -115,8 +127,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026).
 - Tiene una sola disponibilidad activa. Si ya tiene una, la pantalla muestra
   "Estás disponible para este servicio" con sus datos ("Viajas…"), los
-  clientes que lo esperan y al final el aviso de WhatsApp, en vez del
-  formulario. No hay lista de varios días.
+  clientes que lo esperan y al final el aviso de que lo pueden llamar o
+  escribir por WhatsApp, en vez del formulario. No hay lista de varios días.
 - Vale solo el día del viaje (`service_date`): solo le salen clientes de ese
   mismo día. Cuando pasa ese día se apaga sola y vuelve el formulario con sus
   datos. Lo que quedó guardado sin destino, de cuando era opcional, también

@@ -20,9 +20,14 @@ La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
 
-**Cero registros.** No hay cuentas ni contraseñas. El WhatsApp identifica cada
-publicación y el navegador recuerda los datos básicos (tipo de vehículo, mano
-de obra, número) para no volver a escribirlos.
+**Cero registros.** No hay cuentas ni contraseñas. El número de teléfono
+identifica cada publicación y el navegador recuerda los datos básicos (tipo de
+vehículo, mano de obra, número) para no volver a escribirlos.
+
+**Llamada o WhatsApp.** Se pide "Tu teléfono", no "Tu WhatsApp". Cada cliente
+y cada transportista que sale en pantalla tiene dos botones: "Escribir por
+WhatsApp" (con el mensaje listo) y "Llamar". Al transportista se le dice que
+los clientes lo pueden llamar o escribir por WhatsApp.
 
 **Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
 escribiendo parte del nombre, con o sin tildes, o en la lista completa que se
@@ -35,7 +40,7 @@ sugiere nada, y ninguna región va primero.
   para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
   el Modo Ruta; la pantalla no le explica esa lógica al transportista.
 - Qué día viaja (hoy, mañana u otro día) y jornada (mañana, tarde, noche o
-  todo el día), tipo de vehículo, espacio disponible, mano de obra y WhatsApp.
+  todo el día), tipo de vehículo, espacio disponible, mano de obra y teléfono.
   Su tarjeta dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y
   vuelve el formulario con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
@@ -52,10 +57,11 @@ sugiere nada, y ninguna región va primero.
 2. Volumen: sobres, carga parcial, medio camión, camión entero.
 3. Mano de obra y escaleras en origen y destino. Con sobres o paquetes
    pequeños este paso se salta: no cambia el precio.
-4. WhatsApp.
+4. Teléfono.
 
 Muestra el precio estimado mientras llena el formulario, el desglose, y la
-lista de transportistas compatibles con botón de WhatsApp (match inmediato).
+lista de transportistas compatibles con botones para escribir por WhatsApp o
+llamar (match inmediato).
 Si no hay ninguno, la solicitud queda guardada para el match diferido.
 
 **Precios** (`src/lib/pricing.ts`): tarifa base por volumen + valor por km

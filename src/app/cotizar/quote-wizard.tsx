@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { requestQuote, type DriverMatch } from "@/app/actions";
-import { CitySelect, Choices, ErrorNote, Field, WhatsAppButton, useBogotaDates } from "@/components/ui";
+import { CitySelect, Choices, ContactButtons, ErrorNote, Field, useBogotaDates } from "@/components/ui";
 import { getCity } from "@/lib/cities";
 import { whenText } from "@/lib/dates";
 import {
@@ -18,13 +18,13 @@ import {
 import { KEYS, load, save } from "@/lib/local-store";
 import { estimate, formatCOP, type Quote } from "@/lib/pricing";
 import { callServer } from "@/lib/server-call";
-import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
+import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
 const STEPS = [
   { key: "ruta", title: "De dónde a dónde" },
   { key: "volumen", title: "Qué vas a mover" },
   { key: "ayuda", title: "Ayuda y escaleras" },
-  { key: "whatsapp", title: "Tu WhatsApp" },
+  { key: "whatsapp", title: "Tu teléfono" },
 ] as const;
 
 export function QuoteWizard() {
@@ -186,7 +186,7 @@ export function QuoteWizard() {
       )}
 
       {current === "whatsapp" && (
-        <Field label="Tu WhatsApp" hint="El transportista te escribe a este número.">
+        <Field label="Tu teléfono" hint="El transportista te llama o te escribe por WhatsApp a este número.">
           <input
             type="tel"
             inputMode="tel"
@@ -269,7 +269,7 @@ function Results({
   matches: DriverMatch[];
   route: string;
   when: string;
-  /** El WhatsApp del cliente como quedó guardado, para que vea si está bien. */
+  /** El teléfono del cliente como quedó guardado, para que vea si está bien. */
   phone: string | null;
   onRestart: () => void;
 }) {
@@ -313,7 +313,7 @@ function Results({
           <h2 className="font-semibold">Guardamos tu solicitud</h2>
           <p className="mt-1 text-sm text-muted">
             Ahora mismo no hay transportistas libres para ese viaje y ese día. Apenas aparezca uno, verá
-            tu pedido y te escribirá por WhatsApp{phone ? ` al ${formatWhatsApp(phone)}` : ""}.
+            tu pedido y te llamará o te escribirá por WhatsApp{phone ? ` al ${formatWhatsApp(phone)}` : ""}.
           </p>
         </section>
       ) : (
@@ -329,14 +329,10 @@ function Results({
                 {TIME_SLOTS[m.time_slot]} · {DRIVER_LABOR[m.labor]}
               </p>
               <div className="mt-3">
-                <WhatsAppButton
-                  href={waLink(
-                    m.whatsapp,
-                    `Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`,
-                  )}
-                >
-                  Escribir por WhatsApp
-                </WhatsAppButton>
+                <ContactButtons
+                  phone={m.whatsapp}
+                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
+                />
               </div>
             </article>
           ))}

@@ -2,13 +2,13 @@
 
 Plataforma web (PWA) de mudanzas, fletes y envíos que conecta clientes con
 transportistas que ya van hacia otro lado y tienen espacio libre. Sin
-registro, sin comisiones y con conexión directa por WhatsApp, en Colombia.
-Todavía no está definido dónde será el piloto.
+registro, sin comisiones y con contacto directo por llamada o WhatsApp, en
+Colombia. Todavía no está definido dónde será el piloto.
 
 - **Cliente** (`/cotizar`): dice de dónde a dónde, qué va a mover, si necesita
-  ayuda para cargar y su WhatsApp. Ve el precio estimado y los transportistas
-  que le sirven, y les escribe por WhatsApp. Si un transportista ya va para
-  allá, el precio baja hasta un 25%.
+  ayuda para cargar y su teléfono. Ve el precio estimado y los transportistas
+  que le sirven, y los llama o les escribe por WhatsApp. Si un transportista ya
+  va para allá, el precio baja hasta un 25%.
 - **Transportista** (`/transportista`): se pone disponible para un viaje (de
   dónde sale, hacia dónde va y qué día) con su vehículo, el espacio libre y si
   ayuda a cargar. Hasta el día del viaje ve los clientes que lo esperan, o
