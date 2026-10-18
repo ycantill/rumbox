@@ -33,13 +33,11 @@ export function CitySelect({
   value,
   onChange,
   placeholder = "Escribe el municipio",
-  allowEmpty,
   name,
 }: {
   value: string;
   onChange: (slug: string) => void;
   placeholder?: string;
-  allowEmpty?: boolean;
   name: string;
 }) {
   const listId = useId();
@@ -92,12 +90,7 @@ export function CitySelect({
     const text = typedRef.current;
     setTyped(null);
     setBrowsing(false);
-    if (text === null) return;
-    if (!simplify(text)) {
-      // Borró el texto: si el campo es opcional, queda sin municipio.
-      if (allowEmpty && value) onChange("");
-      return;
-    }
+    if (text === null || !simplify(text)) return;
     // Escribió el nombre completo y no lo tocó en la lista: se toma igual.
     const exact = searchCities(text).find((c) => simplify(c.name) === simplify(text));
     if (exact) onChange(exact.slug);
@@ -171,7 +164,6 @@ export function CitySelect({
   }
 
   let index = 0;
-  const showClear = allowEmpty && selected && !open && typed === null;
   return (
     <div ref={wrapperRef} className="relative w-full min-w-0">
       <input
@@ -186,10 +178,10 @@ export function CitySelect({
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
-        className={`input ${showClear ? "pr-28" : "pr-12"}`}
+        className="input pr-12"
         placeholder={placeholder}
         value={typed ?? selected?.name ?? ""}
-        required={!allowEmpty}
+        required
         onFocus={(e) => {
           e.currentTarget.select();
           liftOnPhone(300);
@@ -203,11 +195,6 @@ export function CitySelect({
         onKeyDown={onKeyDown}
       />
       <div className="absolute inset-y-0 right-1 flex items-center">
-        {showClear && (
-          <button type="button" onClick={() => onChange("")} className="rounded-lg px-2 py-1 text-sm text-muted">
-            Quitar
-          </button>
-        )}
         <button
           type="button"
           aria-label={browsing ? "Cerrar la lista de municipios" : "Ver la lista de municipios"}

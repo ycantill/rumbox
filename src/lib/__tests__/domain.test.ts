@@ -3,18 +3,11 @@ import {
   DRIVER_SPACES,
   VEHICLE_SPACES,
   VEHICLE_TYPES,
-  lastAvailableDay,
   slotsLeftToday,
   spaceFitsVehicle,
   spaceFitsVolume,
   type DriverSpace,
 } from "../domain";
-
-describe("lastAvailableDay", () => {
-  it("dura una semana: si empieza el lunes, les sale a los clientes hasta el domingo", () => {
-    expect(lastAvailableDay("2026-10-19")).toBe("2026-10-25");
-  });
-});
 
 describe("spaceFitsVolume", () => {
   it("con solo espacio para paquetes caben sobres, pero no muebles ni una mudanza", () => {

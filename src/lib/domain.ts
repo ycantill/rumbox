@@ -1,7 +1,5 @@
 // Vocabulario compartido del negocio (ver documento de producto, secciones 6-8).
 
-import { addDays } from "./dates";
-
 export const VEHICLE_TYPES = {
   furgon: "Furgón",
   estacas: "Estacas",
@@ -75,18 +73,6 @@ export function slotsLeftToday(hour: number): TimeSlot[] {
     (s) => hour < TIME_SLOT_ENDS[s],
   );
   return left.length === 3 ? [...left, "todo_el_dia"] : left;
-}
-
-/**
- * Una disponibilidad sin destino dura una semana: les sale a los clientes desde
- * la fecha en que empieza a trabajar y los 6 días siguientes. Después se vence y
- * el transportista puede renovarla por otra semana, desde el día en que renueva.
- */
-export const AVAILABILITY_DAYS = 7;
-
-/** Último día en que una disponibilidad sin destino les sale a los clientes. */
-export function lastAvailableDay(start: string): string {
-  return addDays(start, AVAILABILITY_DAYS - 1);
 }
 
 /** Capacidad relativa: un espacio sirve para volúmenes de nivel igual o menor. */

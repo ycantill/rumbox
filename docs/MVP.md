@@ -14,8 +14,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-desde una fecha por una semana, que puede renovar, hasta que diga "Ya no voy a
-trabajar" (si va de viaje, solo el día del viaje).
+para un viaje, y vale hasta el día del viaje o hasta que diga "Ya no voy a
+trabajar".
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -30,19 +30,15 @@ despliega con la flecha, agrupada por departamento. Al tocar el campo no se
 sugiere nada, y ninguna región va primero.
 
 **Pantalla del transportista** (`/transportista`)
-- Origen con botón "Ubicarme" y destino opcional. Por debajo, con destino se
-  activa el Modo Ruta y sin destino el match es por cercanía al origen; la
-  pantalla no le explica esa lógica al transportista.
-- Desde cuándo trabaja (hoy, mañana u otro día) y jornada (mañana, tarde,
-  noche o todo el día), tipo de vehículo, espacio disponible, mano de obra y
-  WhatsApp. Queda disponible desde esa fecha por una semana: la tarjeta cuenta
-  los días que faltan ("Se vence en 6 días") y, cuando se vence, dice "Pasó una
-  semana. ¿Sigues trabajando?" y ofrece "Renovar una semana más" o "No por
-  ahora".
-- Si pone destino, es un viaje: se le pregunta "¿Qué día viajas?", su tarjeta
-  dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y vuelve el
-  formulario con sus datos. Las rutas que se repiten quedan para después, como
-  mejora futura.
+- Siempre va de viaje: origen con botón "Ubicarme" y destino obligatorio
+  ("¿Hacia dónde vas?"). No hay modo local: Yohany lo quitó en octubre de 2026
+  para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
+  el Modo Ruta; la pantalla no le explica esa lógica al transportista.
+- Qué día viaja (hoy, mañana u otro día) y jornada (mañana, tarde, noche o
+  todo el día), tipo de vehículo, espacio disponible, mano de obra y WhatsApp.
+  Su tarjeta dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y
+  vuelve el formulario con sus datos. Las rutas que se repiten quedan para
+  después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos, los clientes que lo
   están esperando (match diferido) y el día de cada uno, "Solo queda espacio
@@ -64,16 +60,14 @@ Si no hay ninguno, la solicitud queda guardada para el match diferido.
 
 **Precios** (`src/lib/pricing.ts`): tarifa base por volumen + valor por km
 (distancia en línea recta × 1.3) + mano de obra + pisos por escalera.
-Descuento del 25% cuando hay un transportista en Modo Ruta compatible. Las
-tarifas son valores iniciales para calibrar con precios reales del piloto.
+Descuento del 25% cuando hay un transportista compatible (todos van de viaje).
+Las tarifas son valores iniciales para calibrar con precios reales del piloto.
 
 **Emparejamiento** (`src/lib/matching.ts`)
-- Disponible: el cliente sale a menos de 40 km de la ciudad del transportista.
 - Ruta: origen y destino del cliente quedan cerca del corredor del
-  transportista y en el mismo sentido de viaje.
-- Además: el cliente pide un día igual o posterior a la fecha desde la que
-  trabaja el transportista (con destino, el mismo día del viaje), la semana del
-  transportista sin destino no se ha vencido, el espacio alcanza para el
+  transportista y en el mismo sentido de viaje. Un servicio dentro de una
+  ciudad del corredor también vale. No hay match por cercanía al origen.
+- Además: el cliente pide el mismo día del viaje, el espacio alcanza para el
   volumen y la mano de obra ofrecida cubre la pedida.
 
 **PWA**: manifest instalable y service worker que guarda las páginas para que

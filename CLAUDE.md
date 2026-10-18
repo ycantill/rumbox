@@ -4,15 +4,15 @@
 
 Muvia es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
 definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
-clientes con transportistas que tienen espacio libre,
-ya sea en su ciudad o porque ya van hacia otro lado. Sin registro, sin
-comisiones y con contacto directo por WhatsApp. El alcance del MVP está en
-[docs/MVP.md](docs/MVP.md) y la visión de negocio completa (modelo, precios,
-emparejamiento, monetización, roadmap) en docs/negocio/.
-Léelos antes de proponer funciones nuevas. Si el documento de negocio y las
-decisiones de abajo no coinciden, mandan las decisiones de abajo. Lo que falta
-por decidir o construir está en [docs/pendientes.md](docs/pendientes.md):
-cuando termines algo de esa lista, pásalo a "Hecho" con su PR.
+clientes con transportistas que ya van hacia otro lado y tienen espacio libre.
+Sin registro, sin comisiones y con contacto directo por WhatsApp. El alcance
+del MVP está en [docs/MVP.md](docs/MVP.md) y la visión de negocio completa
+(modelo, precios, emparejamiento, monetización, roadmap) en
+docs/negocio/. Léelos antes de proponer funciones
+nuevas. Si el documento de negocio y las decisiones de abajo no coinciden,
+mandan las decisiones de abajo. Lo que falta por decidir o construir está en
+[docs/pendientes.md](docs/pendientes.md): cuando termines algo de esa lista,
+pásalo a "Hecho" con su PR.
 
 La dueña del producto es Yohany y escribe en español. Responde, nombra los
 commits y escribe los textos de la app en español.
@@ -47,7 +47,7 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/components/vehicle-icon.tsx  Dibujos de cada vehículo
 src/lib/domain.ts                Vocabulario: vehículos, espacios, jornadas, mano de obra
-src/lib/matching.ts              Emparejamiento por radio y por ruta
+src/lib/matching.ts              Emparejamiento por ruta
 src/lib/pricing.ts               Precios (tarifas provisionales)
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
@@ -77,7 +77,7 @@ public/sw.js                     Service worker
   si la cambias, actualiza o agrega pruebas.
 - Los comentarios y las descripciones de las pruebas van en español. Los
   nombres de funciones, variables, tipos, componentes y archivos van en inglés,
-  como ya está todo el código (`publishAvailability`, `matchKind`,
+  como ya está todo el código (`publishAvailability`, `matchesTrip`,
   `driver-form.tsx`). Las claves internas que se guardan en la base
   (`manana`, `activa`) sí están en español.
 - Mantén `docs/MVP.md` al día cuando cambie una decisión de producto.
@@ -109,24 +109,18 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   disponible" y en el título "Estás disponible para este servicio".
 - No le prometas clientes: nada de "Estás recibiendo clientes".
 
-**Un trabajo a la vez, desde una fecha**
-- El transportista tiene una sola disponibilidad activa. Si ya tiene una, la
-  pantalla muestra "Estás disponible para este servicio" con sus datos, los
-  clientes que lo esperan (cada uno con su día) y al final el aviso de
-  WhatsApp, en vez del formulario. No hay lista de varios días.
-- Sin destino, el formulario pregunta "¿Desde cuándo puedes trabajar?". El
-  match exige que la fecha del cliente sea igual o posterior a `service_date`.
-- Sin destino dura una semana (`AVAILABILITY_DAYS`): les sale a los clientes
-  desde esa fecha y los 6 días siguientes, y la tarjeta cuenta los días ("Se
-  vence en 6 días", "Se vence mañana", "Se vence hoy"). Cuando se vence, la
-  tarjeta dice "Pasó una semana. ¿Sigues trabajando?" y ofrece "Renovar una
-  semana más" (la deja desde hoy por otra semana) o "No por ahora" (la retira
-  sin pedir confirmar y vuelve el formulario con sus datos). Renovar a mano es
-  gratis.
-- Con destino es un viaje: la pregunta es "¿Qué día viajas?", su tarjeta dice
-  "Viajas…" y solo le salen clientes de ese mismo día (`service_date` es el día
-  del viaje). Cuando pasa ese día se apaga sola y vuelve el formulario con sus
-  datos.
+**Un viaje a la vez**
+- El transportista siempre va de viaje: el formulario pregunta "¿Dónde
+  estás?", "¿Hacia dónde vas?" y "¿Qué día viajas?". El destino es
+  obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026).
+- Tiene una sola disponibilidad activa. Si ya tiene una, la pantalla muestra
+  "Estás disponible para este servicio" con sus datos ("Viajas…"), los
+  clientes que lo esperan y al final el aviso de WhatsApp, en vez del
+  formulario. No hay lista de varios días.
+- Vale solo el día del viaje (`service_date`): solo le salen clientes de ese
+  mismo día. Cuando pasa ese día se apaga sola y vuelve el formulario con sus
+  datos. Lo que quedó guardado sin destino, de cuando era opcional, también
+  se apaga y vuelve el formulario para que elija hacia dónde va.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
   futura para el transportista: las "disponibilidades programadas". No van
   en el MVP: quien repite una ruta registra cada viaje.
@@ -134,13 +128,14 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   llenó). Pide confirmar y luego vuelve al formulario con
   los mismos datos. También existe "Solo queda espacio para paquetes".
 
-**Destino y emparejamiento**
-- El destino es opcional ("¿Vas a algún lado? (opcional)"). No hay opción
-  Local/Nacional.
-- Con destino, el sistema activa por debajo el Modo Ruta: hace match con
-  clientes del día del viaje cuyo origen y destino quedan sobre el corredor y
-  en el mismo sentido, y el cliente recibe un 25% de descuento.
-- Sin destino, el match es por radio (40 km) alrededor del origen.
+**Emparejamiento**
+- El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
+  cuyo origen y destino quedan sobre el corredor y en el mismo sentido. Un
+  servicio dentro de una ciudad del corredor también vale.
+- No hay match por cercanía (el antiguo radio de 40 km alrededor del origen)
+  ni opción Local/Nacional.
+- El cliente recibe un 25% de descuento cuando hay un transportista
+  compatible; como todos van de viaje, sale siempre que hay alguno.
 - El transportista no debe ver esta lógica en la pantalla.
 
 **Jornadas, vehículos y espacio**
