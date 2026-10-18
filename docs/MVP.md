@@ -58,6 +58,10 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   si se llenó) lo apaga y le devuelve el formulario con los mismos datos para
   ponerse otra vez cuando quiera. Se controla con un token que solo vive en su
   teléfono.
+- La lista de clientes que lo esperan se actualiza sola: al volver a la app
+  (por ejemplo, después de escribir por WhatsApp) y cada minuto mientras la
+  tiene abierta. Así ve a los que solicitan después de que él se puso
+  disponible.
 
 **Pantalla del cliente** (`/solicitar`)
 - Una sola pantalla, casi igual a la del transportista: sin pasos, con las
@@ -72,9 +76,21 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 Al tocar "Solicitar transportista" ve la lista de transportistas compatibles con
 botones para escribir por WhatsApp o llamar (match inmediato), y la invitación
 a acordar el precio. Si no hay ninguno, la solicitud queda guardada para el
-match diferido. Por eso el botón dice "Solicitar" y no "Buscar". "Hacer otra
-solicitud" le devuelve el formulario con los
-mismos datos.
+match diferido. Por eso el botón dice "Solicitar" y no "Buscar".
+
+Una solicitud a la vez, como el transportista: el teléfono la recuerda con un
+token (en la base solo va el hash). Si vuelve a `/solicitar`, en vez del
+formulario ve "Tu solicitud" con los transportistas que le sirven en ese
+momento, también los que aparecieron después. La lista se actualiza al volver
+a la app y cada minuto. Tiene dos botones:
+- "Ya conseguí transportista": pide confirmar ("¿Dejamos de mostrar tu
+  solicitud a los transportistas?"), deja de salirles a los transportistas y
+  le devuelve el formulario con los mismos datos.
+- "Hacer otra solicitud": le devuelve el formulario con los mismos datos.
+  Al enviarla, la nueva reemplaza la de antes, que deja de salirles a los
+  transportistas.
+
+Cuando pasa el día del viaje, la solicitud se olvida y vuelve el formulario.
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir

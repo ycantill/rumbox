@@ -43,12 +43,14 @@ src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
-                                 getMyAvailability, createRequest)
+                                 getMyAvailability, createRequest, getMyRequest,
+                                 closeRequest)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga, jornadas, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
+src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
 supabase/migrations/             Esquema: availabilities, requests, reviews
 public/sw.js                     Service worker
 ```
@@ -97,7 +99,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   identifica cada disponibilidad.
 - El transportista controla su disponibilidad con un token que vive en su
   teléfono (localStorage); en la base solo se guarda el hash. Por eso "uno a la
-  vez" vale por teléfono.
+  vez" vale por teléfono. El cliente controla su solicitud igual, con su
+  propio token; las solicitudes de antes no tienen token y no las controla
+  nadie.
 
 **Llamada o WhatsApp**
 - Se pide "Tu teléfono", no "Tu WhatsApp": el número sirve para llamar y para
@@ -215,6 +219,24 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   hay nadie, la solicitud queda guardada para cuando aparezca uno (Yohany,
   octubre de 2026). Por eso la pantalla está en `/solicitar`; `/cotizar`
   lleva ahí.
+
+**Una solicitud a la vez**
+- Como el transportista, el cliente tiene una sola solicitud abierta. Si
+  vuelve a `/solicitar`, ve "Tu solicitud" con los transportistas que le
+  sirven en ese momento, en vez del formulario.
+- "Ya conseguí transportista" la cierra (pide confirmar: "¿Dejamos de mostrar
+  tu solicitud a los transportistas?") y vuelve el formulario con los mismos
+  datos. "Hacer otra solicitud" devuelve el formulario; al enviarla, la nueva
+  reemplaza la de antes.
+- Vale hasta el día del viaje: después se olvida y vuelve el formulario.
+
+**Las listas se actualizan solas**
+- Los clientes que esperan al transportista y los transportistas que le
+  sirven al cliente se vuelven a pedir al volver a la app y cada minuto
+  mientras la pantalla se ve (`refreshWhileOpen`). Si falla una de esas
+  consultas que se hacen solas, no se muestra el aviso de señal.
+- No hay notificaciones: el aviso por WhatsApp al transportista necesita la
+  API oficial y está fuera del MVP.
 
 **Sin precio**
 - En el MVP no se calcula ningún precio: el cliente y el transportista lo

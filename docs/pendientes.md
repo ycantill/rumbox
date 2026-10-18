@@ -1,7 +1,7 @@
 # Muvia · Pendientes
 
 Lo que falta por decidir o construir en el MVP, por orden de importancia.
-Actualizado el 17 de octubre de 2026. Los números son los de la revisión de
+Actualizado el 18 de octubre de 2026. Los números son los de la revisión de
 ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Decisiones de Yohany
@@ -11,7 +11,8 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 - **Problema:** cualquiera que llene el formulario del transportista ve el
   teléfono de los clientes que esperan (hasta 20 por consulta, sin ninguna
   verificación), y ese número queda a la vista hasta la fecha del viaje (hasta
-  90 días). La app no tiene aviso de privacidad. En Colombia, la Ley 1581 de
+  90 días) o hasta que el cliente toque "Ya conseguí transportista". La app no
+  tiene aviso de privacidad. En Colombia, la Ley 1581 de
   2012 (habeas data) pide autorización previa y una política de tratamiento de
   datos.
 - **Propuesta:** una frase antes de "Solicitar transportista" ("Los transportistas
@@ -20,17 +21,6 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 - **Falta:** el nombre del responsable (persona o empresa) y un correo de
   contacto. Conviene que alguien que conozca la ley lo revise antes de abrir
   la app al público.
-
-### 16. Botón "Ya conseguí" para el cliente
-
-- **Problema:** la solicitud del cliente queda abierta hasta la fecha del
-  viaje, aunque ya haya conseguido transporte. Les sigue saliendo a los
-  transportistas, que le siguen escribiendo, y su número sigue a la vista.
-- **Propuesta:** un botón para que el cliente cierre su solicitud. Como no hay
-  cuentas, se controlaría con un token en su teléfono, igual que el
-  transportista; eso necesita una migración para guardar el hash.
-- **Falta decidir:** dónde lo ve el cliente. Por ejemplo, al volver a
-  `/solicitar` vería su solicitud con el botón.
 
 ## Propuestas
 
@@ -61,6 +51,18 @@ guardarse dos veces (las listas ya no muestran repetidos).
 
 Lo construido en octubre de 2026 pasó lint, typecheck, pruebas y build, pero no
 se probó en un teléfono:
+
+- El transportista está disponible y un cliente solicita después: al volver
+  a la app (o al minuto, con la pantalla abierta), el cliente le sale en la
+  lista sin tener que recargar.
+- El cliente solicita y cierra la app. Al abrir otra vez `/solicitar` ve "Tu
+  solicitud" con los transportistas de ese momento, no el formulario.
+- "Ya conseguí transportista" pide confirmar, vuelve el formulario con los
+  mismos datos y el cliente ya no le sale a ningún transportista.
+- "Hacer otra solicitud" y enviarla cambiando el día: al transportista del
+  día de antes ya no le sale ese cliente.
+- Al pasar el día del viaje, `/solicitar` muestra el formulario con los datos
+  de la solicitud vieja, sin el día.
 
 - Instalar la app en Android y en iPhone y ver el logo de Muvia.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
@@ -156,9 +158,15 @@ se probó en un teléfono:
   "Ubicarme". Origen y destino ya no pueden ser el mismo municipio, tampoco
   para el cliente: el elegido en un campo no sale en la lista del otro. No hay
   trasteos dentro del mismo pueblo, y con eso se cierra (9).
-- **Rama `claude/formulario-cliente`:** el cliente llena todo en una sola
+- **PR #21:** el cliente llena todo en una sola
   pantalla, casi igual a la del transportista, y también elige la jornada:
   solo se emparejan cliente y transportista de la misma jornada, y "Todo el
   día" coincide con todas (requiere la migración
   `0004_jornada_del_cliente.sql`). La pantalla pasa a `/solicitar` (`/cotizar`
   lleva ahí) y el botón dice "Solicitar transportista".
+- **Rama `claude/formulario-cliente`, después del PR #21:** botón "Ya conseguí
+  transportista" para el cliente (16): una solicitud a la vez, controlada con
+  un token en su teléfono; al volver a `/solicitar` ve su solicitud con los
+  transportistas del momento, y "Hacer otra solicitud" reemplaza la de antes
+  (requiere la migración `0005_cerrar_solicitud.sql`). Las listas del
+  transportista y del cliente se actualizan al volver a la app y cada minuto.
