@@ -5,9 +5,9 @@ import { getMyAvailability, publishAvailability, updateAvailability, type Pendin
 import {
   CitySelect,
   Choices,
+  ContactButtons,
   ErrorNote,
   Field,
-  WhatsAppButton,
   useBogotaDates,
   useBogotaHour,
 } from "@/components/ui";
@@ -18,6 +18,7 @@ import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SPACE_CAPACITY,
+  isKey,
   slotsLeftToday,
   spaceFitsVolume,
   VEHICLE_SPACES,
@@ -32,7 +33,7 @@ import {
 import { KEYS, load, save } from "@/lib/local-store";
 import { formatCOP } from "@/lib/pricing";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
-import { formatWhatsApp, normalizeWhatsApp, waLink } from "@/lib/whatsapp";
+import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
 type Profile = { vehicleType: VehicleType | ""; labor: DriverLabor | ""; whatsapp: string };
 
@@ -73,12 +74,13 @@ export function DriverForm() {
   // Un trabajo a la vez: si ya hay uno, se muestra ese en vez del formulario.
   const current = posts[0];
 
-  // Precarga desde el teléfono: tipo de vehículo, mano de obra y WhatsApp.
+  // Precarga desde el teléfono: tipo de vehículo, mano de obra y número.
   useEffect(() => {
     const p = load<Profile>(KEYS.driverProfile, { vehicleType: "", labor: "", whatsapp: "" });
-    // localStorage solo existe en el navegador: se lee después de hidratar.
+    // localStorage solo existe en el navegador: se lee después de hidratar. Un
+    // carro particular guardado de antes ya no está entre las opciones.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVehicleType(p.vehicleType);
+    setVehicleType(isKey(VEHICLE_TYPES, p.vehicleType) ? p.vehicleType : "");
     setLabor(p.labor);
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []));
@@ -228,7 +230,7 @@ export function DriverForm() {
         </Field>
 
         <Field label="¿Qué vehículo tienes?">
-          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} />
+          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} columns={3} />
         </Field>
 
         <Field label="¿Cuánto espacio tienes libre?">
@@ -243,7 +245,7 @@ export function DriverForm() {
           <Choices options={DRIVER_LABOR} value={labor} onChange={setLabor} columns={1} />
         </Field>
 
-        <Field label="Tu WhatsApp" hint="Los clientes te escriben directo a este número.">
+        <Field label="Tu teléfono" hint="Los clientes te pueden llamar o escribir por WhatsApp a este número.">
           <input
             type="tel"
             inputMode="tel"
@@ -330,14 +332,10 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             {formatCOP(r.estimated_price)}
           </p>
           <div className="mt-3">
-            <WhatsAppButton
-              href={waLink(
-                r.whatsapp,
-                `Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`,
-              )}
-            >
-              Escribir al cliente
-            </WhatsAppButton>
+            <ContactButtons
+              phone={r.whatsapp}
+              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`}
+            />
           </div>
         </article>
       ))}
@@ -354,7 +352,7 @@ function CurrentWork({
   onEnd,
 }: {
   post: MyPost;
-  /** El WhatsApp con que se puso disponible, para que vea si quedó bien. */
+  /** El teléfono con que se puso disponible, para que vea si quedó bien. */
   phone: string | null;
   justPublished: boolean;
   pending: PendingRequest[] | null;
@@ -369,14 +367,15 @@ function CurrentWork({
 
   // Un viaje vale solo su día. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
-  // guardado sin destino, de cuando era opcional: ahora tiene que elegirlo.
-  const tripPassed = !post.destination || post.date < today;
+  // guardado de antes sin destino o con el espacio de un carro particular
+  // (baúl o asientos): ahora tiene que elegir otra vez.
+  const ended = !post.destination || post.date < today || !isKey(DRIVER_SPACES, post.space);
 
   // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
   const fresh = initialPending !== null;
   useEffect(() => {
-    if (tripPassed) {
+    if (ended) {
       onEnd();
       return;
     }
@@ -404,9 +403,9 @@ function CurrentWork({
     return () => {
       cancelled = true;
     };
-    // Solo al montar, si cambia el trabajo guardado o si su viaje ya pasó.
+    // Solo al montar, si cambia el trabajo guardado o si ya se apagó.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, editToken, fresh, tripPassed]);
+  }, [id, editToken, fresh, ended]);
 
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
@@ -462,7 +461,7 @@ function CurrentWork({
         </h2>
         {details}
         <p className="mt-4 text-sm text-brand-ink/80">
-          Los clientes que necesiten un servicio te escribirán por WhatsApp
+          Los clientes que necesiten un servicio te llamarán o te escribirán por WhatsApp
           {phone ? ` al ${formatWhatsApp(phone)}` : ""}.
         </p>
       </section>

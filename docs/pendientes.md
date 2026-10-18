@@ -9,14 +9,14 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 ### 10. Aviso de privacidad
 
 - **Problema:** cualquiera que llene el formulario del transportista ve el
-  WhatsApp de los clientes que esperan (hasta 20 por consulta, sin ninguna
+  teléfono de los clientes que esperan (hasta 20 por consulta, sin ninguna
   verificación), y ese número queda a la vista hasta la fecha del viaje (hasta
   90 días). La app no tiene aviso de privacidad. En Colombia, la Ley 1581 de
   2012 (habeas data) pide autorización previa y una política de tratamiento de
   datos.
 - **Propuesta:** una frase antes de "Ver precio" ("Los transportistas verán tu
-  WhatsApp para escribirte"), una parecida para el transportista y una página
-  de privacidad enlazada desde ahí.
+  número para llamarte o escribirte"), una parecida para el transportista y
+  una página de privacidad enlazada desde ahí.
 - **Falta:** el nombre del responsable (persona o empresa) y un correo de
   contacto. Conviene que alguien que conozca la ley lo revise antes de abrir
   la app al público.
@@ -50,8 +50,8 @@ detalles:
 
 ### 17. Medir los contactos
 
-Contar cuántas veces se toca el botón de WhatsApp, del cliente al
-transportista y al revés. Es el número que dice si el piloto funciona: el
+Contar cuántas veces se tocan los botones de WhatsApp y de llamar, del cliente
+al transportista y al revés. Es el número que dice si el piloto funciona: el
 objetivo del MVP es validar que clientes y transportistas se conectan. Necesita
 una tabla nueva, en una migración (`supabase/migrations/0002_...sql`) que
 Yohany corre en Supabase antes de desplegar.
@@ -85,6 +85,10 @@ se probó en un teléfono:
 - Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
 - Un teléfono que tenía guardada una disponibilidad sin destino, de antes: al
   abrir la pantalla vuelve el formulario con sus datos para elegir el destino.
+- Tocar "Llamar" en un transportista o en un cliente: debe abrir el marcador
+  con el número.
+- Un teléfono que tenía guardado un carro particular: el vehículo sale sin
+  elegir y, si estaba disponible, vuelve el formulario con sus datos.
 
 ## Menores
 
@@ -97,6 +101,9 @@ se probó en un teléfono:
 
 - **Disponibilidades programadas:** rutas que el transportista repite todos
   los días o todas las semanas. Es una mejora futura
+- **Carros particulares:** paquetes y sobres en el baúl o los asientos
+  traseros. Salieron del MVP en octubre de 2026; lo que había está anotado en
+  "Qué queda para después" de [MVP.md](MVP.md).
 - El resto está en "Qué queda para después" de [MVP.md](MVP.md).
 
 ## Hecho
@@ -117,7 +124,10 @@ se probó en un teléfono:
   ya no sale "Hoy" dos veces; la región del piloto queda sin definir.
 - **PR #17:** además de buscar, la flecha despliega la lista completa de
   municipios, agrupada por departamento.
-- **Rama `claude/solo-viajes`:** sin modo local. El transportista siempre dice
+- **PR #18:** sin modo local. El transportista siempre dice
   hacia dónde va y el match es solo por ruta; se quitan el radio de 40 km, la
   semana y "Renovar una semana más". Con eso "Todo el día" para hoy (8) ya no
   aplica: un viaje vale un solo día.
+- **Rama `claude/llamada-o-whatsapp`:** se pide "Tu teléfono" en vez de "Tu
+  WhatsApp", y cada tarjeta tiene "Escribir por WhatsApp" y "Llamar". El carro
+  particular sale del MVP y queda anotado para después.

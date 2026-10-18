@@ -15,7 +15,7 @@ export default function Home() {
           Mudanzas, fletes y envíos con transportistas que ya van para donde tú vas.
         </h1>
         <p className="mt-3 text-muted">
-          Mira cuánto cuesta, habla con el transportista por WhatsApp y paga menos si ya va para allá.
+          Mira cuánto cuesta, llama o escríbele al transportista por WhatsApp y paga menos si ya va para allá.
           Sin registro y sin comisiones.
         </p>
       </section>
@@ -39,7 +39,7 @@ export default function Home() {
           <span className="block text-muted">Si un transportista ya va para allá, el precio baja.</span>
         </li>
         <li className="card">
-          <strong>Directo por WhatsApp.</strong>
+          <strong>Directo por llamada o WhatsApp.</strong>
           <span className="block text-muted">Hablas directo con el transportista y se ponen de acuerdo.</span>
         </li>
       </ul>

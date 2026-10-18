@@ -24,20 +24,15 @@ describe("spaceFitsVolume", () => {
 });
 
 describe("spaceFitsVehicle", () => {
-  it("un carro particular no ofrece camión entero ni medio camión", () => {
-    expect(spaceFitsVehicle("carro", "camion_entero")).toBe(false);
-    expect(spaceFitsVehicle("carro", "medio_camion")).toBe(false);
-    expect(spaceFitsVehicle("carro", "baul")).toBe(true);
-  });
-
   it("un pick-up no ofrece camión entero", () => {
     expect(spaceFitsVehicle("pickup", "camion_entero")).toBe(false);
     expect(spaceFitsVehicle("pickup", "medio_camion")).toBe(true);
   });
 
-  it("los camiones no ofrecen baúl ni asientos", () => {
-    expect(spaceFitsVehicle("furgon", "baul")).toBe(false);
-    expect(spaceFitsVehicle("estacas", "asientos")).toBe(false);
+  it("en el MVP no está el carro particular ni sus espacios (baúl y asientos)", () => {
+    expect(Object.keys(VEHICLE_TYPES)).not.toContain("carro");
+    expect(Object.keys(DRIVER_SPACES)).not.toContain("baul");
+    expect(Object.keys(DRIVER_SPACES)).not.toContain("asientos");
   });
 
   it("cada vehículo tiene al menos una opción y todo espacio sirve para algún vehículo", () => {

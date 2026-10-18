@@ -51,8 +51,8 @@ describe("matchesTrip", () => {
   });
 
   it("respeta el espacio disponible", () => {
-    expect(matchesTrip(driver({ space: "baul" }), request())).toBe(false);
-    expect(matchesTrip(driver({ space: "baul" }), request({ volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(driver({ space: "solo_paquetes" }), request())).toBe(false);
+    expect(matchesTrip(driver({ space: "solo_paquetes" }), request({ volume: "sobres" }))).toBe(true);
     expect(matchesTrip(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBe(false);
   });
 

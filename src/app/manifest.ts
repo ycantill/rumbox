@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Muvia · Mudanzas y fletes",
     short_name: "Muvia",
-    description: "Mira cuánto cuesta tu mudanza, flete o envío y habla con transportistas por WhatsApp.",
+    description: "Mira cuánto cuesta tu mudanza, flete o envío y habla con transportistas por llamada o WhatsApp.",
     lang: "es-CO",
     start_url: "/",
     display: "standalone",

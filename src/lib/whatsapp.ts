@@ -2,7 +2,8 @@
 const COLOMBIA = /^(3\d{9}|60\d{8})$/;
 
 /**
- * Normaliza un número de WhatsApp a formato internacional sin "+".
+ * Normaliza un número de teléfono (sirve para llamar y para WhatsApp) a formato
+ * internacional sin "+".
  * Asume Colombia (+57) cuando llega un número local de 10 dígitos.
  * Devuelve null si el número no parece válido.
  */
@@ -26,4 +27,9 @@ export function formatWhatsApp(phone: string): string {
 
 export function waLink(phone: string, text: string): string {
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
+}
+
+/** Enlace para llamar: en el celular abre el marcador con el número. */
+export function telLink(phone: string): string {
+  return `tel:+${phone}`;
 }
