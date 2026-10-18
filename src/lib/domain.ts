@@ -66,6 +66,19 @@ export const TIME_SLOTS = {
 } as const;
 export type TimeSlot = keyof typeof TIME_SLOTS;
 
+/**
+ * Si la jornada del cliente y la del transportista coinciden. "Todo el día"
+ * coincide con todas, y también las solicitudes de antes, que no tienen jornada.
+ */
+export function slotsMatch(driver: TimeSlot, client: TimeSlot | null): boolean {
+  return !client || driver === "todo_el_dia" || client === "todo_el_dia" || driver === client;
+}
+
+/** El día con la jornada, para armar frases: "mañana por la tarde". "Todo el día" no se dice. */
+export function withSlot(when: string, slot: TimeSlot | null): string {
+  return slot && slot !== "todo_el_dia" ? `${when} ${TIME_SLOTS[slot].toLowerCase()}` : when;
+}
+
 /** Hora (0-23, hora Colombia) en que termina cada jornada. No se muestra en pantalla. */
 export const TIME_SLOT_ENDS = { manana: 12, tarde: 18, noche: 22 } as const;
 

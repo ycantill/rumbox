@@ -21,7 +21,7 @@ export default function Home() {
       </section>
 
       <nav className="mt-10 flex flex-col gap-3">
-        <Link href="/cotizar" className="btn-primary text-center">
+        <Link href="/solicitar" className="btn-primary text-center">
           Necesito mover algo
         </Link>
         <Link href="/transportista" className="btn-secondary py-3.5 text-center text-base">

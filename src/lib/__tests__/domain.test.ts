@@ -5,6 +5,7 @@ import {
   slotsLeftToday,
   spaceFitsVolume,
   spaceInSentence,
+  withSlot,
   type DriverSpace,
   type Volume,
 } from "../domain";
@@ -66,5 +67,17 @@ describe("slotsLeftToday", () => {
   it("de tarde-noche solo queda la noche, y después de las 10 no queda nada", () => {
     expect(slotsLeftToday(18)).toEqual(["noche"]);
     expect(slotsLeftToday(22)).toEqual([]);
+  });
+});
+
+describe("withSlot", () => {
+  it("pone la jornada después del día, dentro de una frase", () => {
+    expect(withSlot("mañana", "manana")).toBe("mañana por la mañana");
+    expect(withSlot("hoy", "tarde")).toBe("hoy por la tarde");
+  });
+
+  it("no dice \"todo el día\", ni nada si la solicitud es de antes y no tiene jornada", () => {
+    expect(withSlot("hoy", "todo_el_dia")).toBe("hoy");
+    expect(withSlot("el sábado 18 de octubre", null)).toBe("el sábado 18 de octubre");
   });
 });

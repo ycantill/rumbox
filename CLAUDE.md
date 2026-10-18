@@ -40,7 +40,7 @@ PR. Corre los cuatro antes de dar un cambio por terminado.
 
 ```
 src/app/page.tsx                 Inicio
-src/app/cotizar/                 Cliente: asistente de 4 pasos que busca transportistas
+src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, createRequest)
@@ -141,6 +141,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
   cuyo origen y destino quedan sobre el corredor y en el mismo sentido.
+- La jornada también tiene que coincidir, y "Todo el día" coincide con todas
+  (Yohany, octubre de 2026). Las solicitudes de antes, sin jornada, coinciden
+  con todas.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
@@ -157,6 +160,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Jornadas**
 - Jornadas sin horas: "Por la mañana", "Por la tarde", "Por la noche" y "Todo
   el día". El prefijo "Por la" evita confundir "mañana" con el día siguiente.
+- Las eligen los dos, debajo del día: el transportista en "¿Qué día viajas?"
+  y el cliente en "¿Qué día?". Viene marcado "Todo el día".
 - Para "Hoy" solo se muestran las jornadas que no han pasado en hora de
   Colombia (cortes a las 12, 18 y 22 h); después de las 10 pm desaparece
   "Hoy".
@@ -199,13 +204,25 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   municipio más cercano según la ubicación del teléfono (`OriginCitySelect`).
 - Los slugs se guardan en la base de datos: no se cambian.
 
+**El cliente llena una sola pantalla**
+- El formulario del cliente es casi igual al del transportista: todo en una
+  pantalla, sin pasos, con las mismas preguntas en el mismo orden ("¿Desde
+  dónde?", "¿Hacia dónde?", "¿Qué día?" con la jornada, "¿Qué vas a mover?",
+  "¿Necesitas ayuda para cargar?" y "Tu teléfono"). Yohany lo pidió en
+  octubre de 2026.
+- Con paquetes o sobres no sale "¿Necesitas ayuda para cargar?".
+- El botón dice "Solicitar transportista", no "Buscar": si en ese momento no
+  hay nadie, la solicitud queda guardada para cuando aparezca uno (Yohany,
+  octubre de 2026). Por eso la pantalla está en `/solicitar`; `/cotizar`
+  lleva ahí.
+
 **Sin precio**
 - En el MVP no se calcula ningún precio: el cliente y el transportista lo
   acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
   la carga por tamaño de casa hace menos preciso cualquier cálculo. Tampoco
   hay descuento por ruta.
-- El cliente busca transportista ("Buscar transportista") y la pantalla le
-  dice que acuerden el precio. Al transportista, en la lista de clientes que
+- El cliente solicita transportista ("Solicitar transportista") y la
+  pantalla le dice que acuerden el precio. Al transportista, en la lista de clientes que
   esperan, le sale la ayuda que pide cada uno (`CLIENT_LABOR_FOR_DRIVER`) para
   que sepa qué cobrar.
 - No se preguntan las escaleras: solo servían para el precio. Las columnas

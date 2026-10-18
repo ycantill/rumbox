@@ -14,8 +14,8 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
   90 días). La app no tiene aviso de privacidad. En Colombia, la Ley 1581 de
   2012 (habeas data) pide autorización previa y una política de tratamiento de
   datos.
-- **Propuesta:** una frase antes de "Buscar transportista" ("Los transportistas verán tu
-  número para llamarte o escribirte"), una parecida para el transportista y
+- **Propuesta:** una frase antes de "Solicitar transportista" ("Los transportistas
+  verán tu número para llamarte o escribirte"), una parecida para el transportista y
   una página de privacidad enlazada desde ahí.
 - **Falta:** el nombre del responsable (persona o empresa) y un correo de
   contacto. Conviene que alguien que conozca la ley lo revise antes de abrir
@@ -30,7 +30,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
   cuentas, se controlaría con un token en su teléfono, igual que el
   transportista; eso necesita una migración para guardar el hash.
 - **Falta decidir:** dónde lo ve el cliente. Por ejemplo, al volver a
-  `/cotizar` vería su solicitud con el botón.
+  `/solicitar` vería su solicitud con el botón.
 
 ## Propuestas
 
@@ -39,7 +39,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 Contar cuántas veces se tocan los botones de WhatsApp y de llamar, del cliente
 al transportista y al revés. Es el número que dice si el piloto funciona: el
 objetivo del MVP es validar que clientes y transportistas se conectan. Necesita
-una tabla nueva, en una migración (`supabase/migrations/0004_...sql`) que
+una tabla nueva, en una migración (`supabase/migrations/0005_...sql`) que
 Yohany corre en Supabase antes de desplegar.
 
 ### 18. Compartir por WhatsApp o con código QR
@@ -63,14 +63,25 @@ Lo construido en octubre de 2026 pasó lint, typecheck, pruebas y build, pero no
 se probó en un teléfono:
 
 - Instalar la app en Android y en iPhone y ver el logo de Muvia.
-- Con el modo avión, tocar "Buscar transportista" o "Ponerme disponible": debe
+- Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
   salir el aviso de señal sin perder lo llenado.
 - El cliente no ve ningún precio ni le preguntan por escaleras. Al final ve
   "Llama o escribe por WhatsApp y acuerden el precio", o "Guardamos tu
   solicitud" si no hay transportistas.
 - En la lista del transportista, cada cliente dice si necesita ayuda para
   cargar, menos los de paquetes o sobres.
-- Con sobres, el cotizador debe tener 3 pasos.
+- El cliente llena todo en una sola pantalla, como el transportista. Con
+  paquetes o sobres no sale "¿Necesitas ayuda para cargar?"; con lo demás,
+  si no elige, sale "Elige si necesitas ayuda para cargar.".
+- El cliente elige la jornada debajo del día, como el transportista. Para
+  hoy solo salen las que no han pasado, y después de las 10 pm no sale "Hoy".
+- Un transportista que va "Por la mañana" no le sale a un cliente que eligió
+  "Por la tarde", ni el cliente a él. Con "Todo el día" salen todos.
+- La lista del transportista y el mensaje de WhatsApp dicen la jornada del
+  cliente ("hoy por la tarde").
+- "Hacer otra solicitud" devuelve el formulario con lo que había llenado.
+- Abrir un enlace viejo a `/cotizar`: debe llevar a `/solicitar`. También con
+  la app instalada.
 - Negar el permiso de ubicación y tocar "Ubicarme": debe salir el aviso. Ahora
   también en "¿Desde dónde?" del cliente.
 - Los campos de municipio vacíos dicen "Escribe o elige" y el texto se ve
@@ -133,7 +144,7 @@ se probó en un teléfono:
   hacia dónde va y el match es solo por ruta; se quitan el radio de 40 km, la
   semana y "Renovar una semana más". Con eso "Todo el día" para hoy (8) ya no
   aplica: un viaje vale un solo día.
-- **Rama `claude/llamada-o-whatsapp`:** se pide "Tu teléfono" en vez de "Tu
+- **PR #19 y #20:** se pide "Tu teléfono" en vez de "Tu
   WhatsApp", y cada tarjeta tiene "Escribir por WhatsApp" y "Llamar". El carro
   particular sale del MVP y queda anotado para después. La carga se mide por
   tamaño de casa, con la misma lista para el cliente y el transportista, y ya
@@ -145,3 +156,9 @@ se probó en un teléfono:
   "Ubicarme". Origen y destino ya no pueden ser el mismo municipio, tampoco
   para el cliente: el elegido en un campo no sale en la lista del otro. No hay
   trasteos dentro del mismo pueblo, y con eso se cierra (9).
+- **Rama `claude/formulario-cliente`:** el cliente llena todo en una sola
+  pantalla, casi igual a la del transportista, y también elige la jornada:
+  solo se emparejan cliente y transportista de la misma jornada, y "Todo el
+  día" coincide con todas (requiere la migración
+  `0004_jornada_del_cliente.sql`). La pantalla pasa a `/solicitar` (`/cotizar`
+  lleva ahí) y el botón dice "Solicitar transportista".

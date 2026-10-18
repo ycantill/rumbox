@@ -6,11 +6,12 @@ import {
   CitySelect,
   Choices,
   ContactButtons,
+  DayPicker,
   ErrorNote,
   Field,
   OriginCitySelect,
   useBogotaDates,
-  useBogotaHour,
+  useDayAndSlot,
 } from "@/components/ui";
 import { getCity } from "@/lib/cities";
 import { capitalize, whenText } from "@/lib/dates";
@@ -21,11 +22,11 @@ import {
   SAME_CITY_ERROR,
   SPACE_CAPACITY,
   isKey,
-  slotsLeftToday,
   spaceFitsVolume,
   spaceInSentence,
   TIME_SLOTS,
   VOLUMES,
+  withSlot,
   type DriverLabor,
   type DriverSpace,
   type TimeSlot,
@@ -47,18 +48,12 @@ export type MyPost = {
 };
 
 export function DriverForm() {
-  const { today, tomorrow } = useBogotaDates();
+  const { today } = useBogotaDates();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
-  const hour = useBogotaHour();
-  // Para hoy solo quedan las jornadas que no han pasado; ya de noche, hoy desaparece.
-  const todayLeft = hour === null ? ALL_SLOTS : slotsLeftToday(hour);
-  const todayOpen = todayLeft.length > 0;
-  const date = pickedDate && (pickedDate !== today || todayOpen) ? pickedDate : todayOpen ? today : tomorrow;
-  const slots = date === today ? todayLeft : ALL_SLOTS;
   const [pickedSlot, setTimeSlot] = useState<TimeSlot | "">("todo_el_dia");
-  const timeSlot = pickedSlot && slots.includes(pickedSlot) ? pickedSlot : "";
+  const { date, timeSlot, todayOpen, slotOptions } = useDayAndSlot(pickedDate, pickedSlot);
   const [space, setSpace] = useState<DriverSpace | "">("");
   const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
@@ -173,19 +168,8 @@ export function DriverForm() {
 
         {/* Es un viaje: vale solo ese día. */}
         <Field label="¿Qué día viajas?">
-          <div className="grid grid-cols-3 gap-2">
-            {todayOpen && <QuickDate label="Hoy" value={today} current={date} onPick={setDate} />}
-            <QuickDate label="Mañana" value={tomorrow} current={date} onPick={setDate} />
-            <input
-              type="date"
-              className="input"
-              min={todayOpen ? today : tomorrow}
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              aria-label="Otra fecha"
-            />
-          </div>
-          <Choices options={slotOptions(slots)} value={timeSlot} onChange={setTimeSlot} />
+          <DayPicker value={date} onChange={setDate} todayOpen={todayOpen} />
+          <Choices options={slotOptions} value={timeSlot} onChange={setTimeSlot} />
         </Field>
 
         {/* La misma lista de tamaños que elige el cliente. */}
@@ -219,38 +203,6 @@ export function DriverForm() {
   );
 }
 
-const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
-
-function slotOptions(slots: TimeSlot[]) {
-  return Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;
-}
-
-function QuickDate({
-  label,
-  value,
-  current,
-  onPick,
-}: {
-  label: string;
-  value: string;
-  current: string;
-  onPick: (v: string) => void;
-}) {
-  const selected = current === value;
-  return (
-    <button
-      type="button"
-      aria-pressed={selected}
-      onClick={() => onPick(value)}
-      className={`rounded-xl border px-3 py-3 text-sm ${
-        selected ? "border-brand bg-brand-soft font-semibold text-brand-ink" : "border-line bg-surface"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
 function PendingList({ items }: { items: PendingRequest[] }) {
   const { today, tomorrow } = useBogotaDates();
   if (items.length === 0) {
@@ -269,14 +221,16 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             {getCity(r.origin_city)?.name} → {getCity(r.destination_city)?.name}
           </p>
           <p className="text-sm text-muted">
-            {capitalize(whenText(r.service_date, today, tomorrow))} · {VOLUMES[r.volume].label}
+            {capitalize(whenText(r.service_date, today, tomorrow))}
+            {/* Las solicitudes de antes no tienen jornada. */}
+            {r.time_slot && ` · ${TIME_SLOTS[r.time_slot]}`} · {VOLUMES[r.volume].label}
             {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
             {r.volume !== "sobres" && ` · ${CLIENT_LABOR_FOR_DRIVER[r.labor]}`}
           </p>
           <div className="mt-3">
             <ContactButtons
               phone={r.whatsapp}
-              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`}
+              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${withSlot(whenText(r.service_date, today, tomorrow), r.time_slot)}. Puedo hacerte el viaje.`}
             />
           </div>
         </article>

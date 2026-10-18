@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
+import { TIME_SLOTS, slotsLeftToday, type TimeSlot } from "@/lib/domain";
 import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
@@ -373,6 +374,82 @@ export function Choices<K extends string>({
         );
       })}
     </div>
+  );
+}
+
+const ALL_SLOTS = Object.keys(TIME_SLOTS) as TimeSlot[];
+
+/**
+ * El día y la jornada que se ven elegidos, a partir de lo que tocó la persona.
+ * Para hoy solo quedan las jornadas que no han pasado en hora de Colombia, y
+ * ya de noche "Hoy" desaparece y queda mañana. Si la jornada que tocó ya pasó,
+ * queda sin elegir.
+ */
+export function useDayAndSlot(pickedDate: string, pickedSlot: TimeSlot | "") {
+  const { today, tomorrow } = useBogotaDates();
+  const hour = useBogotaHour();
+  const todayLeft = hour === null ? ALL_SLOTS : slotsLeftToday(hour);
+  const todayOpen = todayLeft.length > 0;
+  const date = pickedDate && (pickedDate !== today || todayOpen) ? pickedDate : todayOpen ? today : tomorrow;
+  const slots = date === today ? todayLeft : ALL_SLOTS;
+  const timeSlot: TimeSlot | "" = pickedSlot && slots.includes(pickedSlot) ? pickedSlot : "";
+  const slotOptions = Object.fromEntries(slots.map((s) => [s, TIME_SLOTS[s]])) as Record<TimeSlot, string>;
+  return { date, timeSlot, todayOpen, slotOptions };
+}
+
+/**
+ * El día: "Hoy", "Mañana" u otro en el calendario. Ya de noche (`todayOpen` en
+ * falso) "Hoy" no sale y el calendario empieza mañana.
+ */
+export function DayPicker({
+  value,
+  onChange,
+  todayOpen,
+}: {
+  value: string;
+  onChange: (date: string) => void;
+  todayOpen: boolean;
+}) {
+  const { today, tomorrow } = useBogotaDates();
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {todayOpen && <QuickDate label="Hoy" value={today} current={value} onPick={onChange} />}
+      <QuickDate label="Mañana" value={tomorrow} current={value} onPick={onChange} />
+      <input
+        type="date"
+        className="input"
+        min={todayOpen ? today : tomorrow}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        aria-label="Otra fecha"
+      />
+    </div>
+  );
+}
+
+function QuickDate({
+  label,
+  value,
+  current,
+  onPick,
+}: {
+  label: string;
+  value: string;
+  current: string;
+  onPick: (v: string) => void;
+}) {
+  const selected = current === value;
+  return (
+    <button
+      type="button"
+      aria-pressed={selected}
+      onClick={() => onPick(value)}
+      className={`rounded-xl border px-3 py-3 text-sm ${
+        selected ? "border-brand bg-brand-soft font-semibold text-brand-ink" : "border-line bg-surface"
+      }`}
+    >
+      {label}
+    </button>
   );
 }
 

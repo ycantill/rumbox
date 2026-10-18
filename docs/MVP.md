@@ -59,17 +59,22 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   ponerse otra vez cuando quiera. Se controla con un token que solo vive en su
   teléfono.
 
-**Pantalla del cliente** (`/cotizar`), 4 pasos
-1. Ruta (origen con botón "Ubicarme", y un destino que no puede ser el mismo
-   municipio) y fecha (Hoy, Mañana o calendario).
-2. Qué va a mover, con la lista de tamaños.
-3. Si necesita ayuda para cargar. Con paquetes o sobres este paso se salta.
-4. Teléfono.
+**Pantalla del cliente** (`/solicitar`)
+- Una sola pantalla, casi igual a la del transportista: sin pasos, con las
+  mismas preguntas en el mismo orden. Yohany lo pidió en octubre de 2026.
+- La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
+  `/solicitar` para que no se rompan los enlaces guardados o compartidos.
+- Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
+  municipio; qué día (Hoy, Mañana o calendario) y en qué jornada, con las
+  mismas reglas del transportista para hoy; qué va a mover, con la lista de tamaños; si
+  necesita ayuda para cargar, que no sale con paquetes o sobres; y teléfono.
 
-Al tocar "Buscar transportista" ve la lista de transportistas compatibles con
+Al tocar "Solicitar transportista" ve la lista de transportistas compatibles con
 botones para escribir por WhatsApp o llamar (match inmediato), y la invitación
 a acordar el precio. Si no hay ninguno, la solicitud queda guardada para el
-match diferido.
+match diferido. Por eso el botón dice "Solicitar" y no "Buscar". "Hacer otra
+solicitud" le devuelve el formulario con los
+mismos datos.
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
@@ -85,7 +90,9 @@ preguntan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.
-- Además: el cliente pide el mismo día del viaje, lo que mueve es igual o más
+- Además: el cliente pide el mismo día del viaje y la misma jornada ("Todo el
+  día" coincide con todas; las solicitudes de antes no tienen jornada y
+  también), lo que mueve es igual o más
   chico que lo que el transportista puede llevar y la mano de obra ofrecida
   cubre la pedida.
 

@@ -5,14 +5,14 @@ transportistas que ya van hacia otro lado y tienen espacio libre. Sin
 registro, sin comisiones y con contacto directo por llamada o WhatsApp, en
 Colombia. Todavía no está definido dónde será el piloto.
 
-- **Cliente** (`/cotizar`): dice de dónde a dónde, qué va a mover, si necesita
-  ayuda para cargar y su teléfono. Ve el precio estimado y los transportistas
-  que le sirven, y los llama o les escribe por WhatsApp. Si un transportista ya
-  va para allá, el precio baja hasta un 25%.
+- **Cliente** (`/solicitar`): dice de dónde a dónde, qué día y en qué
+  jornada, qué va a mover, si necesita ayuda para cargar y su teléfono. Ve los
+  transportistas que le sirven, los llama o les escribe por WhatsApp y
+  acuerdan el precio.
 - **Transportista** (`/transportista`): se pone disponible para un viaje (de
-  dónde sale, hacia dónde va y qué día) con su vehículo, el espacio libre y si
-  ayuda a cargar. Hasta el día del viaje ve los clientes que lo esperan, o
-  hasta que toque "Ya no voy a trabajar".
+  dónde sale, hacia dónde va, qué día y en qué jornada) con cuánto puede
+  llevar y si ayuda a cargar. Hasta el día del viaje ve los clientes que lo
+  esperan, o hasta que toque "Ya no voy a trabajar".
 
 El alcance del MVP y lo que queda para después está en
 [docs/MVP.md](docs/MVP.md). La visión de negocio completa está en
@@ -38,8 +38,8 @@ en [Supabase](https://supabase.com).
    ```
 
 2. Crea un proyecto en Supabase. En el **SQL Editor**, ejecuta en orden los
-   archivos de `supabase/migrations/` (hoy solo `0001_init.sql`). Cada vez que
-   aparezca una migración nueva hay que ejecutarla también.
+   archivos de `supabase/migrations/`, empezando por `0001_init.sql`. Cada vez
+   que aparezca una migración nueva hay que ejecutarla también.
 
 3. Copia `.env.example` a `.env.local`:
 
@@ -75,7 +75,7 @@ en [Supabase](https://supabase.com).
 | `npm start`         | Sirve el build de producción                 |
 | `npm run lint`      | ESLint                                       |
 | `npm run typecheck` | Verificación de tipos                        |
-| `npm test`          | Pruebas de precios y emparejamiento (Vitest) |
+| `npm test`          | Pruebas del emparejamiento y el vocabulario  |
 
 El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request.
 
@@ -95,11 +95,10 @@ que producción salvo que configures otra.
 ## Estructura
 
 ```
-src/app/                 Páginas: inicio, /cotizar (cliente), /transportista
-src/app/actions.ts       Server Actions: ponerse disponible, actualizar, precio
-src/components/          Componentes compartidos y dibujos de vehículos
-src/lib/domain.ts        Vehículos, espacios, jornadas y sus textos
-src/lib/pricing.ts       Tarifa base + modificadores + descuento por ruta
+src/app/                 Páginas: inicio, /solicitar (cliente), /transportista
+src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicitar
+src/components/          Componentes compartidos
+src/lib/domain.ts        Tamaños de carga, jornadas, ayuda para cargar y sus textos
 src/lib/matching.ts      Emparejamiento por ruta
 src/lib/cities.ts        Todos los municipios de Colombia y su búsqueda
 supabase/migrations/     Esquema de base de datos
