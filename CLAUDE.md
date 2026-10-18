@@ -156,10 +156,15 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Para "Hoy" solo se muestran las jornadas que no han pasado en hora de
   Colombia (cortes a las 12, 18 y 22 h); después de las 10 pm desaparece
   "Hoy".
-- El espacio libre depende del vehículo (`VEHICLE_SPACES`): furgón y estacas
-  hasta camión entero, pick-up hasta medio camión, carro particular solo baúl
-  o asientos traseros. Si cambia a un vehículo donde no cabe, se borra el
+- Los vehículos son furgón, estacas y pick-up. El espacio libre depende del
+  vehículo (`VEHICLE_SPACES`): furgón y estacas hasta camión entero, pick-up
+  hasta medio camión. Si cambia a un vehículo donde no cabe, se borra el
   espacio elegido.
+- El carro particular (con "Espacio en el baúl" y "Asientos traseros libres")
+  salió del MVP en octubre de 2026 y queda anotado para después en
+  [docs/MVP.md](docs/MVP.md). Sus claves (`carro`, `baul`, `asientos`) siguen
+  permitidas en la base; lo que quedó guardado con carro ya no les sale a los
+  clientes y al transportista le vuelve el formulario.
 - Cada vehículo se muestra con un dibujo sencillo que toma el color del texto
   (tema claro y oscuro).
 
@@ -180,7 +185,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Las tarifas de `src/lib/pricing.ts` son provisionales y se calibrarán con
   precios reales del piloto.
 
-**Fuera del MVP** (ver docs/MVP.md): fotos, API oficial de WhatsApp y
-notificaciones, reseñas automáticas, formularios offline, monetización
-(incluidas las disponibilidades programadas), autocompletado de direcciones y
-anti-spam.
+**Fuera del MVP** (ver docs/MVP.md): carros particulares, fotos, API oficial
+de WhatsApp y notificaciones, reseñas automáticas, formularios offline,
+monetización (incluidas las disponibilidades programadas), autocompletado de
+direcciones y anti-spam.

@@ -258,6 +258,9 @@ export function CitySelect({
 /** El orden en que se ve la lista completa, para moverse en ella con el teclado. */
 const ALL_CITIES = CITIES_BY_DEPARTMENT.flatMap((d) => d.cities);
 
+// Clases completas para que Tailwind las encuentre al compilar.
+const GRID_COLUMNS = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" } as const;
+
 export function Choices<K extends string>({
   options,
   value,
@@ -267,10 +270,10 @@ export function Choices<K extends string>({
   options: Record<K, string | { label: string; hint?: string; icon?: React.ReactNode }>;
   value: K | "";
   onChange: (key: K) => void;
-  columns?: 1 | 2;
+  columns?: 1 | 2 | 3;
 }) {
   return (
-    <div className={columns === 2 ? "grid grid-cols-2 gap-2" : "grid grid-cols-1 gap-2"}>
+    <div className={`grid gap-2 ${GRID_COLUMNS[columns]}`}>
       {(Object.keys(options) as K[]).map((key) => {
         const opt = options[key];
         const label = typeof opt === "string" ? opt : opt.label;

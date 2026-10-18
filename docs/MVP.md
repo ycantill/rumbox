@@ -40,7 +40,8 @@ sugiere nada, y ninguna región va primero.
   para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
   el Modo Ruta; la pantalla no le explica esa lógica al transportista.
 - Qué día viaja (hoy, mañana u otro día) y jornada (mañana, tarde, noche o
-  todo el día), tipo de vehículo, espacio disponible, mano de obra y teléfono.
+  todo el día), tipo de vehículo (furgón, estacas o pick-up), espacio
+  disponible, mano de obra y teléfono.
   Su tarjeta dice "Viajas…" y vale solo ese día. Cuando pasa, se apaga solo y
   vuelve el formulario con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
@@ -81,6 +82,13 @@ abran con mala señal.
 
 ## Qué queda para después
 
+- Carros particulares: llevar paquetes y sobres en el baúl o en los asientos
+  traseros de un carro que ya va de viaje. Yohany lo sacó del MVP en octubre
+  de 2026. Cuando vuelva, lo que había: el vehículo "Carro particular"
+  (`carro`) con dos espacios, "Espacio en el baúl" (`baul`) y "Asientos
+  traseros libres" (`asientos`), que solo servían para sobres y paquetes
+  pequeños, y su dibujo. La base de datos todavía acepta esas claves, y el
+  código está en el historial de git (commit `3b0b5d7`, PR #18).
 - Fotos del vehículo y de la carga (Supabase Storage).
 - Notificación proactiva por WhatsApp al transportista cuando entra una
   solicitud en su ruta (requiere la API oficial de WhatsApp).

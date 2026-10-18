@@ -23,16 +23,9 @@ const SHAPES: Record<VehicleType, React.ReactNode> = {
       <path d="M32 10h8l4.5 6.5H32z" />
     </>
   ),
-  carro: (
-    <>
-      <path d="M3 26v-5a3 3 0 0 1 3-3h9l7-8h18l8 8h8a3 3 0 0 1 3 3v5z" />
-      <path d="M23 12.5h7.5V17H19zM33 12.5h6.5L44 17H33z" />
-    </>
-  ),
 };
 
 export function VehicleIcon({ type, className }: { type: VehicleType; className?: string }) {
-  const [rear, front] = type === "carro" ? [16, 48] : [14, 49];
   return (
     <svg
       viewBox="0 0 64 40"
@@ -45,7 +38,7 @@ export function VehicleIcon({ type, className }: { type: VehicleType; className?
       strokeLinejoin="round"
     >
       {SHAPES[type]}
-      {[rear, front].map((cx) => (
+      {[14, 49].map((cx) => (
         <g key={cx}>
           <circle cx={cx} cy="31" r="5" />
           <circle cx={cx} cy="31" r="1.6" fill="currentColor" stroke="none" />

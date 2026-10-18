@@ -87,6 +87,8 @@ se probó en un teléfono:
   abrir la pantalla vuelve el formulario con sus datos para elegir el destino.
 - Tocar "Llamar" en un transportista o en un cliente: debe abrir el marcador
   con el número.
+- Un teléfono que tenía guardado un carro particular: el vehículo sale sin
+  elegir y, si estaba disponible, vuelve el formulario con sus datos.
 
 ## Menores
 
@@ -99,6 +101,9 @@ se probó en un teléfono:
 
 - **Disponibilidades programadas:** rutas que el transportista repite todos
   los días o todas las semanas. Es una mejora futura
+- **Carros particulares:** paquetes y sobres en el baúl o los asientos
+  traseros. Salieron del MVP en octubre de 2026; lo que había está anotado en
+  "Qué queda para después" de [MVP.md](MVP.md).
 - El resto está en "Qué queda para después" de [MVP.md](MVP.md).
 
 ## Hecho
@@ -124,4 +129,5 @@ se probó en un teléfono:
   semana y "Renovar una semana más". Con eso "Todo el día" para hoy (8) ya no
   aplica: un viaje vale un solo día.
 - **Rama `claude/llamada-o-whatsapp`:** se pide "Tu teléfono" en vez de "Tu
-  WhatsApp", y cada tarjeta tiene "Escribir por WhatsApp" y "Llamar".
+  WhatsApp", y cada tarjeta tiene "Escribir por WhatsApp" y "Llamar". El carro
+  particular sale del MVP y queda anotado para después.

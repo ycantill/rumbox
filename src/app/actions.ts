@@ -147,7 +147,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, vehicle_type, space, labor, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -155,8 +155,13 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
     // Un viaje vale solo su día: si ya pasó, se apagó solo. Las de antes, sin
-    // destino, ya no les salen a los clientes: también quedan apagadas.
-    const active = data.status === "activa" && Boolean(data.destination_city) && data.service_date >= todayInBogota();
+    // destino o en carro particular, ya no les salen a los clientes: también
+    // quedan apagadas.
+    const active =
+      data.status === "activa" &&
+      Boolean(data.destination_city) &&
+      isKey(VEHICLE_TYPES, data.vehicle_type) &&
+      data.service_date >= todayInBogota();
     const status = active ? "activa" : "llena";
     const pending = status === "activa" ? await findPendingRequests(data) : [];
     return { ok: true as const, status, space: data.space, pending };
@@ -218,12 +223,13 @@ export async function requestQuote(input: {
     if (error) throw error;
 
     // Vía A (match inmediato): transportistas que viajan justo ese día. Las de
-    // antes, sin destino, ya no salen.
+    // antes, sin destino o en carro particular, ya no salen.
     const { data: rows, error: qErr } = await db()
       .from("availabilities")
       .select("id, origin_city, destination_city, service_date, time_slot, vehicle_type, space, labor, whatsapp")
       .eq("service_date", input.date)
       .not("destination_city", "is", null)
+      .in("vehicle_type", Object.keys(VEHICLE_TYPES))
       .eq("status", "activa")
       .order("created_at", { ascending: false })
       .limit(500);

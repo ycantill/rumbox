@@ -18,6 +18,7 @@ import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SPACE_CAPACITY,
+  isKey,
   slotsLeftToday,
   spaceFitsVolume,
   VEHICLE_SPACES,
@@ -76,9 +77,10 @@ export function DriverForm() {
   // Precarga desde el teléfono: tipo de vehículo, mano de obra y número.
   useEffect(() => {
     const p = load<Profile>(KEYS.driverProfile, { vehicleType: "", labor: "", whatsapp: "" });
-    // localStorage solo existe en el navegador: se lee después de hidratar.
+    // localStorage solo existe en el navegador: se lee después de hidratar. Un
+    // carro particular guardado de antes ya no está entre las opciones.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVehicleType(p.vehicleType);
+    setVehicleType(isKey(VEHICLE_TYPES, p.vehicleType) ? p.vehicleType : "");
     setLabor(p.labor);
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []));
@@ -228,7 +230,7 @@ export function DriverForm() {
         </Field>
 
         <Field label="¿Qué vehículo tienes?">
-          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} />
+          <Choices options={VEHICLE_OPTIONS} value={vehicleType} onChange={pickVehicle} columns={3} />
         </Field>
 
         <Field label="¿Cuánto espacio tienes libre?">
@@ -365,14 +367,15 @@ function CurrentWork({
 
   // Un viaje vale solo su día. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
-  // guardado sin destino, de cuando era opcional: ahora tiene que elegirlo.
-  const tripPassed = !post.destination || post.date < today;
+  // guardado de antes sin destino o con el espacio de un carro particular
+  // (baúl o asientos): ahora tiene que elegir otra vez.
+  const ended = !post.destination || post.date < today || !isKey(DRIVER_SPACES, post.space);
 
   // Al volver a la pantalla: espacio al día y clientes que esperan, desde el servidor.
   const { id, editToken } = post;
   const fresh = initialPending !== null;
   useEffect(() => {
-    if (tripPassed) {
+    if (ended) {
       onEnd();
       return;
     }
@@ -400,9 +403,9 @@ function CurrentWork({
     return () => {
       cancelled = true;
     };
-    // Solo al montar, si cambia el trabajo guardado o si su viaje ya pasó.
+    // Solo al montar, si cambia el trabajo guardado o si ya se apagó.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, editToken, fresh, tripPassed]);
+  }, [id, editToken, fresh, ended]);
 
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);

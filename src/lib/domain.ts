@@ -1,10 +1,12 @@
 // Vocabulario compartido del negocio (ver documento de producto, secciones 6-8).
 
+// El carro particular, con "Espacio en el baúl" y "Asientos traseros libres",
+// salió del MVP y queda para después (ver docs/MVP.md). Sus claves (`carro`,
+// `baul`, `asientos`) siguen permitidas en la base de datos.
 export const VEHICLE_TYPES = {
   furgon: "Furgón",
   estacas: "Estacas",
   pickup: "Pick-up",
-  carro: "Carro particular",
 } as const;
 export type VehicleType = keyof typeof VEHICLE_TYPES;
 
@@ -13,17 +15,14 @@ export const DRIVER_SPACES = {
   camion_entero: "Camión entero",
   medio_camion: "Medio camión",
   solo_paquetes: "Solo paquetes",
-  baul: "Espacio en el baúl",
-  asientos: "Asientos traseros libres",
 } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
 
-/** Espacios que tienen sentido para cada vehículo: un carro no lleva un camión entero. */
+/** Espacios que tienen sentido para cada vehículo: un pick-up no lleva un camión entero. */
 export const VEHICLE_SPACES: Record<VehicleType, readonly DriverSpace[]> = {
   furgon: ["camion_entero", "medio_camion", "solo_paquetes"],
   estacas: ["camion_entero", "medio_camion", "solo_paquetes"],
   pickup: ["medio_camion", "solo_paquetes"],
-  carro: ["baul", "asientos"],
 };
 
 export function spaceFitsVehicle(vehicle: VehicleType, space: DriverSpace): boolean {
@@ -80,8 +79,6 @@ export const SPACE_CAPACITY: Record<DriverSpace, number> = {
   camion_entero: 4,
   medio_camion: 3,
   solo_paquetes: 1,
-  baul: 1,
-  asientos: 1,
 };
 export const VOLUME_LEVEL: Record<Volume, number> = {
   sobres: 1,
