@@ -126,7 +126,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Un viaje a la vez**
 - El transportista siempre va de viaje: el formulario pregunta "¿Dónde
   estás?", "¿Hacia dónde vas?" y "¿Qué día viajas?". El destino es
-  obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026).
+  obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026). Debajo
+  del destino puede elegir "Cualquier destino" (Yohany, octubre de 2026), que
+  se guarda como `cualquiera` (`ANY_DESTINATION`) en `destination_city`.
 - Tiene una sola disponibilidad activa. Si ya tiene una, la pantalla muestra
   "Estás disponible para este servicio" con sus datos ("Viajas…"), los
   clientes que lo esperan y al final el aviso de que lo pueden llamar o
@@ -146,6 +148,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
   cuyo origen y destino quedan sobre el corredor y en el mismo sentido.
+- Con "Cualquier destino" el match es por origen: clientes del día del viaje
+  que salen del mismo municipio que el transportista, vayan a donde vayan. No
+  se mira la cercanía: un municipio vecino no cuenta.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ANY_DESTINATION } from "../domain";
 import { matchesTrip, newestBy, type AvailabilityLike, type RequestLike } from "../matching";
 
 const date = "2026-11-01";
@@ -58,6 +59,19 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver({ space: "carga_parcial" }), request({ volume: "carga_parcial" }))).toBe(true);
     expect(matchesTrip(driver({ space: "carga_parcial" }), request())).toBe(false);
     expect(matchesTrip(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBe(false);
+  });
+
+  it("con cualquier destino atiende a los que salen de su municipio, vayan a donde vayan", () => {
+    const anywhere = driver({ destination_city: ANY_DESTINATION });
+    expect(matchesTrip(anywhere, request())).toBe(true);
+    expect(matchesTrip(anywhere, request({ destination_city: "medellin" }))).toBe(true);
+    // Salir de otro municipio no sirve, aunque quede cerca o de camino.
+    expect(matchesTrip(anywhere, request({ origin_city: "cerete", destination_city: "medellin" }))).toBe(false);
+    expect(matchesTrip(anywhere, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(false);
+    // Lo demás se sigue respetando: el día, la carga y el mismo municipio.
+    expect(matchesTrip(anywhere, request({ service_date: "2026-11-02" }))).toBe(false);
+    expect(matchesTrip(driver({ destination_city: ANY_DESTINATION, space: "solo_paquetes" }), request())).toBe(false);
+    expect(matchesTrip(anywhere, request({ destination_city: "monteria" }))).toBe(false);
   });
 
   it("respeta la mano de obra pedida", () => {

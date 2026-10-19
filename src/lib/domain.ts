@@ -1,5 +1,7 @@
 // Vocabulario compartido del negocio (ver documento de producto, secciones 6-8).
 
+import { getCity } from "./cities";
+
 // La carga se mide por tamaño de casa, con la misma lista para lo que el
 // cliente va a mover y para lo que el transportista puede llevar. No se
 // pregunta el vehículo: la columna `vehicle_type` de la base queda para lo
@@ -12,6 +14,20 @@
 
 /** Origen y destino nunca son el mismo municipio, ni para el cliente ni para el transportista. */
 export const SAME_CITY_ERROR = "Elige otro municipio: no puede ser el mismo de salida.";
+
+/**
+ * "Cualquier destino": el transportista sale de su municipio y va a donde le
+ * pidan. Se guarda en `destination_city` en vez de un municipio. No es vacío
+ * porque lo que quedó guardado sin destino, de cuando era opcional, sigue
+ * apagado.
+ */
+export const ANY_DESTINATION = "cualquiera";
+export const ANY_DESTINATION_LABEL = "Cualquier destino";
+
+/** El nombre del destino del transportista, o "Cualquier destino". */
+export function destinationName(slug: string | null): string | undefined {
+  return slug === ANY_DESTINATION ? ANY_DESTINATION_LABEL : getCity(slug ?? "")?.name;
+}
 
 /** Lo que el cliente necesita mover. */
 export const VOLUMES = {

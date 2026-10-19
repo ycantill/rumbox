@@ -18,6 +18,7 @@ import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
   CLIENT_LABOR,
   DRIVER_LABOR,
+  ANY_DESTINATION,
   SAME_CITY_ERROR,
   VOLUMES,
   spaceInSentence,
@@ -315,7 +316,8 @@ function MyRequestView({
               <article key={m.id} className="card">
                 <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
                 <p className="text-sm text-muted">
-                  Va de {getCity(m.origin_city)?.name} a {getCity(m.destination_city)?.name} ·{" "}
+                  Va de {getCity(m.origin_city)?.name} a{" "}
+                  {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name} ·{" "}
                   {DRIVER_LABOR[m.labor]}
                 </p>
                 <div className="mt-3">
