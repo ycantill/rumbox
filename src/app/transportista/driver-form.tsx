@@ -280,6 +280,10 @@ function CurrentWork({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, editToken, fresh, ended]);
 
+  // Lo que no sirve no se alcanza a mostrar: con un espacio o una fecha que ya no
+  // existen, la pantalla se rompía antes de volver al formulario.
+  if (ended) return null;
+
   async function patch(change: { status?: "llena"; space?: DriverSpace }) {
     setBusy(true);
     setError(null);

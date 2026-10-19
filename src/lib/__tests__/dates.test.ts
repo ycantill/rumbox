@@ -40,4 +40,10 @@ describe("isStillValid", () => {
     expect(isStillValid(tomorrow, "2026-10-20")).toBe(true);
     expect(isStillValid(tomorrow, "2026-10-21")).toBe(false);
   });
+
+  it("sin fecha, o con una que no sirve, ya no vale", () => {
+    expect(isStillValid(undefined as unknown as string, "2026-10-18")).toBe(false);
+    expect(isStillValid("", "2026-10-18")).toBe(false);
+    expect(isStillValid("mañana", "2026-10-18")).toBe(false);
+  });
 });

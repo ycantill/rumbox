@@ -33,5 +33,7 @@ export function addDays(date: string, days: number): string {
  * para mañana se vence pasado mañana. Después se apaga sola.
  */
 export function isStillValid(serviceDate: string, today: string): boolean {
+  // Lo guardado en el teléfono por una versión vieja puede no traer la fecha.
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(serviceDate ?? "")) return false;
   return addDays(serviceDate, 1) >= today;
 }
