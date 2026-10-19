@@ -87,8 +87,18 @@ match diferido. Por eso el botón dice "Solicitar" y no "Buscar".
 Una solicitud a la vez, como el transportista: el teléfono la recuerda con un
 token (en la base solo va el hash). Si vuelve a `/solicitar`, en vez del
 formulario ve "Tu solicitud" con los transportistas que le sirven en ese
-momento, también los que aparecieron después. La lista se actualiza al volver
-a la app y cada minuto. Tiene dos botones:
+momento, también los que aparecieron después. La lista se actualiza sola
+apenas un transportista de ese día se pone disponible o cambia la suya
+(Supabase Realtime), además de al volver a la app y cada minuto.
+
+Debajo le preguntamos "¿Te avisamos cuando aparezca un transportista?". Si
+toca "Sí, avísame" y acepta el permiso del celular, le llega un aviso
+("Apareció un transportista") cuando un transportista que le sirve se pone
+disponible, aunque tenga la app cerrada. Al tocarlo se abre "Tu solicitud". Es
+Web Push, sin Firebase. En iPhone solo funciona con Muvia agregada a la
+pantalla de inicio: ahí se le explica cómo. El transportista no recibe avisos.
+
+Tiene dos botones:
 - "Ya conseguí transportista": pide confirmar ("¿Dejamos de mostrar tu
   solicitud a los transportistas?"), deja de salirles a los transportistas y
   le devuelve el formulario con los mismos datos.
@@ -140,7 +150,8 @@ abran con mala señal.
   precios reales; los precios que acuerden en el piloto servirían para eso.
 - Fotos del vehículo y de la carga (Supabase Storage).
 - Notificación proactiva por WhatsApp al transportista cuando entra una
-  solicitud en su ruta (requiere la API oficial de WhatsApp).
+  solicitud en su ruta (requiere la API oficial de WhatsApp). Al cliente ya
+  le llega un aviso al celular (Web Push) cuando aparece un transportista.
 - Reseñas automáticas 24 h después del viaje y felicitación al transportista
   (la tabla `reviews` ya existe).
 - Formularios offline que se sincronizan al recuperar señal.
