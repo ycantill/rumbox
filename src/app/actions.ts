@@ -245,6 +245,27 @@ export async function closeRequest(input: {
   });
 }
 
+export type AlertsConfig = {
+  /** Para escuchar el canal de Realtime; null si falta la configuración. */
+  live: { url: string; anonKey: string } | null;
+  /** Llave pública VAPID para suscribirse a los avisos; null si no hay avisos. */
+  vapidPublicKey: string | null;
+};
+
+/**
+ * Los datos públicos que necesita el navegador para Realtime y los avisos.
+ * Se leen en el servidor al momento, así que no hace falta el prefijo
+ * NEXT_PUBLIC_ ni volver a construir la app al cambiarlos. Ninguno es secreto.
+ */
+export async function getAlertsConfig(): Promise<AlertsConfig> {
+  const url = process.env.SUPABASE_URL;
+  const anonKey = process.env.SUPABASE_ANON_KEY;
+  return {
+    live: url && anonKey ? { url, anonKey } : null,
+    vapidPublicKey: pushEnabled() ? process.env.VAPID_PUBLIC_KEY! : null,
+  };
+}
+
 export type AlertSubscription = { endpoint: string; keys: { p256dh: string; auth: string } };
 
 /**

@@ -44,7 +44,7 @@ src/app/solicitar/               Cliente: formulario para solicitar transportist
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, createRequest, getMyRequest,
-                                 closeRequest, subscribeToAlerts)
+                                 closeRequest, getAlertsConfig, subscribeToAlerts)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
@@ -64,8 +64,9 @@ public/sw.js                     Service worker
   `src/lib/supabase.ts`, que usa la service role key solo en el servidor. Las
   tablas tienen RLS sin políticas públicas. Nunca expongas la clave al
   navegador ni le pongas el prefijo `NEXT_PUBLIC_`. El navegador solo usa la
-  anon key para escuchar el canal de Realtime, que no lleva datos; tampoco
-  expongas `VAPID_PRIVATE_KEY`.
+  anon key para escuchar el canal de Realtime, que no lleva datos, y la llave
+  pública VAPID; las dos se las da el servidor con `getAlertsConfig`, sin
+  prefijo `NEXT_PUBLIC_`. Nunca expongas `VAPID_PRIVATE_KEY`.
 - Desde el navegador, llama las Server Actions con `callServer()` de
   `src/lib/server-call.ts`. Con mala señal la llamada falla y, sin eso, el
   error rompe la pantalla y la persona pierde lo que llenó.

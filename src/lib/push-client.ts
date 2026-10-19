@@ -10,10 +10,9 @@ export type AlertState =
   | "ask" // se le puede preguntar
   | "on"; // ya aceptó
 
-export function alertState(): AlertState {
-  const vapid = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+export function alertState(vapidPublicKey: string | null): AlertState {
   // El service worker solo se registra en producción.
-  if (!vapid || process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return "no";
+  if (!vapidPublicKey || process.env.NODE_ENV !== "production" || !("serviceWorker" in navigator)) return "no";
   if (!("PushManager" in window) || !("Notification" in window)) {
     const standalone = (navigator as { standalone?: boolean }).standalone === true;
     return isIos() && !standalone ? "iphone" : "no";
@@ -30,7 +29,10 @@ function isIos(): boolean {
  * Pide permiso (si hace falta) y devuelve la suscripción del teléfono, o null
  * si la persona no aceptó.
  */
-export async function getAlertSubscription(askPermission: boolean): Promise<AlertSubscription | null> {
+export async function getAlertSubscription(
+  vapidPublicKey: string,
+  askPermission: boolean,
+): Promise<AlertSubscription | null> {
   if (Notification.permission !== "granted") {
     if (!askPermission || (await Notification.requestPermission()) !== "granted") return null;
   }
@@ -39,7 +41,7 @@ export async function getAlertSubscription(askPermission: boolean): Promise<Aler
     (await registration.pushManager.getSubscription()) ??
     (await registration.pushManager.subscribe({
       userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!),
+      applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     }));
   const json = sub.toJSON();
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return null;

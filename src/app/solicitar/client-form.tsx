@@ -1,7 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { closeRequest, createRequest, getMyRequest, subscribeToAlerts, type DriverMatch } from "@/app/actions";
+import {
+  closeRequest,
+  createRequest,
+  getAlertsConfig,
+  getMyRequest,
+  subscribeToAlerts,
+  type DriverMatch,
+} from "@/app/actions";
 import {
   CitySelect,
   Choices,
@@ -224,6 +231,8 @@ function MyRequestView({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // La llave pública de los avisos: undefined mientras se pregunta, null si no hay avisos.
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null | undefined>(undefined);
 
   // Transportistas que le sirven ahora, desde el servidor: al abrir la
   // pantalla, al volver a la app, cada minuto mientras la tiene abierta y
@@ -257,9 +266,20 @@ function MyRequestView({
         },
       );
     }
+    // Primero los datos de Realtime y avisos: las acciones del servidor van
+    // una detrás de otra, y esta es rápida porque no toca la base de datos.
+    let unlisten = () => {};
+    callServer(() => getAlertsConfig()).then((config) => {
+      if (cancelled) return;
+      if (!("vapidPublicKey" in config)) {
+        setVapidPublicKey(null);
+        return;
+      }
+      setVapidPublicKey(config.vapidPublicKey);
+      if (config.live) unlisten = listenForDrivers(config.live, date, () => refresh(true));
+    });
     if (!fresh) refresh(false);
     const stop = refreshWhileOpen(() => refresh(true));
-    const unlisten = listenForDrivers(date, () => refresh(true));
     return () => {
       cancelled = true;
       stop();
@@ -331,7 +351,9 @@ function MyRequestView({
           </section>
         ))}
 
-      <AlertsOptIn id={id} editToken={editToken} />
+      {vapidPublicKey !== undefined && (
+        <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} />
+      )}
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
@@ -365,13 +387,21 @@ function MyRequestView({
  * la app cerrada. Si ya los aceptó, el teléfono queda ligado a esta solicitud
  * sin preguntar otra vez (por ejemplo, después de "Hacer otra solicitud").
  */
-function AlertsOptIn({ id, editToken }: { id: string; editToken: string }) {
+function AlertsOptIn({
+  id,
+  editToken,
+  vapidPublicKey,
+}: {
+  id: string;
+  editToken: string;
+  vapidPublicKey: string | null;
+}) {
   const [state, setState] = useState<AlertState>("no");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const now = alertState();
+    const now = alertState(vapidPublicKey);
     if (now !== "on") {
       // Notification y PushManager solo existen en el navegador: se leen después de hidratar.
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -381,7 +411,7 @@ function AlertsOptIn({ id, editToken }: { id: string; editToken: string }) {
     // Ya los aceptó: se liga en silencio a esta solicitud. Si no se puede, se
     // le vuelve a ofrecer el botón.
     let cancelled = false;
-    getAlertSubscription(false)
+    getAlertSubscription(vapidPublicKey!, false)
       .then((sub) => (sub ? subscribeToAlerts({ id, editToken, subscription: sub }) : null))
       .then(
         (res) => !cancelled && setState(res?.ok ? "on" : "ask"),
@@ -393,15 +423,15 @@ function AlertsOptIn({ id, editToken }: { id: string; editToken: string }) {
     return () => {
       cancelled = true;
     };
-  }, [id, editToken]);
+  }, [id, editToken, vapidPublicKey]);
 
   async function turnOn() {
     setBusy(true);
     setError(null);
     try {
-      const sub = await getAlertSubscription(true);
+      const sub = await getAlertSubscription(vapidPublicKey!, true);
       if (!sub) {
-        setState(alertState());
+        setState(alertState(vapidPublicKey));
         return;
       }
       const res = await callServer(() => subscribeToAlerts({ id, editToken, subscription: sub }));

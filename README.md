@@ -91,8 +91,8 @@ El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request.
    `ycantill/muvia` (detecta Next.js solo).
 2. En **Settings → Environment Variables**, agrega `SUPABASE_URL` y
    `SUPABASE_SERVICE_ROLE_KEY` para Production y Preview, y las de avisos de
-   `.env.example` (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-   `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`).
+   `.env.example` (`SUPABASE_ANON_KEY`, `VAPID_PUBLIC_KEY`,
+   `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`).
 3. Despliega. Cada push a `main` publica en producción y cada pull request
    tiene su vista previa.
 

@@ -10,13 +10,15 @@ const SETTLE_MS = 1_000;
 
 /**
  * Escucha los cambios de transportistas de un día y llama `onChange`.
- * Devuelve cómo dejar de escuchar. Sin la configuración de Supabase no hace
- * nada: la pantalla se sigue poniendo al día cada minuto.
+ * Devuelve cómo dejar de escuchar. Sin la configuración de Supabase
+ * (`getAlertsConfig`) no se llama: la pantalla se pone al día cada minuto.
  */
-export function listenForDrivers(date: string, onChange: () => void): () => void {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) return () => {};
+export function listenForDrivers(
+  live: { url: string; anonKey: string },
+  date: string,
+  onChange: () => void,
+): () => void {
+  const { url, anonKey: key } = live;
 
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
