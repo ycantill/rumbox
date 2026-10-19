@@ -16,11 +16,14 @@ import {
 import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
+  ANY_DESTINATION,
+  ANY_DESTINATION_LABEL,
   CLIENT_LABOR_FOR_DRIVER,
   DRIVER_LABOR,
   DRIVER_SPACES,
   SAME_CITY_ERROR,
   SPACE_CAPACITY,
+  destinationName,
   isKey,
   spaceFitsVolume,
   spaceInSentence,
@@ -39,7 +42,9 @@ export type MyPost = {
   id: string;
   editToken: string;
   origin: string;
-  destination: string | null; // null en los guardados cuando el destino era opcional
+  // Un municipio o "cualquiera" (Cualquier destino). null en los guardados
+  // cuando el destino era opcional.
+  destination: string | null;
   date: string; // el día del viaje
   space: DriverSpace;
 };
@@ -151,12 +156,24 @@ export function DriverForm() {
           <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
         </Field>
 
-        {/* El match va por el corredor del viaje (Modo Ruta). Es lógica
-            interna: el transportista no la ve. */}
+        {/* El match va por el corredor del viaje (Modo Ruta) o, con "Cualquier
+            destino", por el municipio de donde sale. Es lógica interna: el
+            transportista no la ve. */}
         <Field label="¿Hacia dónde vas?">
-          {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
-          <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
-          <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
+          {destination !== ANY_DESTINATION && (
+            <>
+              {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
+              <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
+              <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
+            </>
+          )}
+          {/* Tocarlo otra vez vuelve a mostrar la lista de municipios. */}
+          <Choices
+            options={{ [ANY_DESTINATION]: { label: ANY_DESTINATION_LABEL, hint: "Vas a donde te pidan" } }}
+            value={destination === ANY_DESTINATION ? ANY_DESTINATION : ""}
+            onChange={() => setDestination(destination === ANY_DESTINATION ? "" : ANY_DESTINATION)}
+            columns={1}
+          />
         </Field>
 
         {/* Es un viaje: vale ese día y 24 horas más. */}
@@ -340,7 +357,7 @@ function CurrentWork({
       <div>
         <dt className="sr-only">Lugar</dt>
         <dd className="font-semibold">
-          {getCity(post.origin)?.name} → {getCity(post.destination)?.name}
+          {getCity(post.origin)?.name} → {destinationName(post.destination)}
         </dd>
       </div>
       <div>

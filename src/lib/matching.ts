@@ -3,11 +3,13 @@
 // En el MVP el transportista siempre va de viaje (Modo Ruta): dice de dónde
 // sale, hacia dónde va y qué día. Atiende solicitudes de ese mismo día cuyo
 // origen y destino quedan sobre su corredor vial y en el mismo sentido de
-// viaje. No hay jornadas. Las rutas que se repiten (diarias o semanales) son una mejora futura
+// viaje. Si eligió "Cualquier destino", atiende las solicitudes de ese día que
+// salen de su municipio o de uno cercano, vayan a donde vayan. No hay jornadas. Las rutas que se repiten (diarias o semanales) son una mejora futura
 // para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
 import {
+  ANY_DESTINATION,
   LABOR_LEVEL,
   LABOR_NEED,
   spaceFitsVolume,
@@ -49,8 +51,15 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas
   // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.
   if (r.origin_city === r.destination_city) return false;
-
   const driverFrom = getCity(a.origin_city);
+  // Va a donde le pidan: basta con que el cliente salga de su municipio o de
+  // uno cercano, con la misma tolerancia mínima del corredor.
+  if (a.destination_city === ANY_DESTINATION) {
+    const from = getCity(r.origin_city);
+    if (!driverFrom || !from || !getCity(r.destination_city)) return false;
+    return haversineKm(driverFrom.lat, driverFrom.lng, from.lat, from.lng) <= CORRIDOR_MIN_TOLERANCE_KM;
+  }
+
   const driverTo = getCity(a.destination_city);
   const from = getCity(r.origin_city);
   const to = getCity(r.destination_city);

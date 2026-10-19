@@ -45,6 +45,9 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   ("¿Hacia dónde vas?"). No hay modo local: Yohany lo quitó en octubre de 2026
   para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
   el Modo Ruta; la pantalla no le explica esa lógica al transportista.
+- Debajo del destino está la opción "Cualquier destino" ("Vas a donde te
+  pidan"), para el que sale de su municipio hacia donde le pidan (Yohany,
+  octubre de 2026). Su tarjeta dice "Montería → Cualquier destino".
 - Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
   tamaños), mano de obra y teléfono. No hay jornadas: Yohany las quitó en
   octubre de 2026.
@@ -103,6 +106,8 @@ preguntan.
 - Ruta: origen y destino del cliente quedan cerca del corredor del
   transportista y en el mismo sentido de viaje. No hay match por cercanía al
   origen.
+- Cualquier destino: le salen los clientes de ese día que salen de su
+  municipio o de uno cercano (a 35 km o menos), vayan a donde vayan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.

@@ -4,6 +4,7 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { getCity } from "@/lib/cities";
 import { addDays } from "@/lib/dates";
 import {
+  ANY_DESTINATION,
   CLIENT_LABOR,
   DRIVER_LABOR,
   DRIVER_SPACES,
@@ -56,7 +57,7 @@ export async function publishAvailability(input: {
 }): Promise<PublishResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   if (!getCity(input.origin)) return fail("Elige la ciudad donde estás.");
-  if (!getCity(input.destination)) return fail("Elige hacia dónde vas.");
+  if (input.destination !== ANY_DESTINATION && !getCity(input.destination)) return fail("Elige hacia dónde vas.");
   if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
   if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
   if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto puedes llevar.");
