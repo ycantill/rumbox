@@ -31,6 +31,7 @@ export type DriverMatch = {
   whatsapp: string;
 };
 
+/** Un cliente que espera, sin su teléfono: por su privacidad, el transportista no lo contacta. */
 export type PendingRequest = {
   id: string;
   origin_city: string;
@@ -38,7 +39,6 @@ export type PendingRequest = {
   service_date: string;
   volume: Volume;
   labor: ClientLabor;
-  whatsapp: string;
 };
 
 // ---------------------------------------------------------------- Transportista
@@ -316,7 +316,11 @@ async function findPendingRequests(a: {
   // Si el cliente buscó varias veces para el mismo viaje, vale la última.
   const trips = newestBy(data ?? [], (r) => [r.whatsapp, r.origin_city, r.destination_city, r.service_date].join("|"));
   for (const r of trips) {
-    if (matchesTrip(a, r)) out.push(r);
+    // El teléfono solo sirve para no repetir clientes: nunca sale del servidor.
+    if (matchesTrip(a, r)) {
+      const { id, origin_city, destination_city, service_date, volume, labor } = r;
+      out.push({ id, origin_city, destination_city, service_date, volume, labor });
+    }
   }
   return out.slice(0, 20);
 }

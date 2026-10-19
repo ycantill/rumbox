@@ -29,10 +29,14 @@ lista: "Paquetes o sobres", "Algunas cosas", "Una habitación o apartaestudio" y
 "Una casa de 2 habitaciones o más". No se pregunta el vehículo: Yohany lo quitó
 en octubre de 2026 porque lo que importa es cuánto puede llevar.
 
-**Llamada o WhatsApp.** Se pide "Tu teléfono", no "Tu WhatsApp". Cada cliente
-y cada transportista que sale en pantalla tiene dos botones: "Escribir por
+**Llamada o WhatsApp.** Se pide "Tu teléfono", no "Tu WhatsApp". Cada
+transportista que le sale al cliente tiene dos botones: "Escribir por
 WhatsApp" (con el mensaje listo) y "Llamar". Al transportista se le dice que
 los clientes lo pueden llamar o escribir por WhatsApp.
+
+**El transportista no contacta al cliente.** Por la privacidad del cliente
+(Yohany, octubre de 2026), el transportista ve los clientes que lo esperan
+pero no su número: siempre es el cliente quien llama o escribe.
 
 **Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
 escribiendo parte del nombre, con o sin tildes, o en la lista completa que se

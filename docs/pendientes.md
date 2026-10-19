@@ -100,8 +100,9 @@ se probó en un teléfono:
 - Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
 - Un teléfono que tenía guardada una disponibilidad sin destino, de antes: al
   abrir la pantalla vuelve el formulario con sus datos para elegir el destino.
-- Tocar "Llamar" en un transportista o en un cliente: debe abrir el marcador
-  con el número.
+- Tocar "Llamar" en un transportista: debe abrir el marcador con el número.
+- En la lista de clientes que esperan al transportista no sale ningún número
+  ni botón para llamar o escribir.
 - Un teléfono que tenía guardado un carro particular: si estaba disponible,
   vuelve el formulario con sus datos y sin elegir cuánto puede llevar.
 - El transportista ya no ve "¿Qué vehículo tienes?": elige en "¿Cuánto puedes
@@ -178,3 +179,6 @@ se probó en un teléfono:
 - **PR #24:** "Cualquier destino" para el transportista: le salen los clientes
   del día que salen de su municipio o de uno cercano, vayan a donde vayan. No necesita
   migración.
+- **PR #25:** el transportista ya no ve el número de los clientes que lo
+  esperan, por la privacidad del cliente: siempre es el cliente quien llama o
+  escribe. No necesita migración.

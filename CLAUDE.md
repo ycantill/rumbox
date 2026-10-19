@@ -106,10 +106,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Llamada o WhatsApp**
 - Se pide "Tu teléfono", no "Tu WhatsApp": el número sirve para llamar y para
   escribir por WhatsApp. Al transportista se le dice que los clientes lo
-  pueden llamar o escribir por WhatsApp, y al cliente, que el transportista lo
-  llama o le escribe por WhatsApp.
-- Cada tarjeta para contactar (los transportistas en los resultados del
-  cliente y los clientes que esperan al transportista) tiene "Escribir por
+  pueden llamar o escribir por WhatsApp.
+- El transportista no contacta al cliente (Yohany, octubre de 2026): por la
+  privacidad del cliente, siempre es el cliente quien llama o escribe. El
+  transportista ve los clientes que lo esperan, pero no su número: el servidor
+  no lo manda (`PendingRequest` no lo trae). Al cliente se le dice que los
+  transportistas no ven su teléfono.
+- Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
 - La columna `whatsapp` de la base y los campos que guarda el navegador

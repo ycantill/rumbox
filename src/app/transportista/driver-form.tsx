@@ -5,7 +5,6 @@ import { getMyAvailability, publishAvailability, updateAvailability, type Pendin
 import {
   CitySelect,
   Choices,
-  ContactButtons,
   DayPicker,
   ErrorNote,
   Field,
@@ -224,7 +223,11 @@ function PendingList({ items }: { items: PendingRequest[] }) {
   }
   return (
     <section className="flex flex-col gap-3">
-      <h3 className="font-semibold">Clientes buscando transportista</h3>
+      <div>
+        <h3 className="font-semibold">Clientes buscando transportista</h3>
+        {/* Por la privacidad del cliente, el transportista no ve su número. */}
+        <p className="text-sm text-muted">Ellos ven tu número y te llaman o te escriben por WhatsApp.</p>
+      </div>
       {items.map((r) => (
         <article key={r.id} className="card">
           <p className="font-semibold">
@@ -237,12 +240,6 @@ function PendingList({ items }: { items: PendingRequest[] }) {
             {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
             {r.volume !== "sobres" && ` · ${CLIENT_LABOR_FOR_DRIVER[r.labor]}`}
           </p>
-          <div className="mt-3">
-            <ContactButtons
-              phone={r.whatsapp}
-              message={`Hola, vi tu solicitud en Muvia de ${getCity(r.origin_city)?.name} a ${getCity(r.destination_city)?.name} para ${whenText(r.service_date, today, tomorrow)}. Puedo hacerte el viaje.`}
-            />
-          </div>
         </article>
       ))}
     </section>

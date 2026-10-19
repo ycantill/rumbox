@@ -28,7 +28,6 @@ import {
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
-import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
 /** La solicitud que el cliente tiene abierta, guardada en su teléfono. Una a la vez. */
 export type MyRequest = {
@@ -133,7 +132,6 @@ export function ClientForm() {
       <MyRequestView
         key={current.id}
         request={current}
-        phone={normalizeWhatsApp(whatsapp)}
         matches={matches}
         onRestart={() => {
           // El formulario vuelve con los mismos datos, para cambiar solo lo que haga falta.
@@ -182,7 +180,7 @@ export function ClientForm() {
           </Field>
         )}
 
-        <Field label="Tu teléfono" hint="El transportista te llama o te escribe por WhatsApp a este número.">
+        <Field label="Tu teléfono" hint="Solo lo guardamos nosotros: los transportistas no lo ven.">
           <input
             type="tel"
             inputMode="tel"
@@ -210,14 +208,11 @@ export function ClientForm() {
  */
 function MyRequestView({
   request,
-  phone,
   matches: initialMatches,
   onRestart,
   onEnd,
 }: {
   request: MyRequest;
-  /** El teléfono del cliente como quedó guardado, para que vea si está bien. */
-  phone: string | null;
   matches: DriverMatch[] | null;
   onRestart: () => void;
   onEnd: () => void;
@@ -301,9 +296,9 @@ function MyRequestView({
           <section className="card">
             <h2 className="font-semibold">Guardamos tu solicitud</h2>
             <p className="mt-1 text-sm text-muted">
-              Ahora mismo no hay transportistas libres para ese viaje. Apenas aparezca uno, verá
-              tu pedido y te llamará o te escribirá por WhatsApp{phone ? ` al ${formatWhatsApp(phone)}` : ""}.
-              También puedes volver aquí para ver si apareció alguno. El precio lo acuerdan cuando hablen.
+              Ahora mismo no hay transportistas libres para ese viaje. Apenas aparezca uno, te sale aquí
+              para que lo llames o le escribas por WhatsApp. Vuelve cuando quieras a mirar. El precio lo
+              acuerdan cuando hablen.
             </p>
           </section>
         ) : (
