@@ -35,8 +35,9 @@ WhatsApp" (con el mensaje listo) y "Llamar". Al transportista se le dice que
 los clientes lo pueden llamar o escribir por WhatsApp.
 
 **El transportista no contacta al cliente.** Por la privacidad del cliente
-(Yohany, octubre de 2026), el transportista ve los clientes que lo esperan
-pero no su número: siempre es el cliente quien llama o escribe.
+(Yohany, octubre de 2026), siempre es el cliente quien llama o escribe. El
+transportista no ve ninguna lista de clientes: una lista con la que no puede
+hacer nada solo frustra. Espera que lo llamen.
 
 **Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
 escribiendo parte del nombre, con o sin tildes, o en la lista completa que se
@@ -60,16 +61,14 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
-  "Estás disponible para este servicio" con sus datos, los clientes que lo
-  están esperando (match diferido) y el día de cada uno, "Solo queda espacio
+  "Estás disponible para este servicio" con sus datos, "Solo queda espacio
   para paquetes" y "Ya no voy a trabajar". Ese último botón (que también sirve
   si se llenó) lo apaga y le devuelve el formulario con los mismos datos para
   ponerse otra vez cuando quiera. Se controla con un token que solo vive en su
   teléfono.
-- La lista de clientes que lo esperan se actualiza sola: al volver a la app
-  (por ejemplo, después de escribir por WhatsApp) y cada minuto mientras la
-  tiene abierta. Así ve a los que solicitan después de que él se puso
-  disponible.
+- La pantalla revisa sola, al volver a la app y cada minuto, si su
+  disponibilidad sigue encendida. Los clientes que solicitan después de que
+  él se puso disponible lo ven en su lista y lo llaman.
 
 **Pantalla del cliente** (`/solicitar`)
 - Una sola pantalla, casi igual a la del transportista: sin pasos, con las
@@ -101,9 +100,8 @@ Vale el día del viaje y 24 horas más: después se olvida y vuelve el formulari
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
-la carga por tamaño de casa hace menos preciso cualquier cálculo. Para que el
-transportista sepa qué cobrar, en su lista de clientes que esperan ve qué
-mueve cada uno y si necesita ayuda para cargar. Las escaleras ya no se
+la carga por tamaño de casa hace menos preciso cualquier cálculo. Qué mueve el
+cliente y si necesita ayuda para cargar lo hablan en la llamada. Las escaleras ya no se
 preguntan.
 
 **Emparejamiento** (`src/lib/matching.ts`)

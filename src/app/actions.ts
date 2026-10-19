@@ -31,20 +31,10 @@ export type DriverMatch = {
   whatsapp: string;
 };
 
-/** Un cliente que espera, sin su teléfono: por su privacidad, el transportista no lo contacta. */
-export type PendingRequest = {
-  id: string;
-  origin_city: string;
-  destination_city: string;
-  service_date: string;
-  volume: Volume;
-  labor: ClientLabor;
-};
-
 // ---------------------------------------------------------------- Transportista
 
 export type PublishResult =
-  | { ok: true; id: string; editToken: string; pending: PendingRequest[] }
+  | { ok: true; id: string; editToken: string }
   | Fail;
 
 export async function publishAvailability(input: {
@@ -80,13 +70,9 @@ export async function publishAvailability(input: {
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db().from("availabilities").insert(row).select("id").single();
     if (error) throw error;
-    // Vía B (match diferido): solicitudes que estaban esperando un transportista.
-    const pending = await findPendingRequests({
-      ...row,
-      space: input.space as DriverSpace,
-      labor: input.labor as DriverLabor,
-    });
-    return { ok: true as const, id: data.id as string, editToken, pending };
+    // No se le muestran los clientes que esperan: por su privacidad, ellos lo
+    // ven a él (Vía B) y son los que llaman o escriben.
+    return { ok: true as const, id: data.id as string, editToken };
   });
 }
 
@@ -121,12 +107,12 @@ export async function updateAvailability(input: {
 }
 
 export type MyAvailabilityResult =
-  | { ok: true; status: "activa" | "llena"; space: DriverSpace; pending: PendingRequest[] }
+  | { ok: true; status: "activa" | "llena"; space: DriverSpace }
   | (Fail & { gone?: true });
 
 /**
  * El trabajo que el transportista tiene guardado en este teléfono, leído de la
- * base de datos (por si cambió) junto con los clientes que lo están esperando.
+ * base de datos, por si cambió o se apagó.
  */
 export async function getMyAvailability(input: { id: string; editToken: string }): Promise<MyAvailabilityResult> {
   return withDb(DRIVER_DB_ERROR, async () => {
@@ -148,8 +134,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       isKey(DRIVER_SPACES, data.space) &&
       data.service_date >= yesterdayInBogota();
     const status = active ? "activa" : "llena";
-    const pending = status === "activa" ? await findPendingRequests(data) : [];
-    return { ok: true as const, status, space: data.space, pending };
+    return { ok: true as const, status, space: data.space };
   });
 }
 
@@ -294,35 +279,6 @@ async function findDrivers(r: {
     if (matchesTrip(a, r)) matches.push(a);
   }
   return matches.slice(0, 20);
-}
-
-async function findPendingRequests(a: {
-  origin_city: string;
-  destination_city: string;
-  service_date: string;
-  space: DriverSpace;
-  labor: DriverLabor;
-}): Promise<PendingRequest[]> {
-  // Solo los clientes del día del viaje.
-  const { data, error } = await db()
-    .from("requests")
-    .select("id, origin_city, destination_city, service_date, volume, labor, whatsapp")
-    .eq("status", "abierta")
-    .eq("service_date", a.service_date)
-    .order("created_at", { ascending: false })
-    .limit(500);
-  if (error) throw error;
-  const out: PendingRequest[] = [];
-  // Si el cliente buscó varias veces para el mismo viaje, vale la última.
-  const trips = newestBy(data ?? [], (r) => [r.whatsapp, r.origin_city, r.destination_city, r.service_date].join("|"));
-  for (const r of trips) {
-    // El teléfono solo sirve para no repetir clientes: nunca sale del servidor.
-    if (matchesTrip(a, r)) {
-      const { id, origin_city, destination_city, service_date, volume, labor } = r;
-      out.push({ id, origin_city, destination_city, service_date, volume, labor });
-    }
-  }
-  return out.slice(0, 20);
 }
 
 function fail(error: string): Fail {

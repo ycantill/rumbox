@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { getMyAvailability, publishAvailability, updateAvailability, type PendingRequest } from "@/app/actions";
+import { getMyAvailability, publishAvailability, updateAvailability } from "@/app/actions";
 import {
   CitySelect,
   Choices,
@@ -13,20 +13,17 @@ import {
   useServiceDay,
 } from "@/components/ui";
 import { getCity } from "@/lib/cities";
-import { capitalize, isStillValid, whenText } from "@/lib/dates";
+import { isStillValid, whenText } from "@/lib/dates";
 import {
   ANY_DESTINATION,
   ANY_DESTINATION_LABEL,
-  CLIENT_LABOR_FOR_DRIVER,
   DRIVER_LABOR,
   DRIVER_SPACES,
   SAME_CITY_ERROR,
   SPACE_CAPACITY,
   destinationName,
   isKey,
-  spaceFitsVolume,
   spaceInSentence,
-  VOLUMES,
   type DriverLabor,
   type DriverSpace,
 } from "@/lib/domain";
@@ -58,7 +55,8 @@ export function DriverForm() {
   const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingRequest[] | null>(null);
+  // Si se acaba de poner disponible: el título dice "¡Listo!".
+  const [justPublished, setJustPublished] = useState(false);
   const [posts, setPosts] = useState<MyPost[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -91,7 +89,7 @@ export function DriverForm() {
       if (isKey(DRIVER_SPACES, current.space)) setSpace(current.space);
     }
     setPosts([]);
-    setPending(null);
+    setJustPublished(false);
     save(KEYS.driverPosts, []);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -124,7 +122,7 @@ export function DriverForm() {
         space: space as DriverSpace,
       };
       updateCurrent(post);
-      setPending(res.pending);
+      setJustPublished(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
@@ -137,8 +135,7 @@ export function DriverForm() {
         key={current.id}
         post={current}
         phone={normalizeWhatsApp(whatsapp)}
-        justPublished={pending !== null}
-        pending={pending}
+        justPublished={justPublished}
         onChange={updateCurrent}
         onEnd={endCurrent}
       />
@@ -211,46 +208,10 @@ export function DriverForm() {
   );
 }
 
-function PendingList({ items }: { items: PendingRequest[] }) {
-  const { today, tomorrow } = useBogotaDates();
-  if (items.length === 0) {
-    return (
-      <p className="text-sm text-muted">
-        Por ahora nadie está buscando transportista. Cuando alguien busque, le mostramos tu número y también te
-        sale aquí.
-      </p>
-    );
-  }
-  return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h3 className="font-semibold">Clientes buscando transportista</h3>
-        {/* Por la privacidad del cliente, el transportista no ve su número. */}
-        <p className="text-sm text-muted">Ellos ven tu número y te llaman o te escriben por WhatsApp.</p>
-      </div>
-      {items.map((r) => (
-        <article key={r.id} className="card">
-          <p className="font-semibold">
-            {getCity(r.origin_city)?.name} → {getCity(r.destination_city)?.name}
-          </p>
-          <p className="text-sm text-muted">
-            {capitalize(whenText(r.service_date, today, tomorrow))}
-            {" · "}
-            {VOLUMES[r.volume].label}
-            {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
-            {r.volume !== "sobres" && ` · ${CLIENT_LABOR_FOR_DRIVER[r.labor]}`}
-          </p>
-        </article>
-      ))}
-    </section>
-  );
-}
-
 function CurrentWork({
   post,
   phone,
   justPublished,
-  pending: initialPending,
   onChange,
   onEnd,
 }: {
@@ -258,12 +219,10 @@ function CurrentWork({
   /** El teléfono con que se puso disponible, para que vea si quedó bien. */
   phone: string | null;
   justPublished: boolean;
-  pending: PendingRequest[] | null;
   onChange: (p: MyPost) => void;
   onEnd: () => void;
 }) {
   const { today, tomorrow } = useBogotaDates();
-  const [pending, setPending] = useState<PendingRequest[] | null>(initialPending);
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -274,11 +233,11 @@ function CurrentWork({
   // (baúl o asientos): ahora tiene que elegir otra vez.
   const ended = !post.destination || !isStillValid(post.date, today) || !isKey(DRIVER_SPACES, post.space);
 
-  // Espacio al día y clientes que esperan, desde el servidor: al abrir la
-  // pantalla, al volver a la app y cada minuto mientras la tiene abierta. Así
-  // ve a los clientes que solicitan después de que él se puso disponible.
+  // Si sigue encendida y el espacio al día, desde el servidor: al abrir la
+  // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No
+  // ve a los clientes: por su privacidad, ellos son los que lo llaman.
   const { id, editToken } = post;
-  const fresh = initialPending !== null;
+  const fresh = justPublished;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva ni
   // lo que acaba de cambiar con los botones.
   const latest = useRef(0);
@@ -302,7 +261,6 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
-          setPending(res.pending);
           onChange({ ...post, space: res.space });
         },
         () => {
@@ -340,8 +298,6 @@ function CurrentWork({
   async function onlyPackages() {
     if (!(await patch({ space: "solo_paquetes" }))) return;
     onChange({ ...post, space: "solo_paquetes" });
-    // Los clientes que ya no caben dejan de salir en la lista.
-    setPending((list) => list && list.filter((r) => spaceFitsVolume("solo_paquetes", r.volume)));
   }
 
   async function end() {
@@ -409,7 +365,6 @@ function CurrentWork({
         )}
       </div>
 
-      {pending && <PendingList items={pending} />}
     </div>
   );
 }

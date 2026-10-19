@@ -67,13 +67,6 @@ export const CLIENT_LABOR = {
 } as const;
 export type ClientLabor = keyof typeof CLIENT_LABOR;
 
-/** La ayuda que pidió el cliente, contada al transportista. */
-export const CLIENT_LABOR_FOR_DRIVER: Record<ClientLabor, string> = {
-  yo_cargo: "El cliente carga",
-  conductor: "Necesita que ayudes a cargar",
-  ayudantes: "Necesita ayudantes extra",
-};
-
 /** Capacidad relativa: un espacio sirve para volúmenes de nivel igual o menor. */
 export const SPACE_CAPACITY: Record<DriverSpace, number> = {
   camion_entero: 4,
