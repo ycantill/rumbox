@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { closeRequest, createRequest, getMyRequest, type DriverMatch } from "@/app/actions";
+import { closeRequest, createRequest, getMyRequest, subscribeToAlerts, type DriverMatch } from "@/app/actions";
 import {
   CitySelect,
   Choices,
@@ -25,7 +25,9 @@ import {
   type ClientLabor,
   type Volume,
 } from "@/lib/domain";
+import { listenForDrivers } from "@/lib/live";
 import { KEYS, load, save } from "@/lib/local-store";
+import { alertState, getAlertSubscription, type AlertState } from "@/lib/push-client";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 
@@ -224,8 +226,9 @@ function MyRequestView({
   const [error, setError] = useState<string | null>(null);
 
   // Transportistas que le sirven ahora, desde el servidor: al abrir la
-  // pantalla, al volver a la app y cada minuto mientras la tiene abierta.
-  const { id, editToken } = request;
+  // pantalla, al volver a la app, cada minuto mientras la tiene abierta y
+  // apenas un transportista de ese día se pone disponible o cambia la suya.
+  const { id, editToken, date } = request;
   const fresh = initialMatches !== null;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva.
   const latest = useRef(0);
@@ -256,13 +259,15 @@ function MyRequestView({
     }
     if (!fresh) refresh(false);
     const stop = refreshWhileOpen(() => refresh(true));
+    const unlisten = listenForDrivers(date, () => refresh(true));
     return () => {
       cancelled = true;
       stop();
+      unlisten();
     };
     // Solo al montar o si cambia la solicitud guardada.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, editToken, fresh]);
+  }, [id, editToken, date, fresh]);
 
   async function end() {
     setBusy(true);
@@ -326,6 +331,8 @@ function MyRequestView({
           </section>
         ))}
 
+      <AlertsOptIn id={id} editToken={editToken} />
+
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
         {confirmEnd ? (
@@ -350,5 +357,96 @@ function MyRequestView({
         </button>
       </div>
     </div>
+  );
+}
+
+/**
+ * "Avísame": un aviso al celular cuando aparece un transportista, aunque tenga
+ * la app cerrada. Si ya los aceptó, el teléfono queda ligado a esta solicitud
+ * sin preguntar otra vez (por ejemplo, después de "Hacer otra solicitud").
+ */
+function AlertsOptIn({ id, editToken }: { id: string; editToken: string }) {
+  const [state, setState] = useState<AlertState>("no");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const now = alertState();
+    if (now !== "on") {
+      // Notification y PushManager solo existen en el navegador: se leen después de hidratar.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setState(now);
+      return;
+    }
+    // Ya los aceptó: se liga en silencio a esta solicitud. Si no se puede, se
+    // le vuelve a ofrecer el botón.
+    let cancelled = false;
+    getAlertSubscription(false)
+      .then((sub) => (sub ? subscribeToAlerts({ id, editToken, subscription: sub }) : null))
+      .then(
+        (res) => !cancelled && setState(res?.ok ? "on" : "ask"),
+        (err) => {
+          console.error(err);
+          if (!cancelled) setState("ask");
+        },
+      );
+    return () => {
+      cancelled = true;
+    };
+  }, [id, editToken]);
+
+  async function turnOn() {
+    setBusy(true);
+    setError(null);
+    try {
+      const sub = await getAlertSubscription(true);
+      if (!sub) {
+        setState(alertState());
+        return;
+      }
+      const res = await callServer(() => subscribeToAlerts({ id, editToken, subscription: sub }));
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      setState("on");
+    } catch (err) {
+      console.error(err);
+      setError("No pudimos activar el aviso en este celular.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (state === "no") return null;
+
+  if (state === "on") {
+    return <p className="text-sm text-muted">Te avisamos al celular cuando aparezca un transportista.</p>;
+  }
+
+  if (state === "iphone") {
+    return (
+      <section className="card">
+        <h2 className="font-semibold">¿Quieres que te avisemos?</h2>
+        <p className="mt-1 text-sm text-muted">
+          En iPhone, primero agrega Muvia a tu pantalla de inicio: toca el botón de compartir y luego
+          &ldquo;Agregar a inicio&rdquo;. Ábrela desde ahí y te podremos avisar cuando aparezca un
+          transportista.
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="card flex flex-col gap-3">
+      <div>
+        <h2 className="font-semibold">¿Te avisamos cuando aparezca un transportista?</h2>
+        <p className="mt-1 text-sm text-muted">Te llega un aviso al celular, aunque tengas la app cerrada.</p>
+      </div>
+      <ErrorNote message={error} />
+      <button type="button" className="btn-primary" disabled={busy} onClick={turnOn}>
+        {busy ? "Un momento…" : "Sí, avísame"}
+      </button>
+    </section>
   );
 }

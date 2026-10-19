@@ -28,7 +28,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 Contar cuántas veces se tocan los botones de WhatsApp y de llamar, del cliente
 al transportista y al revés. Es el número que dice si el piloto funciona: el
 objetivo del MVP es validar que clientes y transportistas se conectan. Necesita
-una tabla nueva, en una migración (`supabase/migrations/0006_...sql`) que
+una tabla nueva, en una migración (`supabase/migrations/0007_...sql`) que
 Yohany corre en Supabase antes de desplegar.
 
 ### 18. Compartir por WhatsApp o con código QR
@@ -50,6 +50,15 @@ guardarse dos veces (las listas ya no muestran repetidos).
 
 Lo construido en octubre de 2026 pasó lint, typecheck, pruebas y build, pero no
 se probó en un teléfono:
+
+- Avisos (con las llaves VAPID y la migración `0006_avisos.sql`): el cliente
+  solicita, toca "Sí, avísame", acepta el permiso y cierra la app. Un
+  transportista que le sirve se pone disponible: le llega "Apareció un
+  transportista" y al tocarlo abre "Tu solicitud" con el transportista. Probar
+  en Android y en un iPhone con Muvia agregada a la pantalla de inicio.
+- Con "Tu solicitud" abierta, un transportista que le sirve se pone disponible
+  en otro teléfono: aparece en la lista en un par de segundos, sin esperar el
+  minuto.
 
 - El transportista está disponible y un cliente solicita después: al volver
   a la app (o al minuto, con la pantalla abierta), el cliente le sale en la
@@ -183,3 +192,7 @@ se probó en un teléfono:
   escribe. No necesita migración.
 - **PR #27:** "Cualquier destino" pasa a ser la primera opción de la lista del
   destino, en vez de un botón aparte. No necesita migración.
+- **PR #28:** la lista del cliente se actualiza sola con Supabase Realtime, y
+  al cliente le llega un aviso al celular (Web Push) cuando aparece un
+  transportista que le sirve. Requiere la migración `0006_avisos.sql`, las
+  llaves VAPID y las variables de `.env.example` en Vercel.
