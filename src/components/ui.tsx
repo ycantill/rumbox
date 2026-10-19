@@ -2,6 +2,7 @@
 
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
+import { ANY_DESTINATION, ANY_DESTINATION_HINT, ANY_DESTINATION_LABEL } from "@/lib/domain";
 import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
@@ -39,6 +40,7 @@ export function CitySelect({
   placeholder = "Escribe o elige",
   name,
   exclude,
+  anyDestination = false,
 }: {
   value: string;
   onChange: (slug: string) => void;
@@ -46,6 +48,8 @@ export function CitySelect({
   name: string;
   /** Municipio que no sale en la lista porque ya está elegido en el otro campo. */
   exclude?: string;
+  /** Destino del transportista: "Cualquier destino" va primero en la lista. */
+  anyDestination?: boolean;
 }) {
   const listId = useId();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -59,16 +63,19 @@ export function CitySelect({
   // La lista completa, que se abre con la flecha (o con ↓ desde el teclado).
   const [browsing, setBrowsing] = useState(false);
   const [active, setActive] = useState(0);
-  const selected = getCity(value);
+  const any = anyDestination ? ANY_OPTION : null;
+  const selected = any && value === any.slug ? any : getCity(value);
 
   const searching = typed !== null && simplify(typed) !== "";
   const found = searching ? searchCities(typed) : [];
   const groups = exclude ? withoutCity(exclude) : CITIES_BY_DEPARTMENT;
+  // "Cualquier destino" sale arriba de la lista completa y al buscarlo.
+  const lead = any && (!searching || matchesAny(typed)) ? [any] : [];
   // En el orden en que se ven, para moverse con el teclado.
   const options = searching
-    ? found.filter((c) => c.slug !== exclude)
+    ? [...lead, ...found.filter((c) => c.slug !== exclude)]
     : browsing
-      ? groups.flatMap((d) => d.cities)
+      ? [...lead, ...groups.flatMap((d) => d.cities)]
       : [];
   const open = searching || browsing;
 
@@ -89,7 +96,7 @@ export function CitySelect({
     setTyped(null);
     setBrowsing(true);
     // Sin municipio elegido no se resalta ninguno: nada de sugerir.
-    const index = selected ? groups.flatMap((d) => d.cities).indexOf(selected) : -1;
+    const index = selected ? [...lead, ...groups.flatMap((d) => d.cities)].indexOf(selected) : -1;
     setActive(index);
     // Si ya había uno elegido, la lista abre mostrándolo.
     requestAnimationFrame(() => {
@@ -106,7 +113,9 @@ export function CitySelect({
     setBrowsing(false);
     if (text === null || !simplify(text)) return;
     // Escribió el nombre completo y no lo tocó en la lista: se toma igual.
-    const exact = searchCities(text).find((c) => c.slug !== exclude && simplify(c.name) === simplify(text));
+    const exact = [...(any ? [any] : []), ...searchCities(text)].find(
+      (c) => c.slug !== exclude && simplify(c.name) === simplify(text),
+    );
     if (exact) onChange(exact.slug);
   }
 
@@ -239,21 +248,28 @@ export function CitySelect({
           className="absolute z-20 mt-1 max-h-80 w-full overflow-auto rounded-xl border border-line bg-surface shadow-lg"
         >
           {searching
-            ? options.map((c, i) => option(c, i, c.name, c.name.endsWith(`(${c.department})`) ? undefined : c.department))
-            : groups.map(({ department, cities }, g) => (
-                <li key={department} role="group" aria-labelledby={`${listId}-g${g}`}>
-                  <div
-                    id={`${listId}-g${g}`}
-                    role="presentation"
-                    className="sticky top-0 z-10 bg-surface-2 px-3 py-1.5 text-xs font-semibold text-muted"
-                  >
-                    {department}
-                  </div>
-                  <ul role="none">
-                    {cities.map((c) => option(c, index++, c.name.replace(` (${department})`, "")))}
-                  </ul>
-                </li>
-              ))}
+            ? options.map((c, i) =>
+                option(c, i, c.name, c === any ? ANY_DESTINATION_HINT : c.name.endsWith(`(${c.department})`) ? undefined : c.department),
+              )
+            : (
+                <>
+                  {lead.map((c) => option(c, index++, c.name, ANY_DESTINATION_HINT))}
+                  {groups.map(({ department, cities }, g) => (
+                    <li key={department} role="group" aria-labelledby={`${listId}-g${g}`}>
+                      <div
+                        id={`${listId}-g${g}`}
+                        role="presentation"
+                        className="sticky top-0 z-10 bg-surface-2 px-3 py-1.5 text-xs font-semibold text-muted"
+                      >
+                        {department}
+                      </div>
+                      <ul role="none">
+                        {cities.map((c) => option(c, index++, c.name.replace(` (${department})`, "")))}
+                      </ul>
+                    </li>
+                  ))}
+                </>
+              )}
         </ul>
       )}
       {searching && options.length === 0 && (
@@ -267,6 +283,16 @@ export function CitySelect({
       )}
     </div>
   );
+}
+
+/** "Cualquier destino" como una opción más de la lista, sin departamento ni lugar. */
+const ANY_OPTION: City = { slug: ANY_DESTINATION, name: ANY_DESTINATION_LABEL, department: "", lat: 0, lng: 0 };
+
+/** Si lo escrito busca "Cualquier destino": "cual", "destino", "cualquiera"… */
+function matchesAny(text: string): boolean {
+  const q = simplify(text);
+  const label = simplify(ANY_DESTINATION_LABEL);
+  return label.startsWith(q) || label.split(" ").some((w) => w.startsWith(q)) || q.startsWith("cualquier");
 }
 
 /**

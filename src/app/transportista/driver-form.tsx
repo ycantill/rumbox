@@ -15,8 +15,6 @@ import {
 import { getCity } from "@/lib/cities";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
-  ANY_DESTINATION,
-  ANY_DESTINATION_LABEL,
   DRIVER_LABOR,
   DRIVER_SPACES,
   SAME_CITY_ERROR,
@@ -156,20 +154,10 @@ export function DriverForm() {
             destino", por el municipio de donde sale. Es lógica interna: el
             transportista no la ve. */}
         <Field label="¿Hacia dónde vas?">
-          {destination !== ANY_DESTINATION && (
-            <>
-              {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
-              <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
-              <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
-            </>
-          )}
-          {/* Tocarlo otra vez vuelve a mostrar la lista de municipios. */}
-          <Choices
-            options={{ [ANY_DESTINATION]: { label: ANY_DESTINATION_LABEL, hint: "Vas a donde te pidan" } }}
-            value={destination === ANY_DESTINATION ? ANY_DESTINATION : ""}
-            onChange={() => setDestination(destination === ANY_DESTINATION ? "" : ANY_DESTINATION)}
-            columns={1}
-          />
+          {/* "Cualquier destino" es la primera opción de la lista. El origen no
+              sale en ella; aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
+          <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} anyDestination />
+          <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
 
         {/* Es un viaje: vale ese día y 24 horas más. */}

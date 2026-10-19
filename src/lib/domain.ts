@@ -23,6 +23,7 @@ export const SAME_CITY_ERROR = "Elige otro municipio: no puede ser el mismo de s
  */
 export const ANY_DESTINATION = "cualquiera";
 export const ANY_DESTINATION_LABEL = "Cualquier destino";
+export const ANY_DESTINATION_HINT = "Vas a donde te pidan";
 
 /** El nombre del destino del transportista, o "Cualquier destino". */
 export function destinationName(slug: string | null): string | undefined {

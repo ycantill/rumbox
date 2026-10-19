@@ -129,9 +129,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Un viaje a la vez**
 - El transportista siempre va de viaje: el formulario pregunta "¿Dónde
   estás?", "¿Hacia dónde vas?" y "¿Qué día viajas?". El destino es
-  obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026). Debajo
-  del destino puede elegir "Cualquier destino" (Yohany, octubre de 2026), que
-  se guarda como `cualquiera` (`ANY_DESTINATION`) en `destination_city`.
+  obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026). En la lista
+  del destino, la primera opción es "Cualquier destino" ("Vas a donde te
+  pidan"), no un botón aparte (Yohany, octubre de 2026). También sale al
+  escribir "cual" o "destino". Viene de `anyDestination` en `CitySelect` y se
+  guarda como `cualquiera` (`ANY_DESTINATION`) en `destination_city`.
 - Tiene una sola disponibilidad activa. Si ya tiene una, la pantalla muestra
   "Estás disponible para este servicio" con sus datos ("Viajas…") y el
   aviso de que los clientes lo llaman o le escriben por WhatsApp, en vez del

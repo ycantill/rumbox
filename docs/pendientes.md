@@ -92,8 +92,8 @@ se probó en un teléfono:
   destino. El cliente no puede continuar y el transportista no puede ponerse
   disponible.
 - Sin elegir hacia dónde va, no deja ponerse disponible.
-- Tocar "Cualquier destino": se esconde la lista de municipios y, al tocarlo
-  otra vez, vuelve. La tarjeta dice "… → Cualquier destino", le salen los
+- "Cualquier destino" sale de primero al tocar la flecha del destino y al
+  escribir "cual"; al elegirlo, el campo lo muestra. La tarjeta dice "… → Cualquier destino", le salen los
   clientes que salen de su municipio o de uno cercano y al cliente le sale "Va de … a
   cualquier destino".
 - Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
@@ -181,3 +181,5 @@ se probó en un teléfono:
 - **PR #25:** el transportista ya no ve a los clientes que lo esperan, ni su
   número, por la privacidad del cliente: siempre es el cliente quien llama o
   escribe. No necesita migración.
+- **PR #27:** "Cualquier destino" pasa a ser la primera opción de la lista del
+  destino, en vez de un botón aparte. No necesita migración.
