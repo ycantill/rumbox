@@ -106,8 +106,8 @@ preguntan.
 - Ruta: origen y destino del cliente quedan cerca del corredor del
   transportista y en el mismo sentido de viaje. No hay match por cercanía al
   origen.
-- Cualquier destino: le salen los clientes de ese día que salen de su mismo
-  municipio, vayan a donde vayan. Los de un municipio vecino no le salen.
+- Cualquier destino: le salen los clientes de ese día que salen de su
+  municipio o de uno cercano (a 35 km o menos), vayan a donde vayan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.

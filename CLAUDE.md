@@ -149,8 +149,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
   cuyo origen y destino quedan sobre el corredor y en el mismo sentido.
 - Con "Cualquier destino" el match es por origen: clientes del día del viaje
-  que salen del mismo municipio que el transportista, vayan a donde vayan. No
-  se mira la cercanía: un municipio vecino no cuenta.
+  que salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
+  corredor), vayan a donde vayan (Yohany, octubre de 2026).
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
@@ -160,8 +160,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   (`SAME_CITY_ERROR`) debajo del destino: el cliente no puede continuar y el
   servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
   salen a ningún transportista.
-- No hay match por cercanía (el antiguo radio de 40 km alrededor del origen)
-  ni opción Local/Nacional.
+- Fuera de "Cualquier destino" no hay match por cercanía (el antiguo radio de
+  40 km alrededor del origen), ni opción Local/Nacional.
 - El transportista no debe ver esta lógica en la pantalla.
 
 **El día, sin jornadas**

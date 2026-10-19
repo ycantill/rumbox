@@ -61,12 +61,13 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBe(false);
   });
 
-  it("con cualquier destino atiende a los que salen de su municipio, vayan a donde vayan", () => {
+  it("con cualquier destino atiende a los que salen de su municipio o de uno cercano, vayan a donde vayan", () => {
     const anywhere = driver({ destination_city: ANY_DESTINATION });
     expect(matchesTrip(anywhere, request())).toBe(true);
     expect(matchesTrip(anywhere, request({ destination_city: "medellin" }))).toBe(true);
-    // Salir de otro municipio no sirve, aunque quede cerca o de camino.
-    expect(matchesTrip(anywhere, request({ origin_city: "cerete", destination_city: "medellin" }))).toBe(false);
+    // Cereté queda al lado de Montería.
+    expect(matchesTrip(anywhere, request({ origin_city: "cerete", destination_city: "medellin" }))).toBe(true);
+    // Sincelejo ya queda lejos, aunque vaya para el mismo lado.
     expect(matchesTrip(anywhere, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(false);
     // Lo demás se sigue respetando: el día, la carga y el mismo municipio.
     expect(matchesTrip(anywhere, request({ service_date: "2026-11-02" }))).toBe(false);

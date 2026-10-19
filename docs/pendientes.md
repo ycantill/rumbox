@@ -95,7 +95,7 @@ se probó en un teléfono:
 - Sin elegir hacia dónde va, no deja ponerse disponible.
 - Tocar "Cualquier destino": se esconde la lista de municipios y, al tocarlo
   otra vez, vuelve. La tarjeta dice "… → Cualquier destino", le salen los
-  clientes que salen de su municipio y al cliente le sale "Va de … a
+  clientes que salen de su municipio o de uno cercano y al cliente le sale "Va de … a
   cualquier destino".
 - Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
 - Un teléfono que tenía guardada una disponibilidad sin destino, de antes: al
@@ -176,5 +176,5 @@ se probó en un teléfono:
   24 horas más (una para mañana se vence pasado mañana). El emparejamiento
   sigue siendo del mismo día. No necesita migración.
 - **PR #24:** "Cualquier destino" para el transportista: le salen los clientes
-  del día que salen de su mismo municipio, vayan a donde vayan. No necesita
+  del día que salen de su municipio o de uno cercano, vayan a donde vayan. No necesita
   migración.
