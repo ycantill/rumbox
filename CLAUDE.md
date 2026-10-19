@@ -106,10 +106,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Llamada o WhatsApp**
 - Se pide "Tu teléfono", no "Tu WhatsApp": el número sirve para llamar y para
   escribir por WhatsApp. Al transportista se le dice que los clientes lo
-  pueden llamar o escribir por WhatsApp, y al cliente, que el transportista lo
-  llama o le escribe por WhatsApp.
-- Cada tarjeta para contactar (los transportistas en los resultados del
-  cliente y los clientes que esperan al transportista) tiene "Escribir por
+  pueden llamar o escribir por WhatsApp.
+- El transportista no contacta al cliente (Yohany, octubre de 2026): por la
+  privacidad del cliente, siempre es el cliente quien llama o escribe. El
+  transportista no ve ninguna lista de clientes ni nada de ellos, porque una
+  lista con la que no puede hacer nada solo frustra (Yohany): espera que lo
+  llamen. Al cliente se le dice que los transportistas no ven su teléfono.
+- Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
 - La columna `whatsapp` de la base y los campos que guarda el navegador
@@ -130,9 +133,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   del destino puede elegir "Cualquier destino" (Yohany, octubre de 2026), que
   se guarda como `cualquiera` (`ANY_DESTINATION`) en `destination_city`.
 - Tiene una sola disponibilidad activa. Si ya tiene una, la pantalla muestra
-  "Estás disponible para este servicio" con sus datos ("Viajas…"), los
-  clientes que lo esperan y al final el aviso de que lo pueden llamar o
-  escribir por WhatsApp, en vez del formulario. No hay lista de varios días.
+  "Estás disponible para este servicio" con sus datos ("Viajas…") y el
+  aviso de que los clientes lo llaman o le escriben por WhatsApp, en vez del
+  formulario. No hay lista de varios días.
 - Vale el día del viaje (`service_date`) y 24 horas más: una para mañana se
   vence pasado mañana (Yohany, octubre de 2026). Solo le salen clientes de ese
   mismo día. Cuando se vence, se apaga sola y vuelve el formulario con sus
@@ -234,9 +237,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   olvida y vuelve el formulario.
 
 **Las listas se actualizan solas**
-- Los clientes que esperan al transportista y los transportistas que le
-  sirven al cliente se vuelven a pedir al volver a la app y cada minuto
-  mientras la pantalla se ve (`refreshWhileOpen`). Si falla una de esas
+- Los transportistas que le sirven al cliente, y si la disponibilidad del
+  transportista sigue encendida, se vuelven a pedir al volver a la app y cada
+  minuto mientras la pantalla se ve (`refreshWhileOpen`). Si falla una de esas
   consultas que se hacen solas, no se muestra el aviso de señal.
 - No hay notificaciones: el aviso por WhatsApp al transportista necesita la
   API oficial y está fuera del MVP.
@@ -247,9 +250,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   la carga por tamaño de casa hace menos preciso cualquier cálculo. Tampoco
   hay descuento por ruta.
 - El cliente solicita transportista ("Solicitar transportista") y la
-  pantalla le dice que acuerden el precio. Al transportista, en la lista de clientes que
-  esperan, le sale la ayuda que pide cada uno (`CLIENT_LABOR_FOR_DRIVER`) para
-  que sepa qué cobrar.
+  pantalla le dice que acuerden el precio. El transportista sabe qué lleva el
+  cliente y qué ayuda pide cuando hablan.
 - No se preguntan las escaleras: solo servían para el precio. Las columnas
   `stairs_origin` y `stairs_destination` quedan en 0 y `estimated_price` queda
   vacía en las solicitudes nuevas.
