@@ -50,8 +50,8 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   ("¿Hacia dónde vas?"). No hay modo local: Yohany lo quitó en octubre de 2026
   para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
   el Modo Ruta; la pantalla no le explica esa lógica al transportista.
-- Debajo del destino está la opción "Cualquier destino" ("Vas a donde te
-  pidan"), para el que sale de su municipio hacia donde le pidan (Yohany,
+- La primera opción de la lista del destino es "Cualquier destino" ("Vas a
+  donde te pidan"), también al escribir "cual". Es para el que sale de su municipio hacia donde le pidan (Yohany,
   octubre de 2026). Su tarjeta dice "Montería → Cualquier destino".
 - Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
   tamaños), mano de obra y teléfono. No hay jornadas: Yohany las quitó en
