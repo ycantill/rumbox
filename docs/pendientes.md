@@ -28,6 +28,31 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
   ajenos, datos falsos). Necesitan los mismos datos del responsable que el
   punto 10.
 
+### 10c. Aparecer en Google (SEO)
+
+- **Decisión:** entra en el MVP, pero queda en espera (Yohany, 20 de octubre
+  de 2026).
+- **Hoy:** cada pantalla tiene título, el idioma es español y hay una
+  descripción general en `src/app/layout.tsx`, que todavía dice "Mira cuánto
+  cuesta tu mudanza" (ya no hay precio; también en `src/app/manifest.ts`).
+  No hay mapa del sitio, ni `robots`, ni dirección oficial (`metadataBase`),
+  ni imagen y texto para cuando el enlace se comparte por WhatsApp o
+  Facebook.
+- **Plan, en tres pasos:**
+  1. Base técnica: `sitemap.ts`, `robots.ts`, la dirección oficial en un solo
+     lugar, una descripción para cada pantalla, la imagen para compartir y
+     quitar "cuánto cuesta". Mientras dure el demo, pedirle a Google que no
+     la muestre (`noindex`) y prenderlo al abrir al público, porque hoy
+     tiene el contacto de prueba (10) y no tiene términos (10b).
+  2. Registrar la app en Google Search Console (Yohany). Conviene tener antes
+     el dominio definitivo: cambiarlo después hace que Google tarde semanas
+     en pasar lo ganado a la nueva dirección.
+  3. Una página por ciudad ("Trasteos en Montería", "Fletes de Cali a Buga"),
+     con la palabra "trasteo", que es como se busca en Colombia, y un botón a
+     "Necesito mover algo". Empezar con las ciudades principales, sin
+     favorecer ninguna región.
+- **Falta decidir:** el dominio y cuándo se retoma.
+
 ## Propuestas
 
 ### 18. Compartir por WhatsApp o con código QR
