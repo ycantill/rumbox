@@ -36,8 +36,9 @@ los clientes lo pueden llamar o escribir por WhatsApp.
 
 **El transportista no contacta al cliente.** Por la privacidad del cliente
 (Yohany, octubre de 2026), siempre es el cliente quien llama o escribe. El
-transportista no ve ninguna lista de clientes: una lista con la que no puede
-hacer nada solo frustra. Espera que lo llamen.
+transportista no ve la lista de clientes que esperan: una lista con la que no
+puede hacer nada solo frustra. Espera que lo llamen. Solo ve, en "Te
+encontraron", a los que tocaron su tarjeta, sin su teléfono.
 
 **Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
 escribiendo parte del nombre, con o sin tildes, o en la lista completa que se
@@ -61,14 +62,21 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
-  "Estás disponible para este servicio" con sus datos, "Solo queda espacio
-  para paquetes" y "Ya no voy a trabajar". Ese último botón (que también sirve
+  "Estás disponible para este servicio" con sus datos y "Ya no estoy
+  disponible". Ese botón (que también sirve
   si se llenó) lo apaga y le devuelve el formulario con los mismos datos para
   ponerse otra vez cuando quiera. Se controla con un token que solo vive en su
   teléfono.
 - La pantalla revisa sola, al volver a la app y cada minuto, si su
   disponibilidad sigue encendida. Los clientes que solicitan después de que
   él se puso disponible lo ven en su lista y lo llaman.
+- "Te encontraron" (Yohany, 20 de octubre de 2026): debajo de sus datos ve a los
+  clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta, con
+  la ruta, qué van a mover, la ayuda que piden y los dos últimos números del
+  teléfono, nunca el número completo. Contesta "Lo llevo" o "No lo llevo".
+  Con "Lo llevo", Muvia le resta ese espacio con puntos (casa 4, habitación
+  2, algunas cosas 1, paquetes 0) y su tarjeta dice "Te queda espacio
+  para…". Ya no existe "Solo queda espacio para paquetes".
 
 **Pantalla del cliente** (`/solicitar`)
 - Una sola pantalla, casi igual a la del transportista: sin pasos, con las

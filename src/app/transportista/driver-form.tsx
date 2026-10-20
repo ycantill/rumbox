@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { getMyAvailability, publishAvailability, updateAvailability } from "@/app/actions";
+import {
+  answerContact,
+  getMyAvailability,
+  publishAvailability,
+  updateAvailability,
+  type DriverContact,
+} from "@/app/actions";
 import {
   CitySelect,
   Choices,
@@ -16,12 +22,12 @@ import {
 } from "@/components/ui";
 import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
+import { loadSummary, type ContactAnswer } from "@/lib/contacts";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SAME_CITY_ERROR,
-  SPACE_CAPACITY,
   destinationName,
   isKey,
   spaceInSentence,
@@ -45,8 +51,8 @@ export type MyPost = {
   destination: string | null;
   date: string; // el día del viaje
   space: DriverSpace;
-  // Lo que podía llevar antes de "Solo queda espacio para paquetes": con eso
-  // vuelve el formulario, para el próximo viaje.
+  // Lo que podía llevar al ponerse disponible; `space` es lo que le queda
+  // después de "Lo llevo". Con esto vuelve el formulario, para el próximo viaje.
   fullSpace?: DriverSpace;
 };
 
@@ -239,6 +245,8 @@ function CurrentWork({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Te encontraron": los clientes que tocaron su tarjeta, desde el servidor.
+  const [contacts, setContacts] = useState<DriverContact[]>([]);
 
   // Un viaje vale hasta que termina su día. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
@@ -247,9 +255,10 @@ function CurrentWork({
   const expired = !isStillValid(post.date, today);
   const ended = !post.destination || expired || !isKey(DRIVER_SPACES, post.space);
 
-  // Si sigue encendida y el espacio al día, desde el servidor: al abrir la
-  // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No
-  // ve a los clientes: por su privacidad, ellos son los que lo llaman.
+  // Si sigue encendida, el espacio y "Te encontraron" al día, desde el servidor:
+  // al abrir la pantalla, al volver a la app y cada minuto mientras la tiene
+  // abierta. No ve a los clientes que esperan: por su privacidad, ellos son
+  // los que lo llaman. Solo ve a los que tocaron su tarjeta, sin su teléfono.
   const { id, editToken } = post;
   const fresh = justPublished;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva ni
@@ -275,7 +284,8 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
-          onChange({ ...post, space: res.space });
+          setContacts(res.contacts);
+          onChange({ ...post, space: res.space, fullSpace: res.fullSpace });
         },
         () => {
           // Sin señal se queda lo guardado en el teléfono, con el aviso. Si
@@ -298,29 +308,42 @@ function CurrentWork({
   // existen, la pantalla se rompía antes de volver al formulario.
   if (ended) return null;
 
-  async function patch(change: { status?: "llena"; space?: DriverSpace }) {
+
+  async function answer(requestId: string, value: ContactAnswer | null) {
     setBusy(true);
     setError(null);
-    // Lo que traiga una consulta que salió antes o durante el cambio ya no sirve.
     latest.current++;
-    const res = await callServer(() => updateAvailability({ id, editToken, ...change }));
+    const res = await callServer(() => answerContact({ id, editToken, requestId, answer: value }));
     latest.current++;
     setBusy(false);
     if (!res.ok) {
       setError(res.error);
-      return false;
+      return;
     }
-    return true;
-  }
-
-  async function onlyPackages() {
-    if (!(await patch({ space: "solo_paquetes" }))) return;
-    onChange({ ...post, space: "solo_paquetes", fullSpace: post.fullSpace ?? post.space });
+    // Muvia resta lo que lleva: a los clientes solo les sale si les cabe.
+    onChange({ ...post, space: res.space, fullSpace: post.fullSpace ?? post.space });
+    // "No lo llevo" lo saca de la lista; "Lo llevo" lo deja marcado.
+    setContacts((list) =>
+      value === "no_lo_llevo"
+        ? list.filter((c) => c.requestId !== requestId)
+        : list.map((c) => (c.requestId === requestId ? { ...c, answer: value } : c)),
+    );
   }
 
   async function end() {
+    setBusy(true);
+    setError(null);
+    // Lo que traiga una consulta que salió antes o durante el cambio ya no sirve.
+    latest.current++;
     // Se apaga en el servidor para que ningún cliente lo vea, y se olvida en el teléfono.
-    if (await patch({ status: "llena" })) onEnd();
+    const res = await callServer(() => updateAvailability({ id, editToken, status: "llena" }));
+    latest.current++;
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    onEnd();
   }
 
   const details = (
@@ -339,7 +362,11 @@ function CurrentWork({
       </div>
       <div>
         <dt className="sr-only">Cuánto puedes llevar</dt>
-        <dd>Puedes llevar {spaceInSentence(post.space)}</dd>
+        <dd>
+          {post.fullSpace && post.fullSpace !== post.space
+            ? `Te queda espacio para ${spaceInSentence(post.space)}`
+            : `Puedes llevar ${spaceInSentence(post.space)}`}
+        </dd>
       </div>
     </dl>
   );
@@ -357,13 +384,10 @@ function CurrentWork({
         </p>
       </section>
 
+      {contacts.length > 0 && <TheyLookedForYou contacts={contacts} busy={busy} onAnswer={answer} />}
+
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
-        {SPACE_CAPACITY[post.space] > 1 && (
-          <button type="button" className="btn-secondary" disabled={busy} onClick={onlyPackages}>
-            Solo queda espacio para paquetes
-          </button>
-        )}
         {confirmEnd ? (
           <div className="card flex flex-col gap-3">
             <p className="text-sm">¿Dejamos de mostrarte a los clientes?</p>
@@ -378,11 +402,79 @@ function CurrentWork({
           </div>
         ) : (
           <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya no voy a trabajar
+            Ya no estoy disponible
           </button>
         )}
       </div>
 
     </div>
+  );
+}
+
+/**
+ * "Te encontraron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
+ * en su tarjeta, con los dos últimos números de su teléfono para reconocerlos.
+ * El número completo no sale: un toque no quiere decir que de verdad escribió.
+ */
+function TheyLookedForYou({
+  contacts,
+  busy,
+  onAnswer,
+}: {
+  contacts: DriverContact[];
+  busy: boolean;
+  onAnswer: (requestId: string, answer: ContactAnswer | null) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="font-semibold">Te encontraron ({contacts.length})</h2>
+        <p className="text-sm text-muted">
+          Estos clientes tocaron para llamarte o escribirte. Si alguno no te ha escrito, puede que se haya
+          arrepentido. Cuando tocas &quot;Lo llevo&quot;, te descontamos ese espacio.
+        </p>
+      </div>
+      {contacts.map((c) => (
+        <article key={c.requestId} className="card">
+          <p className="font-semibold">
+            {getCity(c.origin_city)?.name} → {getCity(c.destination_city)?.name}
+          </p>
+          <p className="text-sm text-muted">{loadSummary(c.volume, c.labor)}</p>
+          {c.phoneEnd && <p className="text-sm text-muted">Su teléfono termina en {c.phoneEnd}</p>}
+          {c.answer === "lo_llevo" ? (
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-brand-ink">Lo llevas</p>
+              <button
+                type="button"
+                className="text-sm text-muted underline"
+                disabled={busy}
+                onClick={() => onAnswer(c.requestId, null)}
+              >
+                Cambiar
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => onAnswer(c.requestId, "lo_llevo")}
+              >
+                Lo llevo
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => onAnswer(c.requestId, "no_lo_llevo")}
+              >
+                No lo llevo
+              </button>
+            </div>
+          )}
+        </article>
+      ))}
+    </section>
   );
 }

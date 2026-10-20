@@ -33,7 +33,7 @@ export function activeScreen(
 
 /** Lo que ve el cliente si su número ya está como transportista. */
 export const BUSY_AS_DRIVER_ERROR =
-  "Este número está como transportista. Para pedir uno, primero toca “Ya no voy a trabajar”.";
+  "Este número está como transportista. Para pedir uno, primero toca “Ya no estoy disponible”.";
 
 /** Lo que ve el transportista si su número tiene una solicitud abierta. */
 export const BUSY_AS_CLIENT_ERROR =
