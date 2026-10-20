@@ -132,6 +132,16 @@ botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
 Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
 y condiciones también entran en el MVP; falta escribirlos.
 
+**Analíticas** (`src/lib/analytics.ts`): para saber si el piloto funciona,
+la app cuenta las visitas a cada pantalla, si quien entra ya había venido
+antes, y cuántas veces un cliente toca "Escribir por WhatsApp" o "Llamar" en
+la tarjeta de un transportista. No guarda nada de la persona: ni teléfono, ni
+conexión, ni un identificador del navegador. Los números se ven en Supabase,
+por día (`analiticas_por_dia`) y por municipio de salida
+(`analiticas_por_municipio`), junto con las solicitudes y las
+disponibilidades. Además, Vercel Web Analytics (gratis, sin cookies) muestra
+en su panel las visitas, el país, el celular y de qué página llega la gente.
+
 **PWA**: manifest instalable y service worker que guarda las páginas para que
 abran con mala señal.
 

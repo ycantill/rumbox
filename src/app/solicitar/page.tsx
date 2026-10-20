@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClientForm } from "./client-form";
+import { TrackVisit } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Solicitar transportista",
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 export default function ClientPage() {
   return (
     <main className="page">
+      <TrackVisit page="solicitar" />
       <Link href="/" className="text-sm text-muted">
         ← Inicio
       </Link>

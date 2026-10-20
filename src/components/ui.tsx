@@ -4,6 +4,9 @@ import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
 import { ANY_DESTINATION, ANY_DESTINATION_HINT, ANY_DESTINATION_LABEL } from "@/lib/domain";
+import type { Page } from "@/lib/analytics";
+import { KEYS, load, save } from "@/lib/local-store";
+import { track } from "@/lib/track";
 import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
@@ -482,25 +485,45 @@ export function ErrorNote({ message }: { message: string | null }) {
 }
 
 /** Las dos formas de contactar a alguien: escribirle por WhatsApp, con el mensaje listo, o llamarlo. */
-export function ContactButtons({ phone, message }: { phone: string; message: string }) {
+export function ContactButtons({
+  phone,
+  message,
+  availabilityId,
+}: {
+  phone: string;
+  message: string;
+  availabilityId: string;
+}) {
   return (
     <div className="flex flex-wrap gap-2">
       <a
         href={waLink(phone, message)}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => track({ kind: "whatsapp", availabilityId })}
         className="inline-flex items-center justify-center rounded-xl border border-transparent bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
       >
         Escribir por WhatsApp
       </a>
       <a
         href={telLink(phone)}
+        onClick={() => track({ kind: "llamada", availabilityId })}
         className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink"
       >
         Llamar
       </a>
     </div>
   );
+}
+
+/** Cuenta que se abrió la pantalla, y si ese navegador ya había entrado antes. */
+export function TrackVisit({ page }: { page: Page }) {
+  useEffect(() => {
+    const returning = load(KEYS.visited, false);
+    save(KEYS.visited, true);
+    track({ kind: "visita", page, returning });
+  }, [page]);
+  return null;
 }
 
 const noopSubscribe = () => () => {};

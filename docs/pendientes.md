@@ -30,14 +30,6 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Propuestas
 
-### 17. Medir los contactos
-
-Contar cuántas veces se tocan los botones de WhatsApp y de llamar, del cliente
-al transportista y al revés. Es el número que dice si el piloto funciona: el
-objetivo del MVP es validar que clientes y transportistas se conectan. Necesita
-una tabla nueva, en una migración (`supabase/migrations/0007_...sql`) que
-Yohany corre en Supabase antes de desplegar.
-
 ### 18. Compartir por WhatsApp o con código QR
 
 Un botón en el inicio para compartir el enlace de la app, y un código QR para
@@ -216,3 +208,10 @@ se probó en un teléfono:
   huella de la conexión se borran cuando la solicitud o la disponibilidad deja
   de valer, cada hora con pg_cron. Requiere activar pg_cron y la migración
   `0009_borrar_telefonos.sql`. El aviso de privacidad (10) sigue pendiente.
+- **PR #33, analíticas (20 de octubre de 2026):** se cuentan las visitas a cada
+  pantalla, si quien entra ya había venido antes, y los toques en "Escribir
+  por WhatsApp" y "Llamar" (17), sin guardar nada de la persona. Los números
+  se ven en Supabase, en las vistas `analiticas_por_dia` y
+  `analiticas_por_municipio`. Requiere la migración `0010_analiticas.sql`.
+  También Vercel Web Analytics (gratis), que hay que activar en el panel de
+  Vercel.

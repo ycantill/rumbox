@@ -3,6 +3,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
 import { after } from "next/server";
+import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
 import { getCity } from "@/lib/cities";
 import { addDays } from "@/lib/dates";
@@ -331,6 +332,23 @@ export async function subscribeToAlerts(input: {
     if (upErr) throw upErr;
     return { ok: true as const };
   });
+}
+
+// ------------------------------------------------------------------- Analíticas
+
+/**
+ * Cuenta una visita o un toque en "Escribir por WhatsApp" o "Llamar". No
+ * guarda nada de la persona. Si falla, no pasa nada: nadie lo ve.
+ */
+export async function trackEvent(input: AnalyticsEvent): Promise<void> {
+  const row = eventRow(input);
+  if (!row) return;
+  try {
+    const { error } = await db().from("events").insert(row);
+    if (error) throw error;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // ---------------------------------------------------------------------- Helpers
