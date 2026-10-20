@@ -5,7 +5,7 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
-import { isContactAnswer, phoneEnding, type ContactAnswer } from "@/lib/contacts";
+import { isContactAnswer, phoneEnding, spaceLeft, type ContactAnswer } from "@/lib/contacts";
 import {
   DRIVER_SPACES,
   isKey,
@@ -67,6 +67,8 @@ export async function publishAvailability(input: {
     // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
     time_slot: "todo_el_dia",
     space: input.space,
+    // Lo que podía llevar al empezar: con "Lo llevo" se resta y `space` guarda lo que queda.
+    full_space: input.space,
     labor: input.labor,
     whatsapp,
     edit_token_hash: hashToken(editToken),
@@ -95,19 +97,15 @@ export async function publishAvailability(input: {
 }
 
 /**
- * "Ya no voy a trabajar" (status llena), o actualizar el espacio que queda libre.
- * Una apagada no se vuelve a encender: después se borra su teléfono.
+ * "Ya no voy a trabajar" (status llena). Una apagada no se vuelve a encender:
+ * después se borra su teléfono.
  */
 export async function updateAvailability(input: {
   id: string;
   editToken: string;
-  status?: "llena";
-  space?: string;
+  status: "llena";
 }): Promise<{ ok: true } | Fail> {
-  if (input.space !== undefined && !isKey(DRIVER_SPACES, input.space)) return fail("Algo salió mal. Intenta de nuevo.");
-  if (input.status !== undefined && input.status !== "llena") {
-    return fail("Algo salió mal. Intenta de nuevo.");
-  }
+  if (input.status !== "llena") return fail("Algo salió mal. Intenta de nuevo.");
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
@@ -118,10 +116,7 @@ export async function updateAvailability(input: {
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos tus datos en este teléfono.");
     }
-    const patch: Record<string, string> = {};
-    if (input.status) patch.status = input.status;
-    if (input.space) patch.space = input.space;
-    const { error: upErr } = await db().from("availabilities").update(patch).eq("id", input.id);
+    const { error: upErr } = await db().from("availabilities").update({ status: "llena" }).eq("id", input.id);
     if (upErr) throw upErr;
     return { ok: true as const };
   });
@@ -140,7 +135,15 @@ export type DriverContact = {
 };
 
 export type MyAvailabilityResult =
-  | { ok: true; status: "activa" | "llena"; space: DriverSpace; contacts: DriverContact[] }
+  | {
+      ok: true;
+      status: "activa" | "llena";
+      /** Lo que le queda, después de restar lo que lleva. */
+      space: DriverSpace;
+      /** Lo que podía llevar al ponerse disponible. */
+      fullSpace: DriverSpace;
+      contacts: DriverContact[];
+    }
   | (Fail & { gone?: true });
 
 /**
@@ -151,7 +154,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, full_space, labor, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -168,25 +171,28 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       data.service_date >= todayInBogota();
     const status = active ? "activa" : "llena";
     const contacts = active ? await findContacts(input.id) : [];
-    return { ok: true as const, status, space: data.space, contacts };
+    // Las de antes no guardaban lo que podía llevar al empezar.
+    const fullSpace = isKey(DRIVER_SPACES, data.full_space) ? data.full_space : data.space;
+    return { ok: true as const, status, space: data.space, fullSpace, contacts };
   });
 }
 
 /**
  * "Lo llevo" o "No lo llevo" de un cliente de "Te buscaron"; null lo deja
- * otra vez sin contestar.
+ * otra vez sin contestar. Después vuelve a calcular el espacio que le queda,
+ * que es lo que miran los clientes, y lo devuelve.
  */
 export async function answerContact(input: {
   id: string;
   editToken: string;
   requestId: string;
   answer: ContactAnswer | null;
-}): Promise<{ ok: true } | Fail> {
+}): Promise<{ ok: true; space: DriverSpace } | Fail> {
   if (input.answer !== null && !isContactAnswer(input.answer)) return fail("Algo salió mal. Intenta de nuevo.");
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("edit_token_hash")
+      .select("space, full_space, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -199,7 +205,23 @@ export async function answerContact(input: {
       .eq("availability_id", input.id)
       .eq("request_id", input.requestId);
     if (upErr) throw upErr;
-    return { ok: true as const };
+
+    // Lo que lleva, aunque el cliente ya haya cerrado la solicitud: igual ocupa espacio.
+    const { data: taken, error: takenErr } = await db()
+      .from("contacts")
+      .select("request:requests!inner(volume)")
+      .eq("availability_id", input.id)
+      .eq("answer", "lo_llevo");
+    if (takenErr) throw takenErr;
+    const volumes = ((taken ?? []) as unknown as { request: { volume: Volume } }[]).map((t) => t.request.volume);
+    // Las de antes no guardaban lo que podía llevar al empezar.
+    const full: DriverSpace = isKey(DRIVER_SPACES, data.full_space) ? data.full_space : data.space;
+    const space = spaceLeft(full, volumes);
+    const patch: Record<string, string> = { space };
+    if (!data.full_space) patch.full_space = full;
+    const { error: spaceErr } = await db().from("availabilities").update(patch).eq("id", input.id);
+    if (spaceErr) throw spaceErr;
+    return { ok: true as const, space };
   });
 }
 
@@ -524,9 +546,10 @@ async function closeOwnRequest(input: { id: string; editToken: string }): Promis
 }
 
 /**
- * Los clientes que buscaron a este transportista y siguen con la solicitud
- * abierta. Los que contestó "No lo llevo" ya no salen, ni los que cerraron la
- * solicitud ("Ya no necesito este servicio") o la cambiaron.
+ * Los clientes que buscaron a este transportista. Los que contestó "No lo
+ * llevo" ya no salen, ni los que no ha contestado y cerraron la solicitud
+ * ("Ya no necesito este servicio") o la cambiaron. Los que lleva siguen
+ * saliendo: ocupan espacio aunque el cliente ya haya cerrado la solicitud.
  */
 async function findContacts(availabilityId: string): Promise<DriverContact[]> {
   const { data, error } = await db()
@@ -535,11 +558,9 @@ async function findContacts(availabilityId: string): Promise<DriverContact[]> {
       "request_id, answer, request:requests!inner(origin_city, destination_city, volume, labor, status, service_date, whatsapp)",
     )
     .eq("availability_id", availabilityId)
-    .eq("request.status", "abierta")
-    .gte("request.service_date", todayInBogota())
     .or("answer.is.null,answer.eq.lo_llevo")
     .order("created_at", { ascending: true })
-    .limit(50);
+    .limit(100);
   if (error) throw error;
   type Row = {
     request_id: string;
@@ -549,10 +570,16 @@ async function findContacts(availabilityId: string): Promise<DriverContact[]> {
       destination_city: string;
       volume: Volume;
       labor: ClientLabor;
+      status: string;
+      service_date: string;
       whatsapp: string | null;
     };
   };
-  return ((data ?? []) as unknown as Row[]).map((c) => ({
+  const today = todayInBogota();
+  const rows = ((data ?? []) as unknown as Row[]).filter(
+    (c) => c.answer === "lo_llevo" || (c.request.status === "abierta" && c.request.service_date >= today),
+  );
+  return rows.map((c) => ({
     requestId: c.request_id,
     origin_city: c.request.origin_city,
     destination_city: c.request.destination_city,

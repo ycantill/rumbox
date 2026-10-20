@@ -4,7 +4,39 @@
 // reconocerlo cuando le escriba, pero nunca el número: un toque no quiere
 // decir que de verdad escribió. Sigue siendo el cliente quien contacta.
 
-import { VOLUMES, isKey, type ClientLabor, type Volume } from "./domain";
+import { VOLUMES, isKey, type ClientLabor, type DriverSpace, type Volume } from "./domain";
+
+/**
+ * Cuánto ocupa cada carga, en puntos, para saber cuánto le queda al
+ * transportista después de "Lo llevo" (Yohany, 20 de octubre de 2026). Es
+ * aproximado: en una casa caben dos habitaciones o cuatro veces "Algunas
+ * cosas". Los paquetes casi no ocupan: no restan.
+ */
+export const VOLUME_POINTS: Record<Volume, number> = {
+  sobres: 0,
+  carga_parcial: 1,
+  medio_camion: 2,
+  camion_entero: 4,
+};
+const SPACE_POINTS: Record<DriverSpace, number> = {
+  solo_paquetes: 0,
+  carga_parcial: 1,
+  medio_camion: 2,
+  camion_entero: 4,
+};
+
+/**
+ * El espacio que le queda: lo que podía llevar menos lo que ya dijo que lleva.
+ * Siempre le queda para paquetes.
+ */
+export function spaceLeft(full: DriverSpace, taken: readonly Volume[]): DriverSpace {
+  const used = taken.reduce((sum, v) => sum + (isKey(VOLUME_POINTS, v) ? VOLUME_POINTS[v] : 0), 0);
+  const left = SPACE_POINTS[full] - used;
+  if (left >= SPACE_POINTS.camion_entero) return "camion_entero";
+  if (left >= SPACE_POINTS.medio_camion) return "medio_camion";
+  if (left >= SPACE_POINTS.carga_parcial) return "carga_parcial";
+  return "solo_paquetes";
+}
 
 /** Lo que el transportista contesta de cada cliente. */
 export const CONTACT_ANSWERS = ["lo_llevo", "no_lo_llevo"] as const;

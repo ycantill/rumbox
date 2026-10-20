@@ -28,7 +28,6 @@ import {
   DRIVER_LABOR,
   DRIVER_SPACES,
   SAME_CITY_ERROR,
-  SPACE_CAPACITY,
   destinationName,
   isKey,
   spaceInSentence,
@@ -52,8 +51,8 @@ export type MyPost = {
   destination: string | null;
   date: string; // el día del viaje
   space: DriverSpace;
-  // Lo que podía llevar antes de "Solo queda espacio para paquetes": con eso
-  // vuelve el formulario, para el próximo viaje.
+  // Lo que podía llevar al ponerse disponible; `space` es lo que le queda
+  // después de "Lo llevo". Con esto vuelve el formulario, para el próximo viaje.
   fullSpace?: DriverSpace;
 };
 
@@ -286,7 +285,7 @@ function CurrentWork({
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
           setContacts(res.contacts);
-          onChange({ ...post, space: res.space });
+          onChange({ ...post, space: res.space, fullSpace: res.fullSpace });
         },
         () => {
           // Sin señal se queda lo guardado en el teléfono, con el aviso. Si
@@ -309,25 +308,6 @@ function CurrentWork({
   // existen, la pantalla se rompía antes de volver al formulario.
   if (ended) return null;
 
-  async function patch(change: { status?: "llena"; space?: DriverSpace }) {
-    setBusy(true);
-    setError(null);
-    // Lo que traiga una consulta que salió antes o durante el cambio ya no sirve.
-    latest.current++;
-    const res = await callServer(() => updateAvailability({ id, editToken, ...change }));
-    latest.current++;
-    setBusy(false);
-    if (!res.ok) {
-      setError(res.error);
-      return false;
-    }
-    return true;
-  }
-
-  async function onlyPackages() {
-    if (!(await patch({ space: "solo_paquetes" }))) return;
-    onChange({ ...post, space: "solo_paquetes", fullSpace: post.fullSpace ?? post.space });
-  }
 
   async function answer(requestId: string, value: ContactAnswer | null) {
     setBusy(true);
@@ -340,6 +320,8 @@ function CurrentWork({
       setError(res.error);
       return;
     }
+    // Muvia resta lo que lleva: a los clientes solo les sale si les cabe.
+    onChange({ ...post, space: res.space, fullSpace: post.fullSpace ?? post.space });
     // "No lo llevo" lo saca de la lista; "Lo llevo" lo deja marcado.
     setContacts((list) =>
       value === "no_lo_llevo"
@@ -349,8 +331,19 @@ function CurrentWork({
   }
 
   async function end() {
+    setBusy(true);
+    setError(null);
+    // Lo que traiga una consulta que salió antes o durante el cambio ya no sirve.
+    latest.current++;
     // Se apaga en el servidor para que ningún cliente lo vea, y se olvida en el teléfono.
-    if (await patch({ status: "llena" })) onEnd();
+    const res = await callServer(() => updateAvailability({ id, editToken, status: "llena" }));
+    latest.current++;
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    onEnd();
   }
 
   const details = (
@@ -369,7 +362,11 @@ function CurrentWork({
       </div>
       <div>
         <dt className="sr-only">Cuánto puedes llevar</dt>
-        <dd>Puedes llevar {spaceInSentence(post.space)}</dd>
+        <dd>
+          {post.fullSpace && post.fullSpace !== post.space
+            ? `Te queda espacio para ${spaceInSentence(post.space)}`
+            : `Puedes llevar ${spaceInSentence(post.space)}`}
+        </dd>
       </div>
     </dl>
   );
@@ -391,11 +388,6 @@ function CurrentWork({
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
-        {SPACE_CAPACITY[post.space] > 1 && (
-          <button type="button" className="btn-secondary" disabled={busy} onClick={onlyPackages}>
-            Solo queda espacio para paquetes
-          </button>
-        )}
         {confirmEnd ? (
           <div className="card flex flex-col gap-3">
             <p className="text-sm">¿Dejamos de mostrarte a los clientes?</p>
@@ -439,7 +431,7 @@ function TheyLookedForYou({
         <h2 className="font-semibold">Te buscaron ({contacts.length})</h2>
         <p className="text-sm text-muted">
           Estos clientes tocaron para llamarte o escribirte. Si alguno no te ha escrito, puede que se haya
-          arrepentido.
+          arrepentido. Cuando tocas &quot;Lo llevo&quot;, te descontamos ese espacio.
         </p>
       </div>
       {contacts.map((c) => (

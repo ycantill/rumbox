@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isContactAnswer, loadSummary, phoneEnding } from "../contacts";
+import { isContactAnswer, loadSummary, phoneEnding, spaceLeft } from "../contacts";
 
 describe("phoneEnding", () => {
   it("deja solo los dos últimos números", () => {
@@ -33,5 +33,29 @@ describe("isContactAnswer", () => {
     expect(isContactAnswer("no_lo_llevo")).toBe(true);
     expect(isContactAnswer("otra")).toBe(false);
     expect(isContactAnswer(null)).toBe(false);
+  });
+});
+
+describe("spaceLeft", () => {
+  it("sin nadie que lleve, queda todo", () => {
+    expect(spaceLeft("camion_entero", [])).toBe("camion_entero");
+  });
+
+  it("en una casa caben dos habitaciones", () => {
+    expect(spaceLeft("camion_entero", ["medio_camion"])).toBe("medio_camion");
+    expect(spaceLeft("camion_entero", ["medio_camion", "medio_camion"])).toBe("solo_paquetes");
+  });
+
+  it("después de algunas cosas, queda para una habitación", () => {
+    expect(spaceLeft("camion_entero", ["carga_parcial"])).toBe("medio_camion");
+    expect(spaceLeft("medio_camion", ["carga_parcial"])).toBe("carga_parcial");
+  });
+
+  it("los paquetes no restan", () => {
+    expect(spaceLeft("carga_parcial", ["sobres", "sobres"])).toBe("carga_parcial");
+  });
+
+  it("si lleva más de lo que cabía, le quedan los paquetes", () => {
+    expect(spaceLeft("carga_parcial", ["camion_entero"])).toBe("solo_paquetes");
   });
 });

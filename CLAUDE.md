@@ -128,9 +128,16 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   que pide y los dos últimos números del teléfono ("Su teléfono termina en
   45"), nunca el número completo: un toque no quiere decir que escribió. Él
   contesta "Lo llevo" (queda marcado y se puede cambiar) o "No lo llevo" (sale
-  de la lista). También salen los que cierran o cambian la solicitud. El
-  cliente no recibe aviso de su respuesta. El espacio que le queda lo sigue
-  bajando él a mano.
+  de la lista). Los que no contestó salen si cierran o cambian la solicitud;
+  los que lleva se quedan, porque ocupan espacio. El cliente no recibe aviso
+  de su respuesta.
+- Muvia calcula el espacio que le queda (Yohany, 20 de octubre de 2026), con
+  puntos (`spaceLeft` en `src/lib/contacts.ts`): una casa vale 4, una
+  habitación 2, algunas cosas 1 y los paquetes no restan. Con "Lo llevo" se
+  resta y `space` guarda lo que queda (lo que miran los clientes); lo que
+  podía llevar al empezar queda en `full_space`. Su tarjeta dice "Te queda
+  espacio para…". Lo que consiga por fuera de Muvia no se resta: para eso
+  está "Ya no voy a trabajar".
 - Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
@@ -168,7 +175,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   en el MVP: quien repite una ruta registra cada viaje.
 - Un solo botón para apagarla: "Ya no voy a trabajar" (también sirve si se
   llenó). Pide confirmar y luego vuelve al formulario con
-  los mismos datos. También existe "Solo queda espacio para paquetes".
+  los mismos datos. "Solo queda espacio para paquetes" ya no existe: Muvia
+  calcula el espacio con "Lo llevo" (ver "Te buscaron").
 
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje

@@ -144,8 +144,8 @@ se probó en un teléfono:
 - Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
   el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
   pasó…".
-- Tocar "Solo queda espacio para paquetes" y luego "Ya no voy a trabajar": el
-  formulario vuelve con lo que podía llevar al empezar, no con paquetes.
+- Tocar "Lo llevo" y luego "Ya no voy a trabajar": el formulario vuelve con
+  lo que podía llevar al empezar, no con lo que le quedaba.
 - Tocar "Sí, avísame" y no dar permiso: sale "No te podemos avisar".
 - Abrir una dirección que no existe: sale "No encontramos esta página".
 
@@ -263,5 +263,6 @@ se probó en un teléfono:
   Supabase (Yohany, 20 de octubre de 2026).
 - **"Te buscaron" (20 de octubre de 2026):** el transportista ve a los
   clientes que tocaron su tarjeta, con los dos últimos números del teléfono,
-  y contesta "Lo llevo" o "No lo llevo". Requiere la migración
-  `0012_te_buscaron.sql`.
+  y contesta "Lo llevo" o "No lo llevo". Con "Lo llevo", Muvia le resta el
+  espacio con puntos, y se quita "Solo queda espacio para paquetes". Requiere la
+  migración `0012_te_buscaron.sql`.
