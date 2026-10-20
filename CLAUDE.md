@@ -243,6 +243,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   solicitud: la ruta, el día, qué va a mover (con su pista) y la ayuda que
   pidió para cargar (`CLIENT_LABOR_SUMMARY` en `domain.ts`), menos con
   paquetes o sobres.
+- Es una pantalla de espera (Yohany, octubre de 2026): mientras no hay
+  transportistas sale "Buscando transportistas…" con ondas que salen del
+  centro, como un radar (`animate-radar` en `globals.css`; quietas si el
+  teléfono pide menos movimiento). Con transportistas, debajo de la lista
+  sigue "Seguimos buscando más transportistas." con una onda chica.
 - "Ya no necesito este servicio" la cierra (pide confirmar: "¿Dejamos de mostrar
   tu solicitud a los transportistas?") y vuelve el formulario con los mismos
   datos. "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva

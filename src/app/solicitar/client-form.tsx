@@ -363,41 +363,39 @@ function MyRequestView({
         </dl>
       </section>
 
-      {matches &&
-        (matches.length === 0 ? (
-          <section className="card">
-            <h2 className="font-semibold">Guardamos tu solicitud</h2>
-            <p className="mt-1 text-sm text-muted">
-              Ahora mismo no hay transportistas libres para ese viaje. Apenas aparezca uno, te sale aquí
-              para que lo llames o le escribas por WhatsApp. Vuelve cuando quieras a mirar. El precio lo
-              acuerdan cuando hablen.
-            </p>
-          </section>
-        ) : (
-          <section className="flex flex-col gap-3">
-            <div>
-              <h2 className="font-semibold">Transportistas libres ({matches.length})</h2>
-              <p className="text-sm text-muted">Llama o escribe por WhatsApp y acuerden el precio.</p>
-            </div>
-            {matches.map((m) => (
-              <article key={m.id} className="card">
-                <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
-                <p className="text-sm text-muted">
-                  Va de {getCity(m.origin_city)?.name} a{" "}
-                  {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name} ·{" "}
-                  {DRIVER_LABOR[m.labor]}
-                </p>
-                <div className="mt-3">
-                  <ContactButtons
-                    availabilityId={m.id}
-                    phone={m.whatsapp}
-                    message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
-                  />
-                </div>
-              </article>
-            ))}
-          </section>
-        ))}
+      {/* Es una pantalla de espera: mientras no haya transportistas, o hasta
+          que llegue la lista, se ve que seguimos buscando. */}
+      {!matches || matches.length === 0 ? (
+        <Searching />
+      ) : (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-semibold">Transportistas libres ({matches.length})</h2>
+            <p className="text-sm text-muted">Llama o escribe por WhatsApp y acuerden el precio.</p>
+          </div>
+          {matches.map((m) => (
+            <article key={m.id} className="card">
+              <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
+              <p className="text-sm text-muted">
+                Va de {getCity(m.origin_city)?.name} a{" "}
+                {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name} ·{" "}
+                {DRIVER_LABOR[m.labor]}
+              </p>
+              <div className="mt-3">
+                <ContactButtons
+                  availabilityId={m.id}
+                  phone={m.whatsapp}
+                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
+                />
+              </div>
+            </article>
+          ))}
+          <p role="status" className="flex items-center gap-2 text-sm text-muted">
+            <Radar size="small" />
+            Seguimos buscando más transportistas.
+          </p>
+        </section>
+      )}
 
       {vapidPublicKey !== undefined && (
         <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} />
@@ -427,6 +425,41 @@ function MyRequestView({
         </button>
       </div>
     </div>
+  );
+}
+
+/** Mientras no hay transportistas: la solicitud quedó guardada y seguimos buscando. */
+function Searching() {
+  return (
+    <section role="status" className="card flex flex-col items-center gap-3 py-6 text-center">
+      <Radar size="large" />
+      <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
+      <p className="text-sm text-muted">
+        Tu solicitud quedó guardada. Apenas un transportista vaya para allá ese día, te sale aquí para que
+        lo llames o le escribas por WhatsApp. Puedes cerrar la app y volver cuando quieras. El precio lo
+        acuerdan cuando hablen.
+      </p>
+    </section>
+  );
+}
+
+/** Ondas que salen del centro: la app sigue buscando. */
+function Radar({ size }: { size: "large" | "small" }) {
+  const box = size === "large" ? "size-24" : "size-4";
+  const dot = size === "large" ? "size-5" : "size-2";
+  return (
+    <span aria-hidden className={`relative grid shrink-0 place-items-center ${box}`}>
+      {/* Tres ondas desfasadas. El retraso va en style: la clase animate-radar
+          trae la animación completa y pisaría un retraso puesto con clase. */}
+      {["0s", "-0.8s", "-1.6s"].map((delay) => (
+        <span
+          key={delay}
+          className="absolute inset-0 rounded-full bg-brand/40 motion-safe:animate-radar"
+          style={{ animationDelay: delay }}
+        />
+      ))}
+      <span className={`relative rounded-full bg-brand ${dot}`} />
+    </span>
   );
 }
 

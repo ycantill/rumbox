@@ -107,6 +107,9 @@ pantalla de inicio: ahí se le explica cómo. El transportista no recibe avisos.
 
 Arriba ve los datos de su solicitud: la ruta, el día, qué va a mover y la
 ayuda que pidió para cargar (menos con paquetes o sobres).
+Es una pantalla de espera: mientras no hay transportistas ve "Buscando
+transportistas…" con una animación de radar, y con transportistas, "Seguimos
+buscando más transportistas." debajo de la lista.
 
 Tiene dos botones:
 - "Ya no necesito este servicio": pide confirmar ("¿Dejamos de mostrar tu

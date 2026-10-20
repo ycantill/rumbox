@@ -255,4 +255,5 @@ se probó en un teléfono:
   necesita migración.
 - **PR #37:** "Tu solicitud" muestra la ruta, el día, qué va a mover y la
   ayuda que pidió. Los botones dicen "Ya no necesito este servicio" y
-  "Cambiar mi solicitud". No necesita migración.
+  "Cambiar mi solicitud". Es una pantalla de espera: "Buscando
+  transportistas…" con una animación de radar. No necesita migración.
