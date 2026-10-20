@@ -10,7 +10,6 @@ const driver = (o: Partial<AvailabilityLike> = {}): AvailabilityLike => ({
   destination_city: "cartagena",
   service_date: date,
   space: "camion_entero",
-  labor: "con_ayudante",
   ...o,
 });
 
@@ -20,7 +19,6 @@ const request = (o: Partial<RequestLike> = {}): RequestLike => ({
   destination_city: "sincelejo",
   service_date: date,
   volume: "medio_camion",
-  labor: "yo_cargo",
   ...o,
 });
 
@@ -73,12 +71,6 @@ describe("matchesTrip", () => {
     expect(matchesTrip(anywhere, request({ service_date: "2026-11-02" }))).toBe(false);
     expect(matchesTrip(driver({ destination_city: ANY_DESTINATION, space: "solo_paquetes" }), request())).toBe(false);
     expect(matchesTrip(anywhere, request({ destination_city: "monteria" }))).toBe(false);
-  });
-
-  it("respeta la mano de obra pedida", () => {
-    expect(matchesTrip(driver({ labor: "solo_manejo" }), request({ labor: "conductor" }))).toBe(false);
-    expect(matchesTrip(driver({ labor: "yo_ayudo" }), request({ labor: "conductor" }))).toBe(true);
-    expect(matchesTrip(driver({ labor: "yo_ayudo" }), request({ labor: "ayudantes" }))).toBe(false);
   });
 });
 

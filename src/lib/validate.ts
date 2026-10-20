@@ -3,14 +3,13 @@
 
 import { getCity } from "./cities";
 import { addDays } from "./dates";
-import { ANY_DESTINATION, CLIENT_LABOR, DRIVER_LABOR, DRIVER_SPACES, SAME_CITY_ERROR, VOLUMES, isKey } from "./domain";
+import { ANY_DESTINATION, DRIVER_SPACES, SAME_CITY_ERROR, VOLUMES, isKey } from "./domain";
 import { normalizeWhatsApp } from "./whatsapp";
 
 type Trip = {
   origin: string;
   destination: string;
   date: string;
-  labor: string;
   whatsapp: string;
 };
 
@@ -21,7 +20,6 @@ export function driverInputError(input: Trip & { space: string }, today: string)
   if (input.destination === input.origin) return SAME_CITY_ERROR;
   if (!isValidServiceDate(input.date, today)) return "Elige un día de hoy en adelante.";
   if (!isKey(DRIVER_SPACES, input.space)) return "Elige cuánto puedes llevar.";
-  if (!isKey(DRIVER_LABOR, input.labor)) return "Elige si ayudas a cargar.";
   if (!normalizeWhatsApp(input.whatsapp ?? "")) return "Revisa el número de teléfono.";
   return null;
 }
@@ -33,7 +31,6 @@ export function requestInputError(input: Trip & { volume: string }, today: strin
   if (input.destination === input.origin) return SAME_CITY_ERROR;
   if (!isValidServiceDate(input.date, today)) return "Elige un día de hoy en adelante.";
   if (!isKey(VOLUMES, input.volume)) return "Elige qué vas a mover.";
-  if (!isKey(CLIENT_LABOR, input.labor)) return "Elige si necesitas ayuda para cargar.";
   if (!normalizeWhatsApp(input.whatsapp ?? "")) return "Revisa el número de teléfono.";
   return null;
 }

@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  CLIENT_LABOR,
-  CLIENT_LABOR_SUMMARY,
   DRIVER_SPACES,
   VOLUMES,
   spaceFitsVolume,
@@ -59,9 +57,5 @@ describe("Tu solicitud", () => {
   it("dice lo que va a mover dentro de una frase", () => {
     expect(volumeInSentence("medio_camion")).toBe("una habitación o apartaestudio");
     expect(volumeInSentence("sobres")).toBe("paquetes o sobres");
-  });
-
-  it("tiene una frase para cada ayuda que puede pedir", () => {
-    expect(Object.keys(CLIENT_LABOR_SUMMARY).sort()).toEqual(Object.keys(CLIENT_LABOR).sort());
   });
 });

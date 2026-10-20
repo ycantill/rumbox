@@ -27,16 +27,12 @@ import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
-  CLIENT_LABOR,
-  CLIENT_LABOR_SUMMARY,
-  DRIVER_LABOR,
   ANY_DESTINATION,
   SAME_CITY_ERROR,
   VOLUMES,
   isKey,
   spaceInSentence,
   volumeInSentence,
-  type ClientLabor,
   type Volume,
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
@@ -54,7 +50,6 @@ export type MyRequest = {
   destination: string;
   date: string;
   volume: Volume;
-  labor: ClientLabor;
 };
 
 /** Todo en una sola pantalla, con las mismas preguntas y el mismo orden que el transportista. */
@@ -65,7 +60,6 @@ export function ClientForm() {
   const [pickedDate, setDate] = useState("");
   const date = useServiceDay(pickedDate);
   const [volume, setVolume] = useState<Volume | "">("");
-  const [labor, setLabor] = useState<ClientLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   // "Tu solicitud anterior ya pasó", cuando vuelve el formulario porque se venció.
@@ -80,8 +74,6 @@ export function ClientForm() {
   const screen = useActiveScreen();
   const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
-  // Para paquetes o sobres no hay nada que preguntar de ayuda para cargar.
-  const asksLabor = volume !== "sobres";
 
   useEffect(() => {
     // Hace falta saber qué día es hoy para ver si la solicitud guardada ya pasó.
@@ -95,7 +87,6 @@ export function ClientForm() {
       setOrigin(saved.origin);
       setDestination(saved.destination);
       setVolume(saved.volume);
-      if (saved.volume !== "sobres") setLabor(saved.labor);
       // Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
       if (isStillValid(saved.date, today)) {
         setDate(saved.date);
@@ -111,8 +102,7 @@ export function ClientForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const sentLabor = asksLabor ? labor : "yo_cargo";
-    const input = { origin, destination, date, volume, labor: sentLabor, whatsapp };
+    const input = { origin, destination, date, volume, whatsapp };
     // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
     const invalid = requestInputError(input, today);
     if (invalid) {
@@ -139,7 +129,6 @@ export function ClientForm() {
         destination,
         date,
         volume: volume as Volume,
-        labor: sentLabor as ClientLabor,
       };
       save(KEYS.clientRequest, mine);
       setCurrent(mine);
@@ -207,12 +196,6 @@ export function ClientForm() {
         <Field label="¿Qué vas a mover?">
           <Choices options={VOLUMES} value={volume} onChange={setVolume} columns={1} />
         </Field>
-
-        {asksLabor && (
-          <Field label="¿Necesitas ayuda para cargar?">
-            <Choices options={CLIENT_LABOR} value={labor} onChange={setLabor} columns={1} />
-          </Field>
-        )}
 
         <Field label="Tu teléfono" hint="Solo lo guardamos nosotros: los transportistas no lo ven.">
           <input
@@ -360,13 +343,6 @@ function MyRequestView({
               </dd>
             </div>
           )}
-          {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
-          {request.volume !== "sobres" && isKey(CLIENT_LABOR_SUMMARY, request.labor) && (
-            <div>
-              <dt className="sr-only">Ayuda para cargar</dt>
-              <dd>{CLIENT_LABOR_SUMMARY[request.labor]}</dd>
-            </div>
-          )}
         </dl>
       </section>
 
@@ -390,8 +366,7 @@ function MyRequestView({
               <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
               <p className="text-sm text-muted">
                 Va de {getCity(m.origin_city)?.name} a{" "}
-                {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name} ·{" "}
-                {DRIVER_LABOR[m.labor]}
+                {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name}
               </p>
               <div className="mt-3">
                 <ContactButtons

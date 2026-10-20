@@ -55,7 +55,7 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   donde te pidan"), también al escribir "cual". Es para el que sale de su municipio hacia donde le pidan (Yohany,
   octubre de 2026). Su tarjeta dice "Montería → Cualquier destino".
 - Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
-  tamaños), mano de obra y teléfono. No hay jornadas: Yohany las quitó en
+  tamaños) y teléfono. No hay jornadas: Yohany las quitó en
   octubre de 2026.
   Su tarjeta dice "Viajas…" y vale hasta que termina ese día, a la medianoche
   en hora de Colombia. Cuando se vence, se apaga solo y vuelve el formulario
@@ -72,8 +72,7 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   él se puso disponible lo ven en su lista y lo llaman.
 - "Te encontraron" (Yohany, 20 de octubre de 2026): debajo de sus datos ve a los
   clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta, con
-  la ruta, qué van a mover, la ayuda que piden y los dos últimos números del
-  teléfono, nunca el número completo. Contesta "Lo llevo" o "No lo llevo".
+  la ruta, qué van a mover y los dos últimos números del teléfono, nunca el número completo. Contesta "Lo llevo" o "No lo llevo".
   Con "Lo llevo", Muvia le resta ese espacio con puntos (casa 4, habitación
   2, algunas cosas 1, paquetes 0) y su tarjeta dice "Te queda espacio
   para…". Ya no existe "Solo queda espacio para paquetes".
@@ -85,8 +84,9 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
   municipio (si "Ubicarme" cae en el destino, el destino se borra); qué día
-  (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; si
-  necesita ayuda para cargar, que no sale con paquetes o sobres; y teléfono.
+  (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
+  teléfono. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
+  2026): la hablan por teléfono.
 
 Al tocar "Solicitar transportista" ve la lista de transportistas compatibles con
 botones para escribir por WhatsApp o llamar (match inmediato), y la invitación
@@ -114,8 +114,7 @@ disponible, aunque tenga la app cerrada. Al tocarlo se abre "Tu solicitud". Es
 Web Push, sin Firebase. En iPhone solo funciona con Muvia agregada a la
 pantalla de inicio: ahí se le explica cómo. El transportista no recibe avisos.
 
-Arriba ve los datos de su solicitud: la ruta, el día, qué va a mover y la
-ayuda que pidió para cargar (menos con paquetes o sobres).
+Arriba ve los datos de su solicitud: la ruta, el día y qué va a mover.
 Es una pantalla de espera: mientras no hay transportistas ve "Buscando
 transportistas…" con una animación de radar, y con transportistas, "Seguimos
 buscando más transportistas." debajo de la lista.
@@ -145,9 +144,9 @@ preguntan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.
-- Además: el cliente pide el mismo día del viaje, lo que mueve es igual o más
-  chico que lo que el transportista puede llevar y la mano de obra ofrecida
-  cubre la pedida.
+- Además: el cliente pide el mismo día del viaje y lo que mueve es igual o más
+  chico que lo que al transportista le queda por llevar. La ayuda para cargar
+  no cuenta: no se pregunta.
 
 **Privacidad y términos**: permiso para guardar los datos encima de los
 botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la

@@ -8,7 +8,6 @@ const driver = {
   destination: "sincelejo",
   date: today,
   space: "camion_entero",
-  labor: "yo_ayudo",
   whatsapp: "310 444 5566",
 };
 const request = {
@@ -16,7 +15,6 @@ const request = {
   destination: "sincelejo",
   date: today,
   volume: "medio_camion",
-  labor: "conductor",
   whatsapp: "300 111 2233",
 };
 
@@ -27,7 +25,7 @@ describe("driverInputError", () => {
   });
 
   it("con el formulario vacío pide primero dónde está", () => {
-    const empty = { origin: "", destination: "", date: today, space: "", labor: "", whatsapp: "" };
+    const empty = { origin: "", destination: "", date: today, space: "", whatsapp: "" };
     expect(driverInputError(empty, today)).toBe("Elige la ciudad donde estás.");
   });
 
@@ -35,7 +33,6 @@ describe("driverInputError", () => {
     expect(driverInputError({ ...driver, destination: "" }, today)).toBe("Elige hacia dónde vas.");
     expect(driverInputError({ ...driver, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
     expect(driverInputError({ ...driver, space: "" }, today)).toBe("Elige cuánto puedes llevar.");
-    expect(driverInputError({ ...driver, labor: "" }, today)).toBe("Elige si ayudas a cargar.");
     expect(driverInputError({ ...driver, whatsapp: "300 12" }, today)).toBe("Revisa el número de teléfono.");
   });
 });
@@ -50,7 +47,6 @@ describe("requestInputError", () => {
     expect(requestInputError({ ...request, destination: "" }, today)).toBe("Elige hacia dónde.");
     expect(requestInputError({ ...request, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
     expect(requestInputError({ ...request, volume: "" }, today)).toBe("Elige qué vas a mover.");
-    expect(requestInputError({ ...request, labor: "" }, today)).toBe("Elige si necesitas ayuda para cargar.");
     expect(requestInputError({ ...request, whatsapp: "" }, today)).toBe("Revisa el número de teléfono.");
   });
 

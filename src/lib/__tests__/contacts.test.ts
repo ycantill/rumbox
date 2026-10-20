@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isContactAnswer, loadSummary, phoneEnding, spaceLeft } from "../contacts";
+import { isContactAnswer, phoneEnding, spaceLeft } from "../contacts";
 
 describe("phoneEnding", () => {
   it("deja solo los dos últimos números", () => {
@@ -14,18 +14,6 @@ describe("phoneEnding", () => {
   });
 });
 
-describe("loadSummary", () => {
-  it("dice qué va a mover y la ayuda que pide", () => {
-    expect(loadSummary("carga_parcial", "yo_cargo")).toBe("Algunas cosas · El cliente carga");
-    expect(loadSummary("camion_entero", "ayudantes")).toBe(
-      "Una casa de 2 habitaciones o más · Necesita ayudantes extra para cargar",
-    );
-  });
-
-  it("con paquetes o sobres no habla de la ayuda para cargar", () => {
-    expect(loadSummary("sobres", "yo_cargo")).toBe("Paquetes o sobres");
-  });
-});
 
 describe("isContactAnswer", () => {
   it("solo acepta lo llevo o no lo llevo", () => {

@@ -103,11 +103,8 @@ se probó en un teléfono:
 - El cliente no ve ningún precio ni le preguntan por escaleras. Al final ve
   "Llama o escribe por WhatsApp y acuerden el precio", o "Guardamos tu
   solicitud" si no hay transportistas.
-- En la lista del transportista, cada cliente dice si necesita ayuda para
-  cargar, menos los de paquetes o sobres.
-- El cliente llena todo en una sola pantalla, como el transportista. Con
-  paquetes o sobres no sale "¿Necesitas ayuda para cargar?"; con lo demás,
-  si no elige, sale "Elige si necesitas ayuda para cargar.".
+- El cliente llena todo en una sola pantalla, como el transportista. Ninguno
+  de los dos ve la pregunta de la ayuda para cargar.
 - Ninguna de las dos pantallas pregunta la jornada: solo "Hoy", "Mañana" u
   otra fecha. "Hoy" sale también de noche.
 - "Cambiar mi solicitud" devuelve el formulario con lo que había llenado.
@@ -266,3 +263,6 @@ se probó en un teléfono:
   y contesta "Lo llevo" o "No lo llevo". Con "Lo llevo", Muvia le resta el
   espacio con puntos, y se quita "Solo queda espacio para paquetes". Requiere la
   migración `0012_te_encontraron.sql`.
+- **Sin ayuda para cargar (20 de octubre de 2026):** ni el cliente ni el
+  transportista la eligen; la hablan por teléfono. Ya no filtra el
+  emparejamiento. Requiere la migración `0013_sin_ayuda_para_cargar.sql`.

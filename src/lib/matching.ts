@@ -10,11 +10,7 @@
 import { getCity, haversineKm } from "./cities";
 import {
   ANY_DESTINATION,
-  LABOR_LEVEL,
-  LABOR_NEED,
   spaceFitsVolume,
-  type ClientLabor,
-  type DriverLabor,
   type DriverSpace,
   type Volume,
 } from "./domain";
@@ -32,7 +28,6 @@ export type AvailabilityLike = {
   destination_city: string;
   service_date: string; // YYYY-MM-DD: el día del viaje
   space: DriverSpace;
-  labor: DriverLabor;
 };
 
 export type RequestLike = {
@@ -40,14 +35,12 @@ export type RequestLike = {
   destination_city: string;
   service_date: string;
   volume: Volume;
-  labor: ClientLabor;
 };
 
 /** Si el servicio que pide el cliente le sirve al transportista en su viaje. */
 export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   if (r.service_date !== a.service_date) return false;
   if (!spaceFitsVolume(a.space, r.volume)) return false;
-  if (r.volume !== "sobres" && LABOR_LEVEL[a.labor] < LABOR_NEED[r.labor]) return false;
   // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas
   // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.
   if (r.origin_city === r.destination_city) return false;
