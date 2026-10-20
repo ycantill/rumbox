@@ -16,6 +16,7 @@ import {
   DayPicker,
   ErrorNote,
   Field,
+  InfoNote,
   OriginCitySelect,
   PrivacyNote,
   useBogotaDates,
@@ -38,6 +39,7 @@ import { KEYS, load, save } from "@/lib/local-store";
 import { alertState, getAlertSubscription, type AlertState } from "@/lib/push-client";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
+import { requestInputError } from "@/lib/validate";
 
 /** La solicitud que el cliente tiene abierta, guardada en su teléfono. Una a la vez. */
 export type MyRequest = {
@@ -61,6 +63,8 @@ export function ClientForm() {
   const [labor, setLabor] = useState<ClientLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // "Tu solicitud anterior ya pasó", cuando vuelve el formulario porque se venció.
+  const [notice, setNotice] = useState<string | null>(null);
   // La solicitud abierta: si hay una, se muestra esa en vez del formulario.
   const [current, setCurrent] = useState<MyRequest | null>(null);
   // Los transportistas que salieron al solicitar; null si la solicitud viene guardada de antes.
@@ -91,6 +95,7 @@ export function ClientForm() {
         setCurrent(saved);
       } else {
         save(KEYS.clientRequest, null);
+        setNotice(EXPIRED_NOTICE);
       }
     }
     setLoaded(true);
@@ -99,16 +104,18 @@ export function ClientForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    const sentLabor = asksLabor ? labor : "yo_cargo";
+    const input = { origin, destination, date, volume, labor: sentLabor, whatsapp };
+    // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
+    const invalid = requestInputError(input, today);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     startTransition(async () => {
-      const sentLabor = asksLabor ? labor : "yo_cargo";
       const res = await callServer(() =>
         createRequest({
-          origin,
-          destination,
-          date,
-          volume,
-          labor: sentLabor,
-          whatsapp,
+          ...input,
           // Una solicitud a la vez: la nueva reemplaza la que estaba abierta.
           replaces: current ? { id: current.id, editToken: current.editToken } : undefined,
         }),
@@ -129,6 +136,7 @@ export function ClientForm() {
       };
       save(KEYS.clientRequest, mine);
       setCurrent(mine);
+      setNotice(null);
       setMatches(res.matches);
       setEditing(false);
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -148,9 +156,10 @@ export function ClientForm() {
           setEditing(true);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
-        onEnd={() => {
+        onEnd={(reason) => {
           // Ya consiguió, o se cerró o pasó el día: se olvida y vuelve el formulario con sus datos.
           save(KEYS.clientRequest, null);
+          setNotice(reason === "expired" ? EXPIRED_NOTICE : null);
           setCurrent(null);
           setMatches(null);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -164,7 +173,9 @@ export function ClientForm() {
       <p className="-mt-4 text-sm text-muted">
         Cuéntanos qué vas a mover, hacia dónde y qué día. No tienes que crear cuenta ni pagar comisiones.
       </p>
-      <form onSubmit={submit} className="flex flex-col gap-6">
+      <InfoNote message={notice} />
+      {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
+      <form onSubmit={submit} noValidate className="flex flex-col gap-6">
         <Field label="¿Desde dónde?">
           <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
         </Field>
@@ -213,6 +224,8 @@ export function ClientForm() {
   );
 }
 
+const EXPIRED_NOTICE = "Tu solicitud anterior ya pasó. Si todavía necesitas mover algo, haz una nueva.";
+
 /**
  * La solicitud abierta, con los transportistas que le sirven. Se ve al
  * solicitar y cada vez que vuelve a la pantalla, con la lista al día.
@@ -226,7 +239,7 @@ function MyRequestView({
   request: MyRequest;
   matches: DriverMatch[] | null;
   onRestart: () => void;
-  onEnd: () => void;
+  onEnd: (reason?: "expired") => void;
 }) {
   const { today, tomorrow } = useBogotaDates();
   const [matches, setMatches] = useState<DriverMatch[] | null>(initialMatches);
@@ -255,7 +268,8 @@ function MyRequestView({
             return;
           }
           if (res.status === "cerrada") {
-            onEnd();
+            // Cerrada en el servidor: si es porque ya pasó el día, se le dice.
+            onEnd(isStillValid(date, today) ? undefined : "expired");
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
@@ -399,7 +413,8 @@ function AlertsOptIn({
   editToken: string;
   vapidPublicKey: string | null;
 }) {
-  const [state, setState] = useState<AlertState>("no");
+  // "blocked": acaba de decir que no al permiso del celular.
+  const [state, setState] = useState<AlertState | "blocked">("no");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -434,7 +449,8 @@ function AlertsOptIn({
     try {
       const sub = await getAlertSubscription(vapidPublicKey!, true);
       if (!sub) {
-        setState(alertState(vapidPublicKey));
+        // Si dijo que no, se le explica en vez de quitar la tarjeta sin decir nada.
+        setState(Notification.permission === "denied" ? "blocked" : alertState(vapidPublicKey));
         return;
       }
       const res = await callServer(() => subscribeToAlerts({ id, editToken, subscription: sub }));
@@ -455,6 +471,18 @@ function AlertsOptIn({
 
   if (state === "on") {
     return <p className="text-sm text-muted">Te avisamos al celular cuando aparezca un transportista.</p>;
+  }
+
+  if (state === "blocked") {
+    return (
+      <section className="card">
+        <h2 className="font-semibold">No te podemos avisar</h2>
+        <p className="mt-1 text-sm text-muted">
+          Tu celular no nos dio permiso. Vuelve a esta pantalla cuando quieras: aquí te salen los
+          transportistas que aparezcan.
+        </p>
+      </section>
+    );
   }
 
   if (state === "iphone") {

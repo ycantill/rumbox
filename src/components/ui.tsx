@@ -475,6 +475,12 @@ export function PrivacyNote({ children }: { children: React.ReactNode }) {
   );
 }
 
+/** Un aviso que no es un error, como que el viaje de antes ya pasó. */
+export function InfoNote({ message }: { message: string | null }) {
+  if (!message) return null;
+  return <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand-ink">{message}</p>;
+}
+
 export function ErrorNote({ message }: { message: string | null }) {
   if (!message) return null;
   return (

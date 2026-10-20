@@ -8,6 +8,7 @@ import {
   DayPicker,
   ErrorNote,
   Field,
+  InfoNote,
   OriginCitySelect,
   PrivacyNote,
   useBogotaDates,
@@ -29,6 +30,7 @@ import {
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
+import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
 type Profile = { labor: DriverLabor | ""; whatsapp: string };
@@ -42,7 +44,13 @@ export type MyPost = {
   destination: string | null;
   date: string; // el día del viaje
   space: DriverSpace;
+  // Lo que podía llevar antes de "Solo queda espacio para paquetes": con eso
+  // vuelve el formulario, para el próximo viaje.
+  fullSpace?: DriverSpace;
 };
+
+/** Por qué se apagó: si fue porque pasó el día, se le dice. */
+type EndReason = "expired";
 
 export function DriverForm() {
   const { today } = useBogotaDates();
@@ -54,6 +62,8 @@ export function DriverForm() {
   const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // "Tu viaje anterior ya pasó", cuando vuelve el formulario porque se venció.
+  const [notice, setNotice] = useState<string | null>(null);
   // Si se acaba de poner disponible: el título dice "¡Listo!".
   const [justPublished, setJustPublished] = useState(false);
   const [posts, setPosts] = useState<MyPost[]>([]);
@@ -79,14 +89,17 @@ export function DriverForm() {
     save(KEYS.driverPosts, [p]);
   }
 
-  function endCurrent() {
+  function endCurrent(reason?: EndReason) {
     // El formulario vuelve con los datos de antes, para ponerse otra vez con un toque.
     if (current) {
       setOrigin(current.origin);
       setDestination(current.destination ?? "");
+      // Lo que podía llevar al empezar, no lo que le quedó libre al final del viaje.
+      const space = current.fullSpace ?? current.space;
       // El baúl o los asientos de un carro particular ya no son una opción.
-      if (isKey(DRIVER_SPACES, current.space)) setSpace(current.space);
+      if (isKey(DRIVER_SPACES, space)) setSpace(space);
     }
+    setNotice(reason === "expired" ? "Tu viaje anterior ya pasó. Cuéntanos cuándo es el próximo." : null);
     setPosts([]);
     setJustPublished(false);
     save(KEYS.driverPosts, []);
@@ -96,17 +109,15 @@ export function DriverForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
+    const input = { origin, destination, date, space, labor, whatsapp };
+    const invalid = driverInputError(input, today);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     startTransition(async () => {
-      const res = await callServer(() =>
-        publishAvailability({
-          origin,
-          destination,
-          date,
-          space,
-          labor,
-          whatsapp,
-        }),
-      );
+      const res = await callServer(() => publishAvailability(input));
       if (!res.ok) {
         setError(res.error);
         return;
@@ -121,6 +132,7 @@ export function DriverForm() {
         space: space as DriverSpace,
       };
       updateCurrent(post);
+      setNotice(null);
       setJustPublished(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
@@ -146,7 +158,9 @@ export function DriverForm() {
       <p className="-mt-4 text-sm text-muted">
         Cuéntanos hacia dónde vas y qué día viajas. No tienes que crear cuenta ni pagar comisiones.
       </p>
-      <form onSubmit={submit} className="flex flex-col gap-6">
+      <InfoNote message={notice} />
+      {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
+      <form onSubmit={submit} noValidate className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
           <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
         </Field>
@@ -210,7 +224,7 @@ function CurrentWork({
   phone: string | null;
   justPublished: boolean;
   onChange: (p: MyPost) => void;
-  onEnd: () => void;
+  onEnd: (reason?: EndReason) => void;
 }) {
   const { today, tomorrow } = useBogotaDates();
   const [busy, setBusy] = useState(false);
@@ -221,7 +235,8 @@ function CurrentWork({
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
   // guardado de antes sin destino o con el espacio de un carro particular
   // (baúl o asientos): ahora tiene que elegir otra vez.
-  const ended = !post.destination || !isStillValid(post.date, today) || !isKey(DRIVER_SPACES, post.space);
+  const expired = !isStillValid(post.date, today);
+  const ended = !post.destination || expired || !isKey(DRIVER_SPACES, post.space);
 
   // Si sigue encendida y el espacio al día, desde el servidor: al abrir la
   // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No
@@ -233,7 +248,7 @@ function CurrentWork({
   const latest = useRef(0);
   useEffect(() => {
     if (ended) {
-      onEnd();
+      onEnd(expired ? "expired" : undefined);
       return;
     }
     let cancelled = false;
@@ -291,7 +306,7 @@ function CurrentWork({
 
   async function onlyPackages() {
     if (!(await patch({ space: "solo_paquetes" }))) return;
-    onChange({ ...post, space: "solo_paquetes" });
+    onChange({ ...post, space: "solo_paquetes", fullSpace: post.fullSpace ?? post.space });
   }
 
   async function end() {
