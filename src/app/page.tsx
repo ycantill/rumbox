@@ -43,6 +43,12 @@ export default function Home() {
           <span className="block text-muted">Hablas directo con el transportista, sin intermediarios.</span>
         </li>
       </ul>
+
+      <footer className="mt-auto pt-10 text-center text-xs text-muted">
+        <Link href="/privacidad" className="underline">
+          Cómo cuidamos tus datos
+        </Link>
+      </footer>
     </main>
   );
 }

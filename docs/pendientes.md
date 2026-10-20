@@ -6,20 +6,27 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Decisiones de Yohany
 
-### 10. Aviso de privacidad
+### 10. Datos de verdad en el aviso de privacidad
 
-- **Problema:** desde el PR #25 el transportista ya no ve a los clientes, pero
-  cualquiera que llene el formulario del cliente ve el teléfono de los
-  transportistas que le sirven, y la app guarda el teléfono del cliente. No
-  tiene aviso de privacidad. En Colombia, la Ley 1581 de
-  2012 (habeas data) pide autorización previa y una política de tratamiento de
-  datos.
-- **Propuesta:** una frase antes de "Solicitar transportista" y otra para el
-  transportista ("Los clientes verán tu número para llamarte"), y
-  una página de privacidad enlazada desde ahí.
-- **Falta:** el nombre del responsable (persona o empresa) y un correo de
-  contacto. Conviene que alguien que conozca la ley lo revise antes de abrir
-  la app al público.
+- **Problema:** el aviso de privacidad y la página `/privacidad` ya existen,
+  pero con datos de prueba para el demo (Yohany, 20 de octubre de 2026): el
+  correo `ayuda@muvia.co` y el teléfono `300 111 2233`, que no es real. El
+  Decreto 1377 de 2013 pide el nombre (o razón social), domicilio,
+  dirección, correo y teléfono del responsable, y alguien tiene que responder
+  ahí (10 días hábiles para preguntas, 15 para reclamos).
+- **Falta antes de abrir al público:** el nombre del responsable (persona o
+  empresa), su dirección, y un correo y un teléfono reales. Se cambian en
+  `src/lib/legal.ts`. Conviene que alguien que conozca la ley revise el texto.
+
+### 10b. Términos y condiciones
+
+- **Decisión:** entran en el MVP (Yohany, 20 de octubre de 2026).
+- **Falta:** escribirlos y enlazarlos junto al aviso de privacidad. Deberían
+  decir, por lo menos, que Muvia solo conecta a las personas, que el precio y
+  el servicio los acuerdan el cliente y el transportista, que Muvia no
+  responde por la carga ni por el viaje, y qué está prohibido (números
+  ajenos, datos falsos). Necesitan los mismos datos del responsable que el
+  punto 10.
 
 ## Propuestas
 

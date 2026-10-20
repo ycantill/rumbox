@@ -276,6 +276,17 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   solicitudes. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
   apagada no se vuelve a encender.
 
+**Privacidad y términos**
+- Encima de "Solicitar transportista" y de "Ponerme disponible" va el permiso
+  para guardar los datos (`PrivacyNote` en `src/components/ui.tsx`), con el
+  enlace "Cómo cuidamos tus datos" a `/privacidad`, que también sale en el
+  inicio.
+- El responsable y su contacto están en `src/lib/legal.ts`. El correo
+  `ayuda@muvia.co` y el teléfono `300 111 2233` son de prueba, solo para el
+  demo (Yohany, octubre de 2026): se cambian antes de abrir al público.
+- Los términos y condiciones entran en el MVP (Yohany, octubre de 2026);
+  todavía no están escritos (docs/pendientes.md).
+
 **Avisos al celular**
 - Yohany eligió Web Push estándar con llaves VAPID, sin Firebase (octubre de
   2026). El aviso es para el cliente: "Apareció un transportista" cuando uno
