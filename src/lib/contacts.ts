@@ -1,4 +1,4 @@
-// "Te buscaron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
+// "Te encontraron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
 // en la tarjeta del transportista (Yohany, 20 de octubre de 2026). El
 // transportista ve su solicitud y los dos últimos números de su teléfono, para
 // reconocerlo cuando le escriba, pero nunca el número: un toque no quiere

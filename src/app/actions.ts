@@ -89,7 +89,7 @@ export async function publishAvailability(input: {
     if (error) throw error;
     // No se le muestran los clientes que esperan: por su privacidad, ellos lo
     // ven a él (Vía B) y son los que llaman o escriben. Solo ve, en "Te
-    // buscaron", a los que tocan su tarjeta. A los que pidieron aviso les
+    // encontraron", a los que tocan su tarjeta. A los que pidieron aviso les
     // llega uno al celular, después de responderle al transportista.
     after(() => alertClients(row as AvailabilityLike));
     return { ok: true as const, id: data.id as string, editToken };
@@ -97,7 +97,7 @@ export async function publishAvailability(input: {
 }
 
 /**
- * "Ya no voy a trabajar" (status llena). Una apagada no se vuelve a encender:
+ * "Ya no estoy disponible" (status llena). Una apagada no se vuelve a encender:
  * después se borra su teléfono.
  */
 export async function updateAvailability(input: {
@@ -178,7 +178,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
 }
 
 /**
- * "Lo llevo" o "No lo llevo" de un cliente de "Te buscaron"; null lo deja
+ * "Lo llevo" o "No lo llevo" de un cliente de "Te encontraron"; null lo deja
  * otra vez sin contestar. Después vuelve a calcular el espacio que le queda,
  * que es lo que miran los clientes, y lo devuelve.
  */
@@ -394,7 +394,7 @@ export async function subscribeToAlerts(input: {
 
 /**
  * El cliente tocó "Escribir por WhatsApp" o "Llamar" en la tarjeta de un
- * transportista: él lo ve en "Te buscaron". Solo cuenta si la solicitud es
+ * transportista: él lo ve en "Te encontraron". Solo cuenta si la solicitud es
  * suya, sigue abierta y ese transportista de verdad le sirve, para que nadie
  * le llene la lista a otro. Si falla, no pasa nada: el cliente ya está
  * escribiendo o llamando.

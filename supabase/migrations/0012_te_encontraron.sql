@@ -1,4 +1,4 @@
--- "Te buscaron" (Yohany, 20 de octubre de 2026).
+-- "Te encontraron" (Yohany, 20 de octubre de 2026).
 --
 -- Cuando un cliente toca "Escribir por WhatsApp" o "Llamar" en la tarjeta de
 -- un transportista, se guarda qué solicitud buscó a qué disponibilidad. El

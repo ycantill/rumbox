@@ -245,7 +245,7 @@ function CurrentWork({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // "Te buscaron": los clientes que tocaron su tarjeta, desde el servidor.
+  // "Te encontraron": los clientes que tocaron su tarjeta, desde el servidor.
   const [contacts, setContacts] = useState<DriverContact[]>([]);
 
   // Un viaje vale hasta que termina su día. Si ya pasó, se apagó solo y vuelve el formulario
@@ -255,7 +255,7 @@ function CurrentWork({
   const expired = !isStillValid(post.date, today);
   const ended = !post.destination || expired || !isKey(DRIVER_SPACES, post.space);
 
-  // Si sigue encendida, el espacio y "Te buscaron" al día, desde el servidor:
+  // Si sigue encendida, el espacio y "Te encontraron" al día, desde el servidor:
   // al abrir la pantalla, al volver a la app y cada minuto mientras la tiene
   // abierta. No ve a los clientes que esperan: por su privacidad, ellos son
   // los que lo llaman. Solo ve a los que tocaron su tarjeta, sin su teléfono.
@@ -402,7 +402,7 @@ function CurrentWork({
           </div>
         ) : (
           <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya no voy a trabajar
+            Ya no estoy disponible
           </button>
         )}
       </div>
@@ -412,7 +412,7 @@ function CurrentWork({
 }
 
 /**
- * "Te buscaron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
+ * "Te encontraron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
  * en su tarjeta, con los dos últimos números de su teléfono para reconocerlos.
  * El número completo no sale: un toque no quiere decir que de verdad escribió.
  */
@@ -428,7 +428,7 @@ function TheyLookedForYou({
   return (
     <section className="flex flex-col gap-3">
       <div>
-        <h2 className="font-semibold">Te buscaron ({contacts.length})</h2>
+        <h2 className="font-semibold">Te encontraron ({contacts.length})</h2>
         <p className="text-sm text-muted">
           Estos clientes tocaron para llamarte o escribirte. Si alguno no te ha escrito, puede que se haya
           arrepentido. Cuando tocas &quot;Lo llevo&quot;, te descontamos ese espacio.

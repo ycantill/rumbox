@@ -396,7 +396,7 @@ function MyRequestView({
               <div className="mt-3">
                 <ContactButtons
                   availabilityId={m.id}
-                  // Sin esperar respuesta: si no hay señal, no le sale en "Te buscaron" y ya.
+                  // Sin esperar respuesta: si no hay señal, no le sale en "Te encontraron" y ya.
                   onContact={() => void callServer(() => recordContact({ id, editToken, availabilityId: m.id }))}
                   phone={m.whatsapp}
                   message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}

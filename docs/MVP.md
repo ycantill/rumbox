@@ -38,7 +38,7 @@ los clientes lo pueden llamar o escribir por WhatsApp.
 (Yohany, octubre de 2026), siempre es el cliente quien llama o escribe. El
 transportista no ve la lista de clientes que esperan: una lista con la que no
 puede hacer nada solo frustra. Espera que lo llamen. Solo ve, en "Te
-buscaron", a los que tocaron su tarjeta, sin su teléfono.
+encontraron", a los que tocaron su tarjeta, sin su teléfono.
 
 **Municipios.** Están todos los de Colombia (DIVIPOLA del DANE). Se buscan
 escribiendo parte del nombre, con o sin tildes, o en la lista completa que se
@@ -62,15 +62,15 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
-  "Estás disponible para este servicio" con sus datos y "Ya no voy a
-  trabajar". Ese botón (que también sirve
+  "Estás disponible para este servicio" con sus datos y "Ya no estoy
+  disponible". Ese botón (que también sirve
   si se llenó) lo apaga y le devuelve el formulario con los mismos datos para
   ponerse otra vez cuando quiera. Se controla con un token que solo vive en su
   teléfono.
 - La pantalla revisa sola, al volver a la app y cada minuto, si su
   disponibilidad sigue encendida. Los clientes que solicitan después de que
   él se puso disponible lo ven en su lista y lo llaman.
-- "Te buscaron" (Yohany, 20 de octubre de 2026): debajo de sus datos ve a los
+- "Te encontraron" (Yohany, 20 de octubre de 2026): debajo de sus datos ve a los
   clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta, con
   la ruta, qué van a mover, la ayuda que piden y los dos últimos números del
   teléfono, nunca el número completo. Contesta "Lo llevo" o "No lo llevo".

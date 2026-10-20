@@ -506,7 +506,7 @@ export function ContactButtons({
   phone: string;
   message: string;
   availabilityId: string;
-  /** Al tocar cualquiera de los dos: el transportista lo ve en "Te buscaron". */
+  /** Al tocar cualquiera de los dos: el transportista lo ve en "Te encontraron". */
   onContact?: () => void;
 }) {
   return (

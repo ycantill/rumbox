@@ -49,7 +49,7 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
-src/lib/contacts.ts              "Te buscaron": lo que ve el transportista de quien lo buscó
+src/lib/contacts.ts              "Te encontraron": lo que ve el transportista de quien lo buscó
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -122,7 +122,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   transportista no ve la lista de clientes que esperan, porque una lista con
   la que no puede hacer nada solo frustra (Yohany): espera que lo llamen. Al
   cliente se le dice que los transportistas no ven su teléfono.
-- "Te buscaron" (Yohany, 20 de octubre de 2026): el transportista sí ve a los
+- "Te encontraron" (Yohany, 20 de octubre de 2026): el transportista sí ve a los
   clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta
   (`recordContact`, tabla `contacts`), con la ruta, qué va a mover, la ayuda
   que pide y los dos últimos números del teléfono ("Su teléfono termina en
@@ -137,7 +137,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   resta y `space` guarda lo que queda (lo que miran los clientes); lo que
   podía llevar al empezar queda en `full_space`. Su tarjeta dice "Te queda
   espacio para…". Lo que consiga por fuera de Muvia no se resta: para eso
-  está "Ya no voy a trabajar".
+  está "Ya no estoy disponible".
 - Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
@@ -148,8 +148,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - En el sistema cada registro es una publicación (`availabilities`), pero en la
   pantalla del transportista nunca se habla de publicar: él "se pone
   disponible".
-- No repitas la palabra "disponible". Solo aparece en el botón "Ponerme
-  disponible" y en el título "Estás disponible para este servicio".
+- No repitas la palabra "disponible". Solo aparece en los botones "Ponerme
+  disponible" y "Ya no estoy disponible" (Yohany, 20 de octubre de 2026; antes
+  "Ya no voy a trabajar") y en el título "Estás disponible para este
+  servicio".
 - No le prometas clientes: nada de "Estás recibiendo clientes".
 
 **Un viaje a la vez**
@@ -173,10 +175,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
   futura para el transportista: las "disponibilidades programadas". No van
   en el MVP: quien repite una ruta registra cada viaje.
-- Un solo botón para apagarla: "Ya no voy a trabajar" (también sirve si se
+- Un solo botón para apagarla: "Ya no estoy disponible" (también sirve si se
   llenó). Pide confirmar y luego vuelve al formulario con
   los mismos datos. "Solo queda espacio para paquetes" ya no existe: Muvia
-  calcula el espacio con "Lo llevo" (ver "Te buscaron").
+  calcula el espacio con "Lo llevo" (ver "Te encontraron").
 
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
@@ -281,8 +283,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Mientras la tenga, Muvia lo lleva siempre a esa pantalla: el inicio y la
   pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
-  nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no voy a
-  trabajar") o se vence, vuelven el formulario y "← Inicio".
+  nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no estoy
+  disponible") o se vence, vuelven el formulario y "← Inicio".
 - El servidor lo revisa con el número (`hasActiveTrip` y `hasOpenRequest` en
   `actions.ts`, textos en `src/lib/one-at-a-time.ts`): con un número que está
   como transportista no se solicita, y con uno que tiene una solicitud abierta
@@ -315,7 +317,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - El teléfono se guarda solo mientras la solicitud o la disponibilidad vale
   (Yohany, octubre de 2026). Cada hora, `borrar_telefonos_vencidos()`
   (pg_cron, migraciones `0009_borrar_telefonos.sql` y
-  `0011_vence_al_terminar_el_dia.sql`, y `0012_te_buscaron.sql`) borra el
+  `0011_vence_al_terminar_el_dia.sql`, y `0012_te_encontraron.sql`) borra el
   teléfono y el `ip_hash` de las vencidas, y de las cerradas o apagadas una
   hora después de creadas (para que el límite las siga contando), las
   suscripciones a avisos de esas solicitudes y sus filas de `contacts`. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
