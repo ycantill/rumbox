@@ -196,3 +196,7 @@ se probó en un teléfono:
   al cliente le llega un aviso al celular (Web Push) cuando aparece un
   transportista que le sirve. Requiere la migración `0006_avisos.sql`, las
   llaves VAPID y las variables de `.env.example` en Vercel.
+- **Revisión de datos (20 de octubre de 2026):** límite de solicitudes del
+  cliente (5 por hora por teléfono y 20 por conexión) para que nadie junte los
+  teléfonos de los transportistas, y el canal de Realtime pasa a ser privado:
+  solo se puede escuchar. Requiere la migración `0007_proteger_datos.sql`.
