@@ -260,5 +260,6 @@ se probó en un teléfono:
   va dentro de esa tarjeta. No necesita migración.
 - **PR #38:** las solicitudes y las disponibilidades valen hasta que termina el
   día del viaje, a la medianoche en hora de Colombia, y no 24 horas más.
-  Requiere la migración `0011_vence_al_terminar_el_dia.sql`, que hace que los
-  teléfonos se borren desde el día siguiente al viaje.
+  La migración `0011_vence_al_terminar_el_dia.sql`, que hace que los
+  teléfonos se borren desde el día siguiente al viaje, ya se corrió en
+  Supabase (Yohany, 20 de octubre de 2026).
