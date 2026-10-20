@@ -1,8 +1,10 @@
 import Link from "next/link";
+import { TrackVisit } from "@/components/ui";
 
 export default function Home() {
   return (
     <main className="page flex flex-1 flex-col">
+      <TrackVisit page="inicio" />
       <header className="flex items-center gap-2">
         <span className="grid size-9 place-items-center rounded-xl bg-brand font-bold text-white dark:text-bg">
           M

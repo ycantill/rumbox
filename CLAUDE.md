@@ -44,7 +44,8 @@ src/app/solicitar/               Cliente: formulario para solicitar transportist
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, createRequest, getMyRequest,
-                                 closeRequest, getAlertsConfig, subscribeToAlerts)
+                                 closeRequest, getAlertsConfig, subscribeToAlerts,
+                                 trackEvent)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
@@ -52,9 +53,11 @@ src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y s
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
 src/lib/alerts.ts                A quién avisar y qué dice el aviso; canal de Realtime del día
+src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda desde el navegador
 src/lib/live.ts                  Realtime en el navegador (lista del cliente al día)
 src/lib/push.ts, push-client.ts  Web Push: enviar (servidor) y suscribirse (navegador)
-supabase/migrations/             Esquema: availabilities, requests, reviews, push_subscriptions
+supabase/migrations/             Esquema: availabilities, requests, reviews, push_subscriptions,
+                                 events
 public/sw.js                     Service worker
 ```
 
@@ -300,6 +303,17 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   funciona con Muvia agregada a la pantalla de inicio, y se le dice cómo.
 - El transportista no recibe avisos. El aviso por WhatsApp al transportista
   necesita la API oficial y está fuera del MVP.
+
+**Analíticas propias**
+- Yohany pidió analíticas en octubre de 2026. Son propias, en la tabla
+  `events` de Supabase, sin Google Analytics ni otro servicio de afuera.
+- Se cuentan las visitas a cada pantalla (`TrackVisit`), si ese navegador ya
+  había entrado (`muvia.ya-vino` en localStorage) y los toques en "Escribir por
+  WhatsApp" y "Llamar" de `ContactButtons`, con el transportista que se tocó.
+- No se guarda nada de la persona: ni teléfono, ni `ip_hash`, ni un
+  identificador del navegador. `/privacidad` lo dice.
+- Yohany ve los números en Supabase, en las vistas `analiticas_por_dia` y
+  `analiticas_por_municipio`. No hay pantalla de estadísticas en la app.
 
 **Sin precio**
 - En el MVP no se calcula ningún precio: el cliente y el transportista lo

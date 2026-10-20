@@ -344,6 +344,7 @@ function MyRequestView({
                 </p>
                 <div className="mt-3">
                   <ContactButtons
+                    availabilityId={m.id}
                     phone={m.whatsapp}
                     message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
                   />

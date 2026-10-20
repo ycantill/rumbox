@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PRIVACY_CONTACT, PRIVACY_UPDATED } from "@/lib/legal";
+import { TrackVisit } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Cómo cuidamos tus datos",
@@ -11,6 +12,7 @@ export default function PrivacyPage() {
   const { name, email, phone } = PRIVACY_CONTACT;
   return (
     <main className="page">
+      <TrackVisit page="privacidad" />
       <Link href="/" className="text-sm text-muted">
         ← Inicio
       </Link>
@@ -41,6 +43,10 @@ export default function PrivacyPage() {
             <li>Una huella de tu conexión a internet, para frenar a quien abusa de la app. No guardamos tu dirección de internet.</li>
             <li>Si pides que te avisemos, lo que necesita tu celular para recibir el aviso.</li>
           </ul>
+          <p className="mt-2 text-muted">
+            También contamos cuántas veces se abre cada pantalla y se tocan los botones de llamar y de WhatsApp,
+            para saber si la app sirve. Eso no dice quién fue.
+          </p>
           <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación exacta.</p>
         </section>
 

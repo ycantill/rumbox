@@ -23,4 +23,5 @@ export const KEYS = {
   driverPosts: "muvia.transportista.publicaciones",
   clientPhone: "muvia.cliente.whatsapp",
   clientRequest: "muvia.cliente.solicitud",
+  visited: "muvia.ya-vino",
 } as const;
