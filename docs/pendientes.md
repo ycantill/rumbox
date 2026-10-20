@@ -256,4 +256,5 @@ se probó en un teléfono:
 - **PR #37:** "Tu solicitud" muestra la ruta, el día, qué va a mover y la
   ayuda que pidió. Los botones dicen "Ya no necesito este servicio" y
   "Cambiar mi solicitud". Es una pantalla de espera: "Buscando
-  transportistas…" con una animación de radar. No necesita migración.
+  transportistas…" con una animación de radar, y la invitación a los avisos
+  va dentro de esa tarjeta. No necesita migración.

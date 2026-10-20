@@ -320,7 +320,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Solo se guardan suscripciones de los servicios de avisos de los navegadores
   (`isPushEndpoint` en `src/lib/alerts.ts`): el servidor no le manda nada a
   otra dirección.
-- El cliente lo pide en "Tu solicitud" con "Sí, avísame". En iPhone solo
+- El cliente lo pide en "Tu solicitud" con "Sí, avísame", dentro de la
+  tarjeta "Buscando transportistas…" para que se vea sin bajar. Si antes le
+  negó el permiso, ahí mismo sale "No te podemos avisar". En iPhone solo
   funciona con Muvia agregada a la pantalla de inicio, y se le dice cómo.
 - El transportista no recibe avisos. El aviso por WhatsApp al transportista
   necesita la API oficial y está fuera del MVP.

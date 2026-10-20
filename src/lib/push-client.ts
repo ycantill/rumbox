@@ -5,7 +5,8 @@ import type { AlertSubscription } from "@/app/actions";
 
 /** Cómo están los avisos en este teléfono. */
 export type AlertState =
-  | "no" // el navegador no los permite, o la persona los bloqueó
+  | "no" // el navegador no los permite
+  | "blocked" // la persona no le dio permiso a Muvia
   | "iphone" // iPhone sin agregar Muvia a la pantalla de inicio
   | "ask" // se le puede preguntar
   | "on"; // ya aceptó
@@ -17,7 +18,7 @@ export function alertState(vapidPublicKey: string | null): AlertState {
     const standalone = (navigator as { standalone?: boolean }).standalone === true;
     return isIos() && !standalone ? "iphone" : "no";
   }
-  if (Notification.permission === "denied") return "no";
+  if (Notification.permission === "denied") return "blocked";
   return Notification.permission === "granted" ? "on" : "ask";
 }
 

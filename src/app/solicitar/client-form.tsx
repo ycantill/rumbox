@@ -366,7 +366,12 @@ function MyRequestView({
       {/* Es una pantalla de espera: mientras no haya transportistas, o hasta
           que llegue la lista, se ve que seguimos buscando. */}
       {!matches || matches.length === 0 ? (
-        <Searching />
+        <Searching>
+          {/* La invitación a los avisos va dentro de la espera, donde se ve sin bajar. */}
+          {vapidPublicKey !== undefined && (
+            <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} embedded />
+          )}
+        </Searching>
       ) : (
         <section className="flex flex-col gap-3">
           <div>
@@ -397,7 +402,7 @@ function MyRequestView({
         </section>
       )}
 
-      {vapidPublicKey !== undefined && (
+      {matches && matches.length > 0 && vapidPublicKey !== undefined && (
         <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} />
       )}
 
@@ -429,23 +434,25 @@ function MyRequestView({
 }
 
 /** Mientras no hay transportistas: la solicitud quedó guardada y seguimos buscando. */
-function Searching() {
+function Searching({ children }: { children?: React.ReactNode }) {
   return (
-    <section role="status" className="card flex flex-col items-center gap-3 py-6 text-center">
-      <Radar size="large" />
-      <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
-      <p className="text-sm text-muted">
-        Tu solicitud quedó guardada. Apenas un transportista vaya para allá ese día, te sale aquí para que
-        lo llames o le escribas por WhatsApp. Puedes cerrar la app y volver cuando quieras. El precio lo
-        acuerdan cuando hablen.
-      </p>
+    <section className="card flex flex-col items-center gap-3 py-5 text-center">
+      <div role="status" className="flex flex-col items-center gap-2">
+        <Radar size="large" />
+        <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
+        <p className="text-sm text-muted">
+          Tu solicitud quedó guardada. Apenas un transportista vaya para allá ese día, te sale aquí para
+          que lo llames o le escribas por WhatsApp.
+        </p>
+      </div>
+      {children}
     </section>
   );
 }
 
 /** Ondas que salen del centro: la app sigue buscando. */
 function Radar({ size }: { size: "large" | "small" }) {
-  const box = size === "large" ? "size-24" : "size-4";
+  const box = size === "large" ? "size-20" : "size-4";
   const dot = size === "large" ? "size-5" : "size-2";
   return (
     <span aria-hidden className={`relative grid shrink-0 place-items-center ${box}`}>
@@ -472,13 +479,15 @@ function AlertsOptIn({
   id,
   editToken,
   vapidPublicKey,
+  embedded = false,
 }: {
   id: string;
   editToken: string;
   vapidPublicKey: string | null;
+  /** Dentro de la tarjeta de espera, separada por una línea, en vez de en su propia tarjeta. */
+  embedded?: boolean;
 }) {
-  // "blocked": acaba de decir que no al permiso del celular.
-  const [state, setState] = useState<AlertState | "blocked">("no");
+  const [state, setState] = useState<AlertState>("no");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -533,17 +542,24 @@ function AlertsOptIn({
 
   if (state === "no") return null;
 
+  const box = embedded ? "w-full border-t border-line pt-4" : "card";
+
   if (state === "on") {
-    return <p className="text-sm text-muted">Te avisamos al celular cuando aparezca un transportista.</p>;
+    return (
+      <p className={embedded ? `${box} text-sm text-muted` : "text-sm text-muted"}>
+        Te avisamos al celular cuando aparezca un transportista.
+      </p>
+    );
   }
 
   if (state === "blocked") {
     return (
-      <section className="card">
+      <section className={box}>
         <h2 className="font-semibold">No te podemos avisar</h2>
         <p className="mt-1 text-sm text-muted">
           Tu celular no nos dio permiso. Vuelve a esta pantalla cuando quieras: aquí te salen los
-          transportistas que aparezcan.
+          transportistas que aparezcan. Si quieres los avisos, dale permiso a Muvia en los ajustes de tu
+          celular.
         </p>
       </section>
     );
@@ -551,7 +567,7 @@ function AlertsOptIn({
 
   if (state === "iphone") {
     return (
-      <section className="card">
+      <section className={box}>
         <h2 className="font-semibold">¿Quieres que te avisemos?</h2>
         <p className="mt-1 text-sm text-muted">
           En iPhone, primero agrega Muvia a tu pantalla de inicio: toca el botón de compartir y luego
@@ -563,7 +579,7 @@ function AlertsOptIn({
   }
 
   return (
-    <section className="card flex flex-col gap-3">
+    <section className={`${box} flex flex-col gap-3`}>
       <div>
         <h2 className="font-semibold">¿Te avisamos cuando aparezca un transportista?</h2>
         <p className="mt-1 text-sm text-muted">Te llega un aviso al celular, aunque tengas la app cerrada.</p>
