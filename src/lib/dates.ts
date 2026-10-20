@@ -29,11 +29,12 @@ export function addDays(date: string, days: number): string {
 }
 
 /**
- * Una solicitud o disponibilidad vale el día del servicio y 24 horas más: una
- * para mañana se vence pasado mañana. Después se apaga sola.
+ * Una solicitud o disponibilidad vale hasta que termina el día del servicio,
+ * a la medianoche en hora de Colombia (Yohany, octubre de 2026). Después se
+ * apaga sola.
  */
 export function isStillValid(serviceDate: string, today: string): boolean {
   // Lo guardado en el teléfono por una versión vieja puede no traer la fecha.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(serviceDate ?? "")) return false;
-  return addDays(serviceDate, 1) >= today;
+  return serviceDate >= today;
 }

@@ -178,7 +178,7 @@ export function DriverForm() {
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
 
-        {/* Es un viaje: vale ese día y 24 horas más. */}
+        {/* Es un viaje: vale hasta que termina ese día. */}
         <Field label="¿Qué día viajas?">
           <DayPicker value={date} onChange={setDate} />
         </Field>
@@ -234,7 +234,7 @@ function CurrentWork({
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Un viaje vale su día y 24 horas más. Si ya pasó, se apagó solo y vuelve el formulario
+  // Un viaje vale hasta que termina su día. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
   // guardado de antes sin destino o con el espacio de un carro particular
   // (baúl o asientos): ahora tiene que elegir otra vez.

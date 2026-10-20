@@ -5,7 +5,6 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
-import { addDays } from "@/lib/dates";
 import {
   DRIVER_SPACES,
   isKey,
@@ -145,14 +144,14 @@ export async function getMyAvailability(input: { id: string; editToken: string }
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
     }
-    // Vale el día del viaje y 24 horas más: después se apagó sola. Las de antes, sin
+    // Vale hasta que termina el día del viaje: después se apagó sola. Las de antes, sin
     // destino o en carro particular (baúl o asientos), ya no les salen a los
     // clientes: también quedan apagadas.
     const active =
       data.status === "activa" &&
       Boolean(data.destination_city) &&
       isKey(DRIVER_SPACES, data.space) &&
-      data.service_date >= yesterdayInBogota();
+      data.service_date >= todayInBogota();
     const status = active ? "activa" : "llena";
     return { ok: true as const, status, space: data.space };
   });
@@ -243,8 +242,8 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
     }
-    // Vale el día del viaje y 24 horas más: después ya no les sale a los transportistas.
-    const open = data.status === "abierta" && data.service_date >= yesterdayInBogota();
+    // Vale hasta que termina el día del viaje: después ya no les sale a los transportistas.
+    const open = data.status === "abierta" && data.service_date >= todayInBogota();
     const matches = open ? await findDrivers(data) : [];
     return { ok: true as const, status: open ? "abierta" : "cerrada", matches };
   });
@@ -411,7 +410,7 @@ async function hasOpenRequest(whatsapp: string): Promise<boolean> {
     .select("id", { count: "exact", head: true })
     .eq("whatsapp", whatsapp)
     .eq("status", "abierta")
-    .gte("service_date", yesterdayInBogota());
+    .gte("service_date", todayInBogota());
   if (error) throw error;
   return (count ?? 0) > 0;
 }
@@ -425,7 +424,7 @@ async function hasActiveTrip(whatsapp: string): Promise<boolean> {
     .eq("status", "activa")
     .not("destination_city", "is", null)
     .in("space", Object.keys(DRIVER_SPACES))
-    .gte("service_date", yesterdayInBogota());
+    .gte("service_date", todayInBogota());
   if (error) throw error;
   return (count ?? 0) > 0;
 }
@@ -505,7 +504,3 @@ function todayInBogota(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Bogota" }).format(new Date());
 }
 
-/** Ayer en hora Colombia: lo de ayer todavía está dentro de sus 24 horas. */
-function yesterdayInBogota(): string {
-  return addDays(todayInBogota(), -1);
-}

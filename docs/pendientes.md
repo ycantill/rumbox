@@ -93,8 +93,8 @@ se probó en un teléfono:
   mismos datos y el cliente ya no le sale a ningún transportista.
 - "Cambiar mi solicitud" y enviarla cambiando el día: al transportista del
   día de antes ya no le sale ese cliente.
-- Un día después del viaje, "Tu solicitud" y "Estás disponible para este
-  servicio" todavía se ven; dos días después vuelve el formulario con los
+- El día del viaje, "Tu solicitud" y "Estás disponible para este servicio"
+  se ven hasta la medianoche; al día siguiente vuelve el formulario con los
   datos de antes, sin el día.
 
 - Instalar la app en Android y en iPhone y ver el logo de Muvia.
@@ -258,3 +258,7 @@ se probó en un teléfono:
   "Cambiar mi solicitud". Es una pantalla de espera: "Buscando
   transportistas…" con una animación de radar, y la invitación a los avisos
   va dentro de esa tarjeta. No necesita migración.
+- **PR #38:** las solicitudes y las disponibilidades valen hasta que termina el
+  día del viaje, a la medianoche en hora de Colombia, y no 24 horas más.
+  Requiere la migración `0011_vence_al_terminar_el_dia.sql`, que hace que los
+  teléfonos se borren desde el día siguiente al viaje.

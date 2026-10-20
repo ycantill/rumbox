@@ -95,7 +95,7 @@ export function ClientForm() {
       setDestination(saved.destination);
       setVolume(saved.volume);
       if (saved.volume !== "sobres") setLabor(saved.labor);
-      // Vale el día del viaje y 24 horas más: después se olvida y vuelve el formulario.
+      // Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
       if (isStillValid(saved.date, today)) {
         setDate(saved.date);
         setCurrent(saved);

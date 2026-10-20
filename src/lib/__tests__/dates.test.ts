@@ -27,18 +27,17 @@ describe("addDays", () => {
 });
 
 describe("isStillValid", () => {
-  it("vale el día del servicio y 24 horas más", () => {
+  it("vale hasta que termina el día del servicio", () => {
     expect(isStillValid("2026-10-18", "2026-10-18")).toBe(true);
-    expect(isStillValid("2026-10-18", "2026-10-19")).toBe(true);
-    expect(isStillValid("2026-10-18", "2026-10-20")).toBe(false);
+    expect(isStillValid("2026-10-18", "2026-10-19")).toBe(false);
   });
 
-  it("un servicio para mañana se vence pasado mañana", () => {
+  it("un servicio para mañana vale hoy y mañana, y se vence pasado mañana", () => {
     const today = "2026-10-18";
     const tomorrow = "2026-10-19";
     expect(isStillValid(tomorrow, today)).toBe(true);
-    expect(isStillValid(tomorrow, "2026-10-20")).toBe(true);
-    expect(isStillValid(tomorrow, "2026-10-21")).toBe(false);
+    expect(isStillValid(tomorrow, tomorrow)).toBe(true);
+    expect(isStillValid(tomorrow, "2026-10-20")).toBe(false);
   });
 
   it("sin fecha, o con una que no sirve, ya no vale", () => {
