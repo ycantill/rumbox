@@ -208,7 +208,7 @@ se probó en un teléfono:
   huella de la conexión se borran cuando la solicitud o la disponibilidad deja
   de valer, cada hora con pg_cron. Requiere activar pg_cron y la migración
   `0009_borrar_telefonos.sql`. El aviso de privacidad (10) sigue pendiente.
-- **Analíticas (20 de octubre de 2026):** se cuentan las visitas a cada
+- **PR #33, analíticas (20 de octubre de 2026):** se cuentan las visitas a cada
   pantalla, si quien entra ya había venido antes, y los toques en "Escribir
   por WhatsApp" y "Llamar" (17), sin guardar nada de la persona. Los números
   se ven en Supabase, en las vistas `analiticas_por_dia` y
