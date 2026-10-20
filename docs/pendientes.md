@@ -249,3 +249,7 @@ se probó en un teléfono:
   `analiticas_por_municipio`. Requiere la migración `0010_analiticas.sql`.
   También Vercel Web Analytics (gratis), que hay que activar en el panel de
   Vercel.
+- **PR #36:** una cosa a la vez en cada teléfono: o es transportista o pide
+  uno. Cada pantalla muestra lo que ya tiene abierto del otro papel, con el
+  botón para apagarlo, y el servidor lo revisa con el número. No necesita
+  migración.
