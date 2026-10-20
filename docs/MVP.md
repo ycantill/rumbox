@@ -132,6 +132,9 @@ botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
 Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
 y condiciones también entran en el MVP; falta escribirlos.
 
+**Aparecer en Google (SEO)**: entra en el MVP, pero está en espera. El plan
+está en el punto 10c de [pendientes.md](pendientes.md).
+
 **Analíticas** (`src/lib/analytics.ts`): para saber si el piloto funciona,
 la app cuenta las visitas a cada pantalla, si quien entra ya había venido
 antes, y cuántas veces un cliente toca "Escribir por WhatsApp" o "Llamar" en
