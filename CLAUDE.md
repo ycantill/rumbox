@@ -256,12 +256,16 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   servidor. El mensaje no lleva teléfonos ni ciudades. Con la anon key solo
   se puede escuchar ese canal; escribir en él, solo la base de datos.
 
-**Límite de solicitudes**
+**Límites sin cuenta**
 - Para que nadie junte los teléfonos de los transportistas haciendo muchas
   solicitudes, el cliente puede hacer hasta 5 por hora desde un mismo
-  teléfono y 20 desde una misma conexión (Yohany, octubre de 2026). Los
-  límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda una
-  huella (`ip_hash`), nunca la IP.
+  teléfono y 20 desde una misma conexión (Yohany, octubre de 2026).
+- Para que nadie llene la app de transportistas falsos (con el número de otra
+  persona) que además les mandan avisos a los clientes, el transportista
+  puede ponerse disponible hasta 3 veces por hora desde un mismo teléfono y
+  10 desde una misma conexión (Yohany, octubre de 2026).
+- Los límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda
+  una huella (`ip_hash`), nunca la IP.
 
 **Avisos al celular**
 - Yohany eligió Web Push estándar con llaves VAPID, sin Firebase (octubre de
@@ -269,6 +273,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   que le sirve a su solicitud abierta se pone disponible. Lo envía el
   servidor de Next.js con `after()` al terminar `publishAvailability`, con la
   misma lógica de `matchesTrip`.
+- Solo se guardan suscripciones de los servicios de avisos de los navegadores
+  (`isPushEndpoint` en `src/lib/alerts.ts`): el servidor no le manda nada a
+  otra dirección.
 - El cliente lo pide en "Tu solicitud" con "Sí, avísame". En iPhone solo
   funciona con Muvia agregada a la pantalla de inicio, y se le dice cómo.
 - El transportista no recibe avisos. El aviso por WhatsApp al transportista
@@ -289,5 +296,5 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
 fotos, API oficial de WhatsApp y avisos al transportista, reseñas automáticas,
 formularios offline, monetización (incluidas las disponibilidades
-programadas), autocompletado de direcciones y el resto del anti-spam
-(captcha, límite para el transportista).
+programadas), autocompletado de direcciones, captcha y verificar el número
+con un código por SMS.

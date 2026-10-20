@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { alertMessage, alertsFor, liveTopic, type SubscriptionRow } from "../alerts";
+import { alertMessage, alertsFor, isPushEndpoint, liveTopic, type SubscriptionRow } from "../alerts";
 import type { AvailabilityLike } from "../matching";
 import { urlBase64ToUint8Array } from "../push-client";
 
@@ -14,7 +14,7 @@ const driver: AvailabilityLike = {
 function row(id: string, request: Partial<SubscriptionRow["request"]>): SubscriptionRow {
   return {
     id,
-    endpoint: `https://push.example/${id}`,
+    endpoint: `https://fcm.googleapis.com/fcm/send/${id}`,
     p256dh: "p",
     auth: "a",
     request: {
@@ -43,6 +43,30 @@ describe("alertsFor", () => {
     const anywhere = { ...driver, destination_city: "cualquiera" };
     const rows = [row("sale-de-ahi", { destination_city: "medellin" })];
     expect(alertsFor(anywhere, rows)).toHaveLength(1);
+  });
+});
+
+describe("isPushEndpoint", () => {
+  it("acepta los servicios de avisos de los navegadores", () => {
+    expect(isPushEndpoint("https://fcm.googleapis.com/fcm/send/abc")).toBe(true);
+    expect(isPushEndpoint("https://updates.push.services.mozilla.com/wpush/v2/abc")).toBe(true);
+    expect(isPushEndpoint("https://web.push.apple.com/abc")).toBe(true);
+    expect(isPushEndpoint("https://wns2-bl2p.notify.windows.com/w/?token=abc")).toBe(true);
+  });
+
+  it("rechaza cualquier otra página", () => {
+    expect(isPushEndpoint("https://ejemplo.com/fcm.googleapis.com")).toBe(false);
+    expect(isPushEndpoint("https://fcm.googleapis.com.ejemplo.com/abc")).toBe(false);
+    expect(isPushEndpoint("https://malofcm.googleapis.com/abc")).toBe(false);
+    expect(isPushEndpoint("http://fcm.googleapis.com/abc")).toBe(false);
+    expect(isPushEndpoint("https://fcm.googleapis.com:8443/abc")).toBe(false);
+    expect(isPushEndpoint("https://usuario@fcm.googleapis.com/abc")).toBe(false);
+    expect(isPushEndpoint("no es una dirección")).toBe(false);
+  });
+
+  it("alertsFor no usa una suscripción con otra dirección", () => {
+    const bad = { ...row("x", {}), endpoint: "https://ejemplo.com/x" };
+    expect(alertsFor(driver, [bad])).toEqual([]);
   });
 });
 

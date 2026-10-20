@@ -14,6 +14,31 @@ export function liveTopic(date: string): string {
   return `transportistas-${date}`;
 }
 
+/**
+ * Los servicios de avisos de los navegadores (Chrome y Android, Firefox,
+ * Safari y iPhone, Edge). El servidor de Muvia les manda los avisos a las
+ * direcciones que guarda: solo se aceptan las de estos servicios, para que
+ * nadie lo use para mandar mensajes a otra página.
+ */
+const PUSH_HOSTS = [
+  "fcm.googleapis.com",
+  "android.googleapis.com",
+  "updates.push.services.mozilla.com",
+  "push.apple.com",
+  "notify.windows.com",
+];
+
+export function isPushEndpoint(endpoint: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(endpoint);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== "https:" || url.port !== "" || url.username !== "" || url.password !== "") return false;
+  return PUSH_HOSTS.some((host) => url.hostname === host || url.hostname.endsWith(`.${host}`));
+}
+
 /** El evento que manda la base de datos al canal. */
 export const LIVE_EVENT = "cambio";
 
@@ -37,7 +62,8 @@ export function alertsFor(
   rows: SubscriptionRow[],
 ): { row: SubscriptionRow; message: AlertMessage }[] {
   return rows
-    .filter((row) => matchesTrip(availability, row.request))
+    // Las suscripciones guardadas antes de revisar la dirección tampoco se usan.
+    .filter((row) => isPushEndpoint(row.endpoint) && matchesTrip(availability, row.request))
     .map((row) => ({ row, message: alertMessage(row.request) }));
 }
 

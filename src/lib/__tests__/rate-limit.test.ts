@@ -1,21 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { MAX_PER_IP, MAX_PER_PHONE, clientIp, overLimit } from "../rate-limit";
+import { LIMITS, clientIp, overLimit } from "../rate-limit";
 
 function headers(values: Record<string, string>) {
   return { get: (name: string) => values[name] ?? null };
 }
 
-describe("límite de solicitudes", () => {
-  it("deja pasar por debajo de los dos límites", () => {
-    expect(overLimit({ phone: MAX_PER_PHONE - 1, ip: MAX_PER_IP - 1 })).toBe(false);
-  });
+describe("límite de lo que se guarda", () => {
+  for (const table of ["requests", "availabilities"] as const) {
+    const max = LIMITS[table];
 
-  it("frena al llegar al límite del teléfono", () => {
-    expect(overLimit({ phone: MAX_PER_PHONE, ip: 0 })).toBe(true);
-  });
+    it(`${table}: deja pasar por debajo de los dos límites`, () => {
+      expect(overLimit(table, { phone: max.phone - 1, ip: max.ip - 1 })).toBe(false);
+    });
 
-  it("frena al llegar al límite de la conexión", () => {
-    expect(overLimit({ phone: 0, ip: MAX_PER_IP })).toBe(true);
+    it(`${table}: frena al llegar al límite del teléfono`, () => {
+      expect(overLimit(table, { phone: max.phone, ip: 0 })).toBe(true);
+    });
+
+    it(`${table}: frena al llegar al límite de la conexión`, () => {
+      expect(overLimit(table, { phone: 0, ip: max.ip })).toBe(true);
+    });
+  }
+
+  it("el transportista tiene menos margen que el cliente", () => {
+    expect(LIMITS.availabilities.phone).toBeLessThan(LIMITS.requests.phone);
   });
 });
 
