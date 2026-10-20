@@ -91,6 +91,13 @@ momento, también los que aparecieron después. La lista se actualiza sola
 apenas un transportista de ese día se pone disponible o cambia la suya
 (Supabase Realtime), además de al volver a la app y cada minuto.
 
+Una cosa a la vez en cada teléfono, también entre los dos papeles (Yohany,
+octubre de 2026): o tiene una solicitud o un viaje como transportista. Mientras
+la tenga, Muvia lo lleva siempre a esa pantalla; el inicio y la pantalla del
+otro papel no se ven hasta que la cierre o se venza. El servidor lo revisa con
+el número: no deja solicitar con un número que está como transportista, ni
+ponerse disponible con uno que tiene una solicitud abierta.
+
 Debajo le preguntamos "¿Te avisamos cuando aparezca un transportista?". Si
 toca "Sí, avísame" y acepta el permiso del celular, le llega un aviso
 ("Apareció un transportista") cuando un transportista que le sirve se pone

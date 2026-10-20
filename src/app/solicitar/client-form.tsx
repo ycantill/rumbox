@@ -22,6 +22,7 @@ import {
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
+import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
@@ -71,6 +72,8 @@ export function ClientForm() {
   const [matches, setMatches] = useState<DriverMatch[] | null>(null);
   // "Hacer otra solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
   const [editing, setEditing] = useState(false);
+  // Una cosa a la vez en el teléfono: si está como transportista, se va a esa pantalla.
+  const screen = useActiveScreen();
   const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
   // Para paquetes o sobres no hay nada que preguntar de ayuda para cargar.
@@ -143,7 +146,7 @@ export function ClientForm() {
     });
   }
 
-  if (!loaded) return null;
+  if (!loaded || (!current && screen === "/transportista")) return null;
 
   if (current && !editing) {
     return (

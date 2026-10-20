@@ -14,6 +14,7 @@ import {
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
+import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
@@ -71,6 +72,8 @@ export function DriverForm() {
   const [isPending, startTransition] = useTransition();
   // Un trabajo a la vez: si ya hay uno, se muestra ese en vez del formulario.
   const current = posts[0];
+  // Una cosa a la vez en el teléfono: si tiene una solicitud abierta, se va a esa pantalla.
+  const screen = useActiveScreen();
 
   // Precarga desde el teléfono: mano de obra y número. Lo guardado antes puede
   // traer también el vehículo, que ya no se pregunta.
@@ -138,7 +141,7 @@ export function DriverForm() {
     });
   }
 
-  if (!loaded) return null;
+  if (!loaded || (!current && screen === "/solicitar")) return null;
 
   if (current) {
     return (

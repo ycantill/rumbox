@@ -15,6 +15,7 @@ import {
   type Volume,
 } from "@/lib/domain";
 import { matchesTrip, newestBy, type AvailabilityLike } from "@/lib/matching";
+import { BUSY_AS_CLIENT_ERROR, BUSY_AS_DRIVER_ERROR } from "@/lib/one-at-a-time";
 import { pushEnabled, sendPush } from "@/lib/push";
 import {
   DRIVER_RATE_LIMIT_ERROR,
@@ -75,6 +76,8 @@ export async function publishAvailability(input: {
     // Sin límite, cualquiera podría poner transportistas falsos, con el número
     // de otra persona, que además les mandan avisos a los clientes.
     if (await tooMany("availabilities", whatsapp, ipHash)) return fail(DRIVER_RATE_LIMIT_ERROR);
+    // Una cosa a la vez: un número con una solicitud abierta no se pone de transportista.
+    if (await hasOpenRequest(whatsapp)) return fail(BUSY_AS_CLIENT_ERROR);
 
     const { data, error } = await db()
       .from("availabilities")
@@ -196,6 +199,8 @@ export async function createRequest(input: {
     // Muchas solicitudes seguidas sirven para juntar los teléfonos de los
     // transportistas: se frenan por teléfono y por conexión.
     if (await tooMany("requests", whatsapp, ipHash)) return fail(RATE_LIMIT_ERROR);
+    // Una cosa a la vez: un número que está como transportista no pide uno.
+    if (await hasActiveTrip(whatsapp)) return fail(BUSY_AS_DRIVER_ERROR);
 
     const { data, error } = await db()
       .from("requests")
@@ -397,6 +402,32 @@ function hashIp(ip: string | null): string | null {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!ip || !secret) return null;
   return createHmac("sha256", secret).update(ip).digest("hex");
+}
+
+/** Si el número tiene una solicitud abierta que todavía vale. */
+async function hasOpenRequest(whatsapp: string): Promise<boolean> {
+  const { count, error } = await db()
+    .from("requests")
+    .select("id", { count: "exact", head: true })
+    .eq("whatsapp", whatsapp)
+    .eq("status", "abierta")
+    .gte("service_date", yesterdayInBogota());
+  if (error) throw error;
+  return (count ?? 0) > 0;
+}
+
+/** Si el número está como transportista en un viaje que todavía vale (lo mismo que ven los clientes). */
+async function hasActiveTrip(whatsapp: string): Promise<boolean> {
+  const { count, error } = await db()
+    .from("availabilities")
+    .select("id", { count: "exact", head: true })
+    .eq("whatsapp", whatsapp)
+    .eq("status", "activa")
+    .not("destination_city", "is", null)
+    .in("space", Object.keys(DRIVER_SPACES))
+    .gte("service_date", yesterdayInBogota());
+  if (error) throw error;
+  return (count ?? 0) > 0;
 }
 
 /** Cierra la solicitud si el token es el suyo. Devuelve si la encontró. */
