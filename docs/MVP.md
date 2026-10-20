@@ -91,6 +91,15 @@ momento, también los que aparecieron después. La lista se actualiza sola
 apenas un transportista de ese día se pone disponible o cambia la suya
 (Supabase Realtime), además de al volver a la app y cada minuto.
 
+Una cosa a la vez en cada teléfono, también entre los dos papeles (Yohany,
+octubre de 2026): o es transportista o pide uno. Si el teléfono está como
+transportista, en `/solicitar` ve "Este teléfono está como transportista" con
+su viaje, "Ya no voy a trabajar" y "Ver mi viaje", en vez del formulario. Si
+tiene una solicitud abierta, en `/transportista` ve "Tienes una solicitud
+abierta" con "Cerrar mi solicitud" y "Ver mi solicitud". El servidor lo
+revisa con el número: no deja solicitar con un número que está como
+transportista, ni ponerse disponible con uno que tiene una solicitud abierta.
+
 Debajo le preguntamos "¿Te avisamos cuando aparezca un transportista?". Si
 toca "Sí, avísame" y acepta el permiso del celular, le llega un aviso
 ("Apareció un transportista") cuando un transportista que le sirve se pone

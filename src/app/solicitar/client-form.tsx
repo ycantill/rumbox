@@ -22,6 +22,8 @@ import {
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
+import { ActiveTripNotice } from "@/components/one-at-a-time";
+import type { MyPost } from "@/app/transportista/driver-form";
 import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
@@ -36,6 +38,7 @@ import {
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
 import { KEYS, load, save } from "@/lib/local-store";
+import { tripIsOn } from "@/lib/one-at-a-time";
 import { alertState, getAlertSubscription, type AlertState } from "@/lib/push-client";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
@@ -71,6 +74,8 @@ export function ClientForm() {
   const [matches, setMatches] = useState<DriverMatch[] | null>(null);
   // "Hacer otra solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
   const [editing, setEditing] = useState(false);
+  // Una cosa a la vez en el teléfono: si está como transportista, ve eso en vez del formulario.
+  const [driverTrip, setDriverTrip] = useState<MyPost | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [isPending, startTransition] = useTransition();
   // Para paquetes o sobres no hay nada que preguntar de ayuda para cargar.
@@ -98,6 +103,8 @@ export function ClientForm() {
         setNotice(EXPIRED_NOTICE);
       }
     }
+    const trip = load<MyPost[]>(KEYS.driverPosts, [])[0];
+    if (trip && tripIsOn(trip, today)) setDriverTrip(trip);
     setLoaded(true);
   }, [today]);
 
@@ -144,6 +151,10 @@ export function ClientForm() {
   }
 
   if (!loaded) return null;
+
+  if (!current && driverTrip) {
+    return <ActiveTripNotice post={driverTrip} onCleared={() => setDriverTrip(null)} />;
+  }
 
   if (current && !editing) {
     return (

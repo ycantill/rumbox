@@ -247,6 +247,18 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Vale el día del viaje y 24 horas más, como la del transportista: después se
   olvida y vuelve el formulario.
 
+**Una cosa a la vez en cada teléfono**
+- Un teléfono no puede ser transportista y pedir uno al mismo tiempo (Yohany,
+  octubre de 2026). Si está como transportista, `/solicitar` muestra "Este
+  teléfono está como transportista" con su viaje, "Ya no voy a trabajar" y
+  "Ver mi viaje"; si tiene una solicitud abierta, `/transportista` muestra
+  "Tienes una solicitud abierta" con "Cerrar mi solicitud" y "Ver mi
+  solicitud". Al apagarla sale el formulario (`src/components/one-at-a-time.tsx`).
+- El servidor lo revisa con el número (`hasActiveTrip` y `hasOpenRequest` en
+  `actions.ts`, textos en `src/lib/one-at-a-time.ts`): con un número que está
+  como transportista no se solicita, y con uno que tiene una solicitud abierta
+  no se pone disponible.
+
 **Las listas se actualizan solas**
 - Los transportistas que le sirven al cliente, y si la disponibilidad del
   transportista sigue encendida, se vuelven a pedir al volver a la app y cada

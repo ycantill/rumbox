@@ -14,6 +14,8 @@ import {
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
+import { OpenRequestNotice } from "@/components/one-at-a-time";
+import type { MyRequest } from "@/app/solicitar/client-form";
 import { getCity } from "@/lib/cities";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
@@ -28,6 +30,7 @@ import {
   type DriverSpace,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
+import { requestIsOpen } from "@/lib/one-at-a-time";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
@@ -71,6 +74,8 @@ export function DriverForm() {
   const [isPending, startTransition] = useTransition();
   // Un trabajo a la vez: si ya hay uno, se muestra ese en vez del formulario.
   const current = posts[0];
+  // Una cosa a la vez en el teléfono: si tiene una solicitud abierta, ve esa en vez del formulario.
+  const [clientRequest, setClientRequest] = useState<MyRequest | null>(null);
 
   // Precarga desde el teléfono: mano de obra y número. Lo guardado antes puede
   // traer también el vehículo, que ya no se pregunta.
@@ -81,6 +86,8 @@ export function DriverForm() {
     setLabor(p.labor);
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []));
+    const request = load<MyRequest | null>(KEYS.clientRequest, null);
+    setClientRequest(today && request && requestIsOpen(request, today) ? request : null);
     setLoaded(Boolean(today));
   }, [today]);
 
@@ -139,6 +146,10 @@ export function DriverForm() {
   }
 
   if (!loaded) return null;
+
+  if (!current && clientRequest) {
+    return <OpenRequestNotice request={clientRequest} onCleared={() => setClientRequest(null)} />;
+  }
 
   if (current) {
     return (
