@@ -261,3 +261,7 @@ se probó en un teléfono:
   La migración `0011_vence_al_terminar_el_dia.sql`, que hace que los
   teléfonos se borren desde el día siguiente al viaje, ya se corrió en
   Supabase (Yohany, 20 de octubre de 2026).
+- **"Te buscaron" (20 de octubre de 2026):** el transportista ve a los
+  clientes que tocaron su tarjeta, con los dos últimos números del teléfono,
+  y contesta "Lo llevo" o "No lo llevo". Requiere la migración
+  `0012_te_buscaron.sql`.

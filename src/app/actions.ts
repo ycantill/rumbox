@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
+import { isContactAnswer, phoneEnding, type ContactAnswer } from "@/lib/contacts";
 import {
   DRIVER_SPACES,
   isKey,
@@ -85,8 +86,9 @@ export async function publishAvailability(input: {
       .single();
     if (error) throw error;
     // No se le muestran los clientes que esperan: por su privacidad, ellos lo
-    // ven a él (Vía B) y son los que llaman o escriben. A los que pidieron
-    // aviso les llega uno al celular, después de responderle al transportista.
+    // ven a él (Vía B) y son los que llaman o escriben. Solo ve, en "Te
+    // buscaron", a los que tocan su tarjeta. A los que pidieron aviso les
+    // llega uno al celular, después de responderle al transportista.
     after(() => alertClients(row as AvailabilityLike));
     return { ok: true as const, id: data.id as string, editToken };
   });
@@ -125,8 +127,20 @@ export async function updateAvailability(input: {
   });
 }
 
+/** Un cliente que tocó "Escribir por WhatsApp" o "Llamar" en su tarjeta. Nunca lleva el teléfono. */
+export type DriverContact = {
+  requestId: string;
+  origin_city: string;
+  destination_city: string;
+  volume: Volume;
+  labor: ClientLabor;
+  /** Los dos últimos números del teléfono del cliente, para reconocerlo. */
+  phoneEnd: string | null;
+  answer: "lo_llevo" | null;
+};
+
 export type MyAvailabilityResult =
-  | { ok: true; status: "activa" | "llena"; space: DriverSpace }
+  | { ok: true; status: "activa" | "llena"; space: DriverSpace; contacts: DriverContact[] }
   | (Fail & { gone?: true });
 
 /**
@@ -153,7 +167,39 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       isKey(DRIVER_SPACES, data.space) &&
       data.service_date >= todayInBogota();
     const status = active ? "activa" : "llena";
-    return { ok: true as const, status, space: data.space };
+    const contacts = active ? await findContacts(input.id) : [];
+    return { ok: true as const, status, space: data.space, contacts };
+  });
+}
+
+/**
+ * "Lo llevo" o "No lo llevo" de un cliente de "Te buscaron"; null lo deja
+ * otra vez sin contestar.
+ */
+export async function answerContact(input: {
+  id: string;
+  editToken: string;
+  requestId: string;
+  answer: ContactAnswer | null;
+}): Promise<{ ok: true } | Fail> {
+  if (input.answer !== null && !isContactAnswer(input.answer)) return fail("Algo salió mal. Intenta de nuevo.");
+  return withDb(DRIVER_DB_ERROR, async () => {
+    const { data, error } = await db()
+      .from("availabilities")
+      .select("edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return fail("No encontramos tus datos en este teléfono.");
+    }
+    const { error: upErr } = await db()
+      .from("contacts")
+      .update({ answer: input.answer })
+      .eq("availability_id", input.id)
+      .eq("request_id", input.requestId);
+    if (upErr) throw upErr;
+    return { ok: true as const };
   });
 }
 
@@ -324,6 +370,44 @@ export async function subscribeToAlerts(input: {
   });
 }
 
+/**
+ * El cliente tocó "Escribir por WhatsApp" o "Llamar" en la tarjeta de un
+ * transportista: él lo ve en "Te buscaron". Solo cuenta si la solicitud es
+ * suya, sigue abierta y ese transportista de verdad le sirve, para que nadie
+ * le llene la lista a otro. Si falla, no pasa nada: el cliente ya está
+ * escribiendo o llamando.
+ */
+export async function recordContact(input: { id: string; editToken: string; availabilityId: string }): Promise<void> {
+  try {
+    const [{ data: r, error: rErr }, { data: a, error: aErr }] = await Promise.all([
+      db()
+        .from("requests")
+        .select("origin_city, destination_city, service_date, volume, labor, status, edit_token_hash")
+        .eq("id", input.id)
+        .maybeSingle(),
+      db()
+        .from("availabilities")
+        .select("origin_city, destination_city, service_date, space, labor, status")
+        .eq("id", input.availabilityId)
+        .maybeSingle(),
+    ]);
+    if (rErr) throw rErr;
+    if (aErr) throw aErr;
+    if (!r || !a || !tokenMatches(input.editToken, r.edit_token_hash)) return;
+    if (r.status !== "abierta" || a.status !== "activa" || r.service_date < todayInBogota()) return;
+    if (!a.destination_city || !isKey(DRIVER_SPACES, a.space) || !matchesTrip(a, r)) return;
+    const { error } = await db()
+      .from("contacts")
+      .upsert(
+        { availability_id: input.availabilityId, request_id: input.id },
+        { onConflict: "availability_id,request_id", ignoreDuplicates: true },
+      );
+    if (error) throw error;
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 // ------------------------------------------------------------------- Analíticas
 
 /**
@@ -437,6 +521,47 @@ async function closeOwnRequest(input: { id: string; editToken: string }): Promis
   const { error: upErr } = await db().from("requests").update({ status: "cerrada" }).eq("id", input.id);
   if (upErr) throw upErr;
   return true;
+}
+
+/**
+ * Los clientes que buscaron a este transportista y siguen con la solicitud
+ * abierta. Los que contestó "No lo llevo" ya no salen, ni los que cerraron la
+ * solicitud ("Ya no necesito este servicio") o la cambiaron.
+ */
+async function findContacts(availabilityId: string): Promise<DriverContact[]> {
+  const { data, error } = await db()
+    .from("contacts")
+    .select(
+      "request_id, answer, request:requests!inner(origin_city, destination_city, volume, labor, status, service_date, whatsapp)",
+    )
+    .eq("availability_id", availabilityId)
+    .eq("request.status", "abierta")
+    .gte("request.service_date", todayInBogota())
+    .or("answer.is.null,answer.eq.lo_llevo")
+    .order("created_at", { ascending: true })
+    .limit(50);
+  if (error) throw error;
+  type Row = {
+    request_id: string;
+    answer: "lo_llevo" | null;
+    request: {
+      origin_city: string;
+      destination_city: string;
+      volume: Volume;
+      labor: ClientLabor;
+      whatsapp: string | null;
+    };
+  };
+  return ((data ?? []) as unknown as Row[]).map((c) => ({
+    requestId: c.request_id,
+    origin_city: c.request.origin_city,
+    destination_city: c.request.destination_city,
+    volume: c.request.volume,
+    labor: c.request.labor,
+    // Solo los dos últimos números: el teléfono completo nunca sale del servidor.
+    phoneEnd: phoneEnding(c.request.whatsapp),
+    answer: c.answer,
+  }));
 }
 
 /** Los transportistas que viajan el día de la solicitud y le sirven. */

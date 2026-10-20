@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { getMyAvailability, publishAvailability, updateAvailability } from "@/app/actions";
+import {
+  answerContact,
+  getMyAvailability,
+  publishAvailability,
+  updateAvailability,
+  type DriverContact,
+} from "@/app/actions";
 import {
   CitySelect,
   Choices,
@@ -16,6 +22,7 @@ import {
 } from "@/components/ui";
 import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
+import { loadSummary, type ContactAnswer } from "@/lib/contacts";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
   DRIVER_LABOR,
@@ -239,6 +246,8 @@ function CurrentWork({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "Te buscaron": los clientes que tocaron su tarjeta, desde el servidor.
+  const [contacts, setContacts] = useState<DriverContact[]>([]);
 
   // Un viaje vale hasta que termina su día. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
@@ -247,9 +256,10 @@ function CurrentWork({
   const expired = !isStillValid(post.date, today);
   const ended = !post.destination || expired || !isKey(DRIVER_SPACES, post.space);
 
-  // Si sigue encendida y el espacio al día, desde el servidor: al abrir la
-  // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No
-  // ve a los clientes: por su privacidad, ellos son los que lo llaman.
+  // Si sigue encendida, el espacio y "Te buscaron" al día, desde el servidor:
+  // al abrir la pantalla, al volver a la app y cada minuto mientras la tiene
+  // abierta. No ve a los clientes que esperan: por su privacidad, ellos son
+  // los que lo llaman. Solo ve a los que tocaron su tarjeta, sin su teléfono.
   const { id, editToken } = post;
   const fresh = justPublished;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva ni
@@ -275,6 +285,7 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
+          setContacts(res.contacts);
           onChange({ ...post, space: res.space });
         },
         () => {
@@ -318,6 +329,25 @@ function CurrentWork({
     onChange({ ...post, space: "solo_paquetes", fullSpace: post.fullSpace ?? post.space });
   }
 
+  async function answer(requestId: string, value: ContactAnswer | null) {
+    setBusy(true);
+    setError(null);
+    latest.current++;
+    const res = await callServer(() => answerContact({ id, editToken, requestId, answer: value }));
+    latest.current++;
+    setBusy(false);
+    if (!res.ok) {
+      setError(res.error);
+      return;
+    }
+    // "No lo llevo" lo saca de la lista; "Lo llevo" lo deja marcado.
+    setContacts((list) =>
+      value === "no_lo_llevo"
+        ? list.filter((c) => c.requestId !== requestId)
+        : list.map((c) => (c.requestId === requestId ? { ...c, answer: value } : c)),
+    );
+  }
+
   async function end() {
     // Se apaga en el servidor para que ningún cliente lo vea, y se olvida en el teléfono.
     if (await patch({ status: "llena" })) onEnd();
@@ -357,6 +387,8 @@ function CurrentWork({
         </p>
       </section>
 
+      {contacts.length > 0 && <TheyLookedForYou contacts={contacts} busy={busy} onAnswer={answer} />}
+
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
         {SPACE_CAPACITY[post.space] > 1 && (
@@ -384,5 +416,73 @@ function CurrentWork({
       </div>
 
     </div>
+  );
+}
+
+/**
+ * "Te buscaron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
+ * en su tarjeta, con los dos últimos números de su teléfono para reconocerlos.
+ * El número completo no sale: un toque no quiere decir que de verdad escribió.
+ */
+function TheyLookedForYou({
+  contacts,
+  busy,
+  onAnswer,
+}: {
+  contacts: DriverContact[];
+  busy: boolean;
+  onAnswer: (requestId: string, answer: ContactAnswer | null) => void;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="font-semibold">Te buscaron ({contacts.length})</h2>
+        <p className="text-sm text-muted">
+          Estos clientes tocaron para llamarte o escribirte. Si alguno no te ha escrito, puede que se haya
+          arrepentido.
+        </p>
+      </div>
+      {contacts.map((c) => (
+        <article key={c.requestId} className="card">
+          <p className="font-semibold">
+            {getCity(c.origin_city)?.name} → {getCity(c.destination_city)?.name}
+          </p>
+          <p className="text-sm text-muted">{loadSummary(c.volume, c.labor)}</p>
+          {c.phoneEnd && <p className="text-sm text-muted">Su teléfono termina en {c.phoneEnd}</p>}
+          {c.answer === "lo_llevo" ? (
+            <div className="mt-3 flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-brand-ink">Lo llevas</p>
+              <button
+                type="button"
+                className="text-sm text-muted underline"
+                disabled={busy}
+                onClick={() => onAnswer(c.requestId, null)}
+              >
+                Cambiar
+              </button>
+            </div>
+          ) : (
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => onAnswer(c.requestId, "lo_llevo")}
+              >
+                Lo llevo
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                disabled={busy}
+                onClick={() => onAnswer(c.requestId, "no_lo_llevo")}
+              >
+                No lo llevo
+              </button>
+            </div>
+          )}
+        </article>
+      ))}
+    </section>
   );
 }

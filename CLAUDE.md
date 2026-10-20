@@ -43,12 +43,13 @@ src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
-                                 getMyAvailability, createRequest, getMyRequest,
-                                 closeRequest, getAlertsConfig, subscribeToAlerts,
-                                 trackEvent)
+                                 getMyAvailability, answerContact, createRequest,
+                                 getMyRequest, closeRequest, recordContact,
+                                 getAlertsConfig, subscribeToAlerts, trackEvent)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga, mano de obra
 src/lib/matching.ts              Emparejamiento por ruta
+src/lib/contacts.ts              "Te buscaron": lo que ve el transportista de quien lo buscó
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -57,7 +58,7 @@ src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda des
 src/lib/live.ts                  Realtime en el navegador (lista del cliente al día)
 src/lib/push.ts, push-client.ts  Web Push: enviar (servidor) y suscribirse (navegador)
 supabase/migrations/             Esquema: availabilities, requests, reviews, push_subscriptions,
-                                 events
+                                 events, contacts
 public/sw.js                     Service worker
 ```
 
@@ -118,9 +119,18 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   pueden llamar o escribir por WhatsApp.
 - El transportista no contacta al cliente (Yohany, octubre de 2026): por la
   privacidad del cliente, siempre es el cliente quien llama o escribe. El
-  transportista no ve ninguna lista de clientes ni nada de ellos, porque una
-  lista con la que no puede hacer nada solo frustra (Yohany): espera que lo
-  llamen. Al cliente se le dice que los transportistas no ven su teléfono.
+  transportista no ve la lista de clientes que esperan, porque una lista con
+  la que no puede hacer nada solo frustra (Yohany): espera que lo llamen. Al
+  cliente se le dice que los transportistas no ven su teléfono.
+- "Te buscaron" (Yohany, 20 de octubre de 2026): el transportista sí ve a los
+  clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta
+  (`recordContact`, tabla `contacts`), con la ruta, qué va a mover, la ayuda
+  que pide y los dos últimos números del teléfono ("Su teléfono termina en
+  45"), nunca el número completo: un toque no quiere decir que escribió. Él
+  contesta "Lo llevo" (queda marcado y se puede cambiar) o "No lo llevo" (sale
+  de la lista). También salen los que cierran o cambian la solicitud. El
+  cliente no recibe aviso de su respuesta. El espacio que le queda lo sigue
+  bajando él a mano.
 - Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
@@ -297,10 +307,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - El teléfono se guarda solo mientras la solicitud o la disponibilidad vale
   (Yohany, octubre de 2026). Cada hora, `borrar_telefonos_vencidos()`
   (pg_cron, migraciones `0009_borrar_telefonos.sql` y
-  `0011_vence_al_terminar_el_dia.sql`) borra el teléfono y el `ip_hash` de
-  las vencidas, y de las cerradas o apagadas una hora después de creadas (para
-  que el límite las siga contando), y las suscripciones a avisos de esas
-  solicitudes. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
+  `0011_vence_al_terminar_el_dia.sql`, y `0012_te_buscaron.sql`) borra el
+  teléfono y el `ip_hash` de las vencidas, y de las cerradas o apagadas una
+  hora después de creadas (para que el límite las siga contando), las
+  suscripciones a avisos de esas solicitudes y sus filas de `contacts`. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
   apagada no se vuelve a encender.
 
 **Privacidad y términos**

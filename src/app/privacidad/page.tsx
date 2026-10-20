@@ -42,6 +42,7 @@ export default function PrivacyPage() {
             <li>Qué vas a mover o cuánto puedes llevar, y si hay ayuda para cargar.</li>
             <li>Una huella de tu conexión a internet, para frenar a quien abusa de la app. No guardamos tu dirección de internet.</li>
             <li>Si pides que te avisemos, lo que necesita tu celular para recibir el aviso.</li>
+            <li>A qué transportistas tocaste para llamar o escribir, y si el transportista te va a llevar.</li>
           </ul>
           <p className="mt-2 text-muted">
             También contamos cuántas veces se abre cada pantalla y se tocan los botones de llamar y de WhatsApp,
@@ -63,7 +64,9 @@ export default function PrivacyPage() {
           <h2 className="text-base font-bold">Quién ve tu teléfono</h2>
           <p className="mt-1 text-muted">
             Si necesitas mover algo, nadie: los transportistas no ven tu teléfono. Tú decides a quién llamar o
-            escribir.
+            escribir. Cuando tocas llamar o escribir a un transportista, él ve tu solicitud (de dónde a dónde, qué
+            vas a mover y la ayuda que pides) y los dos últimos números de tu teléfono, para reconocerte cuando le
+            escribas.
           </p>
           <p className="mt-1 text-muted">
             Si eres transportista, lo ven las personas que buscan un viaje como el tuyo, para llamarte o escribirte
@@ -74,8 +77,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-bold">Cuánto tiempo los guardamos</h2>
           <p className="mt-1 text-muted">
-            Tu teléfono se borra cuando tu solicitud o tu viaje deja de valer: el día después del viaje, o poco
-            después de que lo cierras.
+            Tu teléfono, y a qué transportistas tocaste, se borran cuando tu solicitud o tu viaje deja de valer: el
+            día después del viaje, o poco después de que lo cierras.
           </p>
         </section>
 
