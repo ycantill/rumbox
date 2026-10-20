@@ -22,16 +22,15 @@ import {
 } from "@/components/ui";
 import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
-import { loadSummary, type ContactAnswer } from "@/lib/contacts";
+import type { ContactAnswer } from "@/lib/contacts";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
-  DRIVER_LABOR,
   DRIVER_SPACES,
+  VOLUMES,
   SAME_CITY_ERROR,
   destinationName,
   isKey,
   spaceInSentence,
-  type DriverLabor,
   type DriverSpace,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -40,7 +39,8 @@ import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
-type Profile = { labor: DriverLabor | ""; whatsapp: string };
+// Lo guardado antes puede traer también la ayuda para cargar, que ya no se pregunta.
+type Profile = { whatsapp: string };
 
 export type MyPost = {
   id: string;
@@ -66,7 +66,6 @@ export function DriverForm() {
   const [pickedDate, setDate] = useState("");
   const date = useServiceDay(pickedDate);
   const [space, setSpace] = useState<DriverSpace | "">("");
-  const [labor, setLabor] = useState<DriverLabor | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   // "Tu viaje anterior ya pasó", cuando vuelve el formulario porque se venció.
@@ -81,13 +80,11 @@ export function DriverForm() {
   // Una cosa a la vez en el teléfono: si tiene una solicitud abierta, se va a esa pantalla.
   const screen = useActiveScreen();
 
-  // Precarga desde el teléfono: mano de obra y número. Lo guardado antes puede
-  // traer también el vehículo, que ya no se pregunta.
+  // Precarga el número desde el teléfono.
   useEffect(() => {
-    const p = load<Profile>(KEYS.driverProfile, { labor: "", whatsapp: "" });
+    const p = load<Profile>(KEYS.driverProfile, { whatsapp: "" });
     // localStorage solo existe en el navegador: se lee después de hidratar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLabor(p.labor);
     setWhatsapp(p.whatsapp);
     setPosts(load<MyPost[]>(KEYS.driverPosts, []));
     setLoaded(Boolean(today));
@@ -119,7 +116,7 @@ export function DriverForm() {
     e.preventDefault();
     setError(null);
     // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
-    const input = { origin, destination, date, space, labor, whatsapp };
+    const input = { origin, destination, date, space, whatsapp };
     const invalid = driverInputError(input, today);
     if (invalid) {
       setError(invalid);
@@ -131,7 +128,7 @@ export function DriverForm() {
         setError(res.error);
         return;
       }
-      save(KEYS.driverProfile, { labor, whatsapp } satisfies Profile);
+      save(KEYS.driverProfile, { whatsapp } satisfies Profile);
       const post: MyPost = {
         id: res.id,
         editToken: res.editToken,
@@ -198,10 +195,6 @@ export function DriverForm() {
         {/* La misma lista de tamaños que elige el cliente. */}
         <Field label="¿Cuánto puedes llevar?">
           <Choices options={DRIVER_SPACES} value={space} onChange={setSpace} columns={1} />
-        </Field>
-
-        <Field label="¿Ayudas a cargar?">
-          <Choices options={DRIVER_LABOR} value={labor} onChange={setLabor} columns={1} />
         </Field>
 
         <Field label="Tu teléfono" hint="Los clientes te pueden llamar o escribir por WhatsApp a este número.">
@@ -439,7 +432,7 @@ function TheyLookedForYou({
           <p className="font-semibold">
             {getCity(c.origin_city)?.name} → {getCity(c.destination_city)?.name}
           </p>
-          <p className="text-sm text-muted">{loadSummary(c.volume, c.labor)}</p>
+          {isKey(VOLUMES, c.volume) && <p className="text-sm text-muted">{VOLUMES[c.volume].label}</p>}
           {c.phoneEnd && <p className="text-sm text-muted">Su teléfono termina en {c.phoneEnd}</p>}
           {c.answer === "lo_llevo" ? (
             <div className="mt-3 flex items-center justify-between gap-2">

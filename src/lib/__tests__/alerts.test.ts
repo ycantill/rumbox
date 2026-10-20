@@ -8,7 +8,6 @@ const driver: AvailabilityLike = {
   destination_city: "sincelejo",
   service_date: "2026-10-20",
   space: "camion_entero",
-  labor: "con_ayudante",
 };
 
 function row(id: string, request: Partial<SubscriptionRow["request"]>): SubscriptionRow {
@@ -23,7 +22,6 @@ function row(id: string, request: Partial<SubscriptionRow["request"]>): Subscrip
       destination_city: "sincelejo",
       service_date: "2026-10-20",
       volume: "carga_parcial",
-      labor: "yo_cargo",
       ...request,
     },
   };

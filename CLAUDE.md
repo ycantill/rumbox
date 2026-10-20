@@ -47,7 +47,7 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
                                  getMyRequest, closeRequest, recordContact,
                                  getAlertsConfig, subscribeToAlerts, trackEvent)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
-src/lib/domain.ts                Vocabulario: tamaños de carga, mano de obra
+src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/contacts.ts              "Te encontraron": lo que ve el transportista de quien lo buscó
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
@@ -102,7 +102,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   "¿Hacia dónde?", "¿Cuánto puedes llevar?").
 - Nada de jerga técnica en pantalla: no "cotizar", "ruta programada", "mano de
   obra", "tarifa", "GPS", "Modo Ruta", "local", "zona" ni distancias en km.
-- Los errores usan el mismo tono, por ejemplo "Elige si ayudas a cargar".
+- Los errores usan el mismo tono, por ejemplo "Elige cuánto puedes llevar".
 
 **Sin cuentas**
 - No hay login ni contraseñas ("Cero registros"). El número de teléfono
@@ -124,8 +124,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   cliente se le dice que los transportistas no ven su teléfono.
 - "Te encontraron" (Yohany, 20 de octubre de 2026): el transportista sí ve a los
   clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta
-  (`recordContact`, tabla `contacts`), con la ruta, qué va a mover, la ayuda
-  que pide y los dos últimos números del teléfono ("Su teléfono termina en
+  (`recordContact`, tabla `contacts`), con la ruta, qué va a mover y los dos
+  últimos números del teléfono ("Su teléfono termina en
   45"), nunca el número completo: un toque no quiere decir que escribió. Él
   contesta "Lo llevo" (queda marcado y se puede cambiar) o "No lo llevo" (sale
   de la lista). Los que no contestó salen si cierran o cambian la solicitud;
@@ -249,10 +249,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **El cliente llena una sola pantalla**
 - El formulario del cliente es casi igual al del transportista: todo en una
   pantalla, sin pasos, con las mismas preguntas en el mismo orden ("¿Desde
-  dónde?", "¿Hacia dónde?", "¿Qué día?", "¿Qué vas a mover?",
-  "¿Necesitas ayuda para cargar?" y "Tu teléfono"). Yohany lo pidió en
-  octubre de 2026.
-- Con paquetes o sobres no sale "¿Necesitas ayuda para cargar?".
+  dónde?", "¿Hacia dónde?", "¿Qué día?", "¿Qué vas a mover?" y "Tu
+  teléfono"). Yohany lo pidió en octubre de 2026.
+- No se pregunta la ayuda para cargar, ni al cliente ni al transportista
+  (Yohany, 20 de octubre de 2026): es un detalle más que hablan por teléfono,
+  como el precio, y en el MVP solo era ruido. No filtra el emparejamiento.
+  La columna `labor` queda en la base para lo guardado antes y lo nuevo la
+  deja vacía (migración `0013_sin_ayuda_para_cargar.sql`).
 - El botón dice "Solicitar transportista", no "Buscar": si en ese momento no
   hay nadie, la solicitud queda guardada para cuando aparezca uno (Yohany,
   octubre de 2026). Por eso la pantalla está en `/solicitar`; `/cotizar`
@@ -262,9 +265,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Como el transportista, el cliente tiene una sola solicitud abierta. Si
   vuelve a `/solicitar`, ve "Tu solicitud" con los transportistas que le
   sirven en ese momento, en vez del formulario. Arriba están los datos de su
-  solicitud: la ruta, el día, qué va a mover (con su pista) y la ayuda que
-  pidió para cargar (`CLIENT_LABOR_SUMMARY` en `domain.ts`), menos con
-  paquetes o sobres.
+  solicitud: la ruta, el día y qué va a mover (con su pista).
 - Es una pantalla de espera (Yohany, octubre de 2026): mientras no hay
   transportistas sale "Buscando transportistas…" con ondas que salen del
   centro, como un radar (`animate-radar` en `globals.css`; quietas si el
@@ -372,7 +373,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   hay descuento por ruta.
 - El cliente solicita transportista ("Solicitar transportista") y la
   pantalla le dice que acuerden el precio. El transportista sabe qué lleva el
-  cliente y qué ayuda pide cuando hablan.
+  cliente cuando hablan; si hace falta ayuda para cargar, lo hablan ahí.
 - No se preguntan las escaleras: solo servían para el precio. Las columnas
   `stairs_origin` y `stairs_destination` quedan en 0 y `estimated_price` queda
   vacía en las solicitudes nuevas.

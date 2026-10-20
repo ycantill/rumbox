@@ -54,26 +54,9 @@ export function spaceInSentence(space: DriverSpace): string {
   return label.charAt(0).toLowerCase() + label.slice(1);
 }
 
-export const DRIVER_LABOR = {
-  solo_manejo: "Solo manejo (el cliente carga)",
-  yo_ayudo: "Yo ayudo a cargar",
-  con_ayudante: "Con ayudante extra",
-} as const;
-export type DriverLabor = keyof typeof DRIVER_LABOR;
-
-export const CLIENT_LABOR = {
-  yo_cargo: "No, yo cargo",
-  conductor: "Necesito al conductor",
-  ayudantes: "Necesito ayudantes extra",
-} as const;
-export type ClientLabor = keyof typeof CLIENT_LABOR;
-
-/** La ayuda que pidió el cliente, dicha en "Tu solicitud". */
-export const CLIENT_LABOR_SUMMARY: Record<ClientLabor, string> = {
-  yo_cargo: "Tú cargas",
-  conductor: "Necesitas que el conductor ayude a cargar",
-  ayudantes: "Necesitas ayudantes extra para cargar",
-};
+// No se pregunta la ayuda para cargar (Yohany, 20 de octubre de 2026): lo
+// hablan por teléfono, como el precio. La columna `labor` queda en la base para
+// lo guardado antes y lo nuevo la deja vacía.
 
 /** La etiqueta dentro de una frase: "Vas a mover una habitación o apartaestudio". */
 export function volumeInSentence(volume: Volume): string {
@@ -99,10 +82,6 @@ export const VOLUME_LEVEL: Record<Volume, number> = {
 export function spaceFitsVolume(space: DriverSpace, volume: Volume): boolean {
   return SPACE_CAPACITY[space] >= VOLUME_LEVEL[volume];
 }
-
-/** Mano de obra que ofrece el transportista, ordenada de menos a más. */
-export const LABOR_LEVEL: Record<DriverLabor, number> = { solo_manejo: 0, yo_ayudo: 1, con_ayudante: 2 };
-export const LABOR_NEED: Record<ClientLabor, number> = { yo_cargo: 0, conductor: 1, ayudantes: 2 };
 
 export function isKey<T extends object>(obj: T, key: unknown): key is keyof T {
   return typeof key === "string" && Object.prototype.hasOwnProperty.call(obj, key);

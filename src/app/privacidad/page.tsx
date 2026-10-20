@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           <ul className="mt-1 list-disc pl-5 text-muted">
             <li>Tu teléfono.</li>
             <li>De dónde sales, hacia dónde vas y qué día.</li>
-            <li>Qué vas a mover o cuánto puedes llevar, y si hay ayuda para cargar.</li>
+            <li>Qué vas a mover o cuánto puedes llevar.</li>
             <li>Una huella de tu conexión a internet, para frenar a quien abusa de la app. No guardamos tu dirección de internet.</li>
             <li>Si pides que te avisemos, lo que necesita tu celular para recibir el aviso.</li>
             <li>A qué transportistas tocaste para llamar o escribir, y si el transportista te va a llevar.</li>
@@ -64,8 +64,8 @@ export default function PrivacyPage() {
           <h2 className="text-base font-bold">Quién ve tu teléfono</h2>
           <p className="mt-1 text-muted">
             Si necesitas mover algo, nadie: los transportistas no ven tu teléfono. Tú decides a quién llamar o
-            escribir. Cuando tocas llamar o escribir a un transportista, él ve tu solicitud (de dónde a dónde, qué
-            vas a mover y la ayuda que pides) y los dos últimos números de tu teléfono, para reconocerte cuando le
+            escribir. Cuando tocas llamar o escribir a un transportista, él ve tu solicitud (de dónde a dónde y
+            qué vas a mover) y los dos últimos números de tu teléfono, para reconocerte cuando le
             escribas.
           </p>
           <p className="mt-1 text-muted">

@@ -9,8 +9,6 @@ import { isContactAnswer, phoneEnding, spaceLeft, type ContactAnswer } from "@/l
 import {
   DRIVER_SPACES,
   isKey,
-  type ClientLabor,
-  type DriverLabor,
   type DriverSpace,
   type Volume,
 } from "@/lib/domain";
@@ -36,7 +34,6 @@ export type DriverMatch = {
   origin_city: string;
   destination_city: string;
   space: DriverSpace;
-  labor: DriverLabor;
   whatsapp: string;
 };
 
@@ -51,7 +48,6 @@ export async function publishAvailability(input: {
   destination: string;
   date: string;
   space: string;
-  labor: string;
   whatsapp: string;
 }): Promise<PublishResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
@@ -69,7 +65,6 @@ export async function publishAvailability(input: {
     space: input.space,
     // Lo que podía llevar al empezar: con "Lo llevo" se resta y `space` guarda lo que queda.
     full_space: input.space,
-    labor: input.labor,
     whatsapp,
     edit_token_hash: hashToken(editToken),
   };
@@ -128,7 +123,6 @@ export type DriverContact = {
   origin_city: string;
   destination_city: string;
   volume: Volume;
-  labor: ClientLabor;
   /** Los dos últimos números del teléfono del cliente, para reconocerlo. */
   phoneEnd: string | null;
   answer: "lo_llevo" | null;
@@ -154,7 +148,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, full_space, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, full_space, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -244,7 +238,6 @@ export async function createRequest(input: {
   destination: string;
   date: string;
   volume: string;
-  labor: string;
   whatsapp: string;
   replaces?: { id: string; editToken: string };
 }): Promise<RequestResult> {
@@ -257,7 +250,6 @@ export async function createRequest(input: {
     destination_city: input.destination,
     service_date: input.date,
     volume: input.volume as Volume,
-    labor: input.labor as ClientLabor,
   };
 
   const editToken = randomBytes(24).toString("base64url");
@@ -303,7 +295,7 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
   return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
-      .select("origin_city, destination_city, service_date, volume, labor, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, volume, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -404,12 +396,12 @@ export async function recordContact(input: { id: string; editToken: string; avai
     const [{ data: r, error: rErr }, { data: a, error: aErr }] = await Promise.all([
       db()
         .from("requests")
-        .select("origin_city, destination_city, service_date, volume, labor, status, edit_token_hash")
+        .select("origin_city, destination_city, service_date, volume, status, edit_token_hash")
         .eq("id", input.id)
         .maybeSingle(),
       db()
         .from("availabilities")
-        .select("origin_city, destination_city, service_date, space, labor, status")
+        .select("origin_city, destination_city, service_date, space, status")
         .eq("id", input.availabilityId)
         .maybeSingle(),
     ]);
@@ -460,7 +452,7 @@ async function alertClients(availability: AvailabilityLike): Promise<void> {
     const { data, error } = await db()
       .from("push_subscriptions")
       .select(
-        "id, endpoint, p256dh, auth, request:requests!inner(id, origin_city, destination_city, service_date, volume, labor, status)",
+        "id, endpoint, p256dh, auth, request:requests!inner(id, origin_city, destination_city, service_date, volume, status)",
       )
       .eq("request.service_date", availability.service_date)
       .eq("request.status", "abierta")
@@ -555,7 +547,7 @@ async function findContacts(availabilityId: string): Promise<DriverContact[]> {
   const { data, error } = await db()
     .from("contacts")
     .select(
-      "request_id, answer, request:requests!inner(origin_city, destination_city, volume, labor, status, service_date, whatsapp)",
+      "request_id, answer, request:requests!inner(origin_city, destination_city, volume, status, service_date, whatsapp)",
     )
     .eq("availability_id", availabilityId)
     .or("answer.is.null,answer.eq.lo_llevo")
@@ -569,7 +561,6 @@ async function findContacts(availabilityId: string): Promise<DriverContact[]> {
       origin_city: string;
       destination_city: string;
       volume: Volume;
-      labor: ClientLabor;
       status: string;
       service_date: string;
       whatsapp: string | null;
@@ -584,7 +575,6 @@ async function findContacts(availabilityId: string): Promise<DriverContact[]> {
     origin_city: c.request.origin_city,
     destination_city: c.request.destination_city,
     volume: c.request.volume,
-    labor: c.request.labor,
     // Solo los dos últimos números: el teléfono completo nunca sale del servidor.
     phoneEnd: phoneEnding(c.request.whatsapp),
     answer: c.answer,
@@ -597,12 +587,11 @@ async function findDrivers(r: {
   destination_city: string;
   service_date: string;
   volume: Volume;
-  labor: ClientLabor;
 }): Promise<DriverMatch[]> {
   // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
   const { data, error } = await db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, space, labor, whatsapp")
+    .select("id, origin_city, destination_city, service_date, space, whatsapp")
     .eq("service_date", r.service_date)
     .not("destination_city", "is", null)
     .in("space", Object.keys(DRIVER_SPACES))
