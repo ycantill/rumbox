@@ -200,3 +200,8 @@ se probó en un teléfono:
   cliente (5 por hora por teléfono y 20 por conexión) para que nadie junte los
   teléfonos de los transportistas, y el canal de Realtime pasa a ser privado:
   solo se puede escuchar. Requiere la migración `0007_proteger_datos.sql`.
+- **Revisión de seguridad (20 de octubre de 2026, segunda parte):** límite
+  para el transportista (3 por hora por teléfono y 10 por conexión), los
+  avisos solo se mandan a los servicios de avisos de los navegadores, y
+  cabeceras para que ninguna otra página meta Muvia dentro de la suya.
+  Requiere la migración `0008_limite_transportista.sql`.

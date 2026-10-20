@@ -3,7 +3,7 @@
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
 import { after } from "next/server";
-import { alertsFor, type SubscriptionRow } from "@/lib/alerts";
+import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
 import { getCity } from "@/lib/cities";
 import { addDays } from "@/lib/dates";
 import {
@@ -21,7 +21,14 @@ import {
 } from "@/lib/domain";
 import { matchesTrip, newestBy, type AvailabilityLike } from "@/lib/matching";
 import { pushEnabled, sendPush } from "@/lib/push";
-import { RATE_LIMIT_ERROR, RATE_WINDOW_MS, clientIp, overLimit } from "@/lib/rate-limit";
+import {
+  DRIVER_RATE_LIMIT_ERROR,
+  RATE_LIMIT_ERROR,
+  RATE_WINDOW_MS,
+  clientIp,
+  overLimit,
+  type LimitedTable,
+} from "@/lib/rate-limit";
 import { db } from "@/lib/supabase";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 
@@ -60,6 +67,7 @@ export async function publishAvailability(input: {
   if (!whatsapp) return fail("Revisa el número de teléfono.");
 
   const editToken = randomBytes(24).toString("base64url");
+  const ipHash = hashIp(clientIp(await headers()));
   const row = {
     origin_city: input.origin,
     destination_city: input.destination,
@@ -73,7 +81,15 @@ export async function publishAvailability(input: {
   };
 
   return withDb(DRIVER_DB_ERROR, async () => {
-    const { data, error } = await db().from("availabilities").insert(row).select("id").single();
+    // Sin límite, cualquiera podría poner transportistas falsos, con el número
+    // de otra persona, que además les mandan avisos a los clientes.
+    if (await tooMany("availabilities", whatsapp, ipHash)) return fail(DRIVER_RATE_LIMIT_ERROR);
+
+    const { data, error } = await db()
+      .from("availabilities")
+      .insert({ ...row, ip_hash: ipHash })
+      .select("id")
+      .single();
     if (error) throw error;
     // No se le muestran los clientes que esperan: por su privacidad, ellos lo
     // ven a él (Vía B) y son los que llaman o escriben. A los que pidieron
@@ -189,7 +205,7 @@ export async function createRequest(input: {
   return withDb(CLIENT_DB_ERROR, async () => {
     // Muchas solicitudes seguidas sirven para juntar los teléfonos de los
     // transportistas: se frenan por teléfono y por conexión.
-    if (await tooManyRequests(whatsapp, ipHash)) return fail(RATE_LIMIT_ERROR);
+    if (await tooMany("requests", whatsapp, ipHash)) return fail(RATE_LIMIT_ERROR);
 
     const { data, error } = await db()
       .from("requests")
@@ -288,7 +304,7 @@ export async function subscribeToAlerts(input: {
   const sub = input.subscription;
   if (
     typeof sub?.endpoint !== "string" ||
-    !sub.endpoint.startsWith("https://") ||
+    !isPushEndpoint(sub.endpoint) ||
     sub.endpoint.length > 1000 ||
     typeof sub.keys?.p256dh !== "string" ||
     typeof sub.keys?.auth !== "string" ||
@@ -349,13 +365,13 @@ async function alertClients(availability: AvailabilityLike): Promise<void> {
   }
 }
 
-/** Si el teléfono o la conexión ya hicieron demasiadas solicitudes en la última hora. */
-async function tooManyRequests(whatsapp: string, ipHash: string | null): Promise<boolean> {
+/** Si el teléfono o la conexión ya guardaron demasiadas en la última hora. */
+async function tooMany(table: LimitedTable, whatsapp: string, ipHash: string | null): Promise<boolean> {
   const since = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
   const count = async (column: "whatsapp" | "ip_hash", value: string | null) => {
     if (!value) return 0;
     const { count, error } = await db()
-      .from("requests")
+      .from(table)
       .select("id", { count: "exact", head: true })
       .eq(column, value)
       .gte("created_at", since);
@@ -363,11 +379,11 @@ async function tooManyRequests(whatsapp: string, ipHash: string | null): Promise
     return count ?? 0;
   };
   const [phone, ip] = await Promise.all([count("whatsapp", whatsapp), count("ip_hash", ipHash)]);
-  return overLimit({ phone, ip });
+  return overLimit(table, { phone, ip });
 }
 
 /**
- * Huella de la IP para contar solicitudes sin guardar la IP. Lleva la service
+ * Huella de la IP para contar lo guardado sin guardar la IP. Lleva la service
  * role key como llave secreta para que no se pueda adivinar la IP probando.
  */
 function hashIp(ip: string | null): string | null {

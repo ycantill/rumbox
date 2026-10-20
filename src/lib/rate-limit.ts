@@ -1,22 +1,32 @@
-// Límite de solicitudes del cliente. Sin cuentas, cualquiera podría hacer
-// muchas solicitudes seguidas para juntar los teléfonos de los transportistas.
+// Límites para lo que se guarda sin cuenta. Sin ellos, cualquiera podría hacer
+// muchas solicitudes seguidas para juntar los teléfonos de los transportistas,
+// o llenar la app de transportistas falsos (con el número de otra persona) que
+// además les mandan avisos a los clientes.
 
-/** La ventana en la que se cuentan las solicitudes. */
+/** La ventana en la que se cuenta lo guardado. */
 export const RATE_WINDOW_MS = 60 * 60 * 1000;
 
-/** Solicitudes por teléfono en la ventana: alcanza para corregir varias veces. */
-export const MAX_PER_PHONE = 5;
-
 /**
- * Solicitudes por conexión en la ventana. Es más alto porque en los datos del
- * celular muchas personas salen a internet por la misma IP.
+ * Cuántas se permiten en la ventana por teléfono y por conexión. Por conexión
+ * es más alto porque en los datos del celular muchas personas salen a internet
+ * por la misma IP.
  */
-export const MAX_PER_IP = 20;
+export const LIMITS = {
+  /** Solicitudes del cliente: alcanza para corregir varias veces. */
+  requests: { phone: 5, ip: 20 },
+  /** Disponibilidades del transportista: tiene una a la vez. */
+  availabilities: { phone: 3, ip: 10 },
+} as const;
+
+export type LimitedTable = keyof typeof LIMITS;
 
 export const RATE_LIMIT_ERROR = "Ya hiciste muchas solicitudes seguidas. Espera un rato e intenta otra vez.";
+/** Para el transportista: él no hace solicitudes, y "disponible" no se repite. */
+export const DRIVER_RATE_LIMIT_ERROR = "Ya enviaste tus datos muchas veces seguidas. Espera un rato e intenta otra vez.";
 
-export function overLimit(counts: { phone: number; ip: number }): boolean {
-  return counts.phone >= MAX_PER_PHONE || counts.ip >= MAX_PER_IP;
+export function overLimit(table: LimitedTable, counts: { phone: number; ip: number }): boolean {
+  const max = LIMITS[table];
+  return counts.phone >= max.phone || counts.ip >= max.ip;
 }
 
 /** La IP de quien llama. En Vercel la pone Vercel, no el navegador. */
