@@ -17,6 +17,7 @@ import {
   ErrorNote,
   Field,
   OriginCitySelect,
+  PrivacyNote,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -202,6 +203,7 @@ export function ClientForm() {
           />
         </Field>
 
+        <PrivacyNote>Al continuar, aceptas que guardemos tu teléfono mientras tu solicitud esté abierta.</PrivacyNote>
         <ErrorNote message={error} />
         <button type="submit" className="btn-primary" disabled={isPending}>
           {isPending ? "Un momento…" : "Solicitar transportista"}

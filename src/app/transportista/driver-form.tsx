@@ -9,6 +9,7 @@ import {
   ErrorNote,
   Field,
   OriginCitySelect,
+  PrivacyNote,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -187,6 +188,7 @@ export function DriverForm() {
           />
         </Field>
 
+        <PrivacyNote>Al continuar, aceptas que los clientes vean tu número mientras dure este viaje.</PrivacyNote>
         <ErrorNote message={error} />
         <button type="submit" className="btn-primary" disabled={isPending}>
           {isPending ? "Un momento…" : "Ponerme disponible"}

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
 import { ANY_DESTINATION, ANY_DESTINATION_HINT, ANY_DESTINATION_LABEL } from "@/lib/domain";
@@ -453,6 +454,21 @@ function QuickDate({
     >
       {label}
     </button>
+  );
+}
+
+/**
+ * El permiso para guardar los datos (Ley 1581 de 2012), justo antes del botón
+ * que los envía, con el enlace a /privacidad.
+ */
+export function PrivacyNote({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-xs text-muted">
+      {children}{" "}
+      <Link href="/privacidad" className="underline">
+        Cómo cuidamos tus datos
+      </Link>
+    </p>
   );
 }
 

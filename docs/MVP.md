@@ -127,6 +127,11 @@ preguntan.
   chico que lo que el transportista puede llevar y la mano de obra ofrecida
   cubre la pedida.
 
+**Privacidad y términos**: permiso para guardar los datos encima de los
+botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
+Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
+y condiciones también entran en el MVP; falta escribirlos.
+
 **PWA**: manifest instalable y service worker que guarda las páginas para que
 abran con mala señal.
 
