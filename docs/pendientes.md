@@ -205,3 +205,7 @@ se probó en un teléfono:
   avisos solo se mandan a los servicios de avisos de los navegadores, y
   cabeceras para que ninguna otra página meta Muvia dentro de la suya.
   Requiere la migración `0008_limite_transportista.sql`.
+- **Teléfonos solo mientras valen (20 de octubre de 2026):** el teléfono y la
+  huella de la conexión se borran cuando la solicitud o la disponibilidad deja
+  de valer, cada hora con pg_cron. Requiere activar pg_cron y la migración
+  `0009_borrar_telefonos.sql`. El aviso de privacidad (10) sigue pendiente.
