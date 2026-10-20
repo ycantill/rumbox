@@ -253,3 +253,6 @@ se probó en un teléfono:
   uno. Con algo abierto, Muvia lo lleva siempre a esa pantalla (sin inicio ni
   la pantalla del otro papel), y el servidor lo revisa con el número. No
   necesita migración.
+- **PR #37:** "Tu solicitud" muestra la ruta, el día, qué va a mover y la
+  ayuda que pidió. Los botones dicen "Ya no necesito este servicio" y
+  "Cambiar mi solicitud". No necesita migración.
