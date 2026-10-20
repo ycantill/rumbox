@@ -27,11 +27,14 @@ import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
   CLIENT_LABOR,
+  CLIENT_LABOR_SUMMARY,
   DRIVER_LABOR,
   ANY_DESTINATION,
   SAME_CITY_ERROR,
   VOLUMES,
+  isKey,
   spaceInSentence,
+  volumeInSentence,
   type ClientLabor,
   type Volume,
 } from "@/lib/domain";
@@ -70,7 +73,7 @@ export function ClientForm() {
   const [current, setCurrent] = useState<MyRequest | null>(null);
   // Los transportistas que salieron al solicitar; null si la solicitud viene guardada de antes.
   const [matches, setMatches] = useState<DriverMatch[] | null>(null);
-  // "Hacer otra solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
+  // "Cambiar mi solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
   const [editing, setEditing] = useState(false);
   // Una cosa a la vez en el teléfono: si está como transportista, se va a esa pantalla.
   const screen = useActiveScreen();
@@ -330,9 +333,34 @@ function MyRequestView({
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
-        <p className="text-sm">Tu solicitud</p>
-        <p className="font-semibold">{route}</p>
-        <p className="text-sm">{capitalize(when)}</p>
+        <h2 className="text-lg font-bold">Tu solicitud</h2>
+        <dl className="mt-3 grid gap-1 text-sm">
+          <div>
+            <dt className="sr-only">Lugar</dt>
+            <dd className="font-semibold">{route}</dd>
+          </div>
+          <div>
+            <dt className="sr-only">Día</dt>
+            <dd>{capitalize(when)}</dd>
+          </div>
+          {/* Lo guardado por una versión vieja puede traer un tamaño que ya no existe. */}
+          {isKey(VOLUMES, request.volume) && (
+            <div>
+              <dt className="sr-only">Qué vas a mover</dt>
+              <dd>
+                Vas a mover {volumeInSentence(request.volume)}{" "}
+                <span className="text-brand-ink/70">({VOLUMES[request.volume].hint.toLowerCase()})</span>
+              </dd>
+            </div>
+          )}
+          {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
+          {request.volume !== "sobres" && isKey(CLIENT_LABOR_SUMMARY, request.labor) && (
+            <div>
+              <dt className="sr-only">Ayuda para cargar</dt>
+              <dd>{CLIENT_LABOR_SUMMARY[request.labor]}</dd>
+            </div>
+          )}
+        </dl>
       </section>
 
       {matches &&
@@ -391,11 +419,11 @@ function MyRequestView({
           </div>
         ) : (
           <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya conseguí transportista
+            Ya no necesito este servicio
           </button>
         )}
         <button type="button" className="btn-secondary" onClick={onRestart}>
-          Hacer otra solicitud
+          Cambiar mi solicitud
         </button>
       </div>
     </div>
@@ -405,7 +433,7 @@ function MyRequestView({
 /**
  * "Avísame": un aviso al celular cuando aparece un transportista, aunque tenga
  * la app cerrada. Si ya los aceptó, el teléfono queda ligado a esta solicitud
- * sin preguntar otra vez (por ejemplo, después de "Hacer otra solicitud").
+ * sin preguntar otra vez (por ejemplo, después de "Cambiar mi solicitud").
  */
 function AlertsOptIn({
   id,

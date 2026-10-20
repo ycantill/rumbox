@@ -239,10 +239,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Una solicitud a la vez**
 - Como el transportista, el cliente tiene una sola solicitud abierta. Si
   vuelve a `/solicitar`, ve "Tu solicitud" con los transportistas que le
-  sirven en ese momento, en vez del formulario.
-- "Ya conseguí transportista" la cierra (pide confirmar: "¿Dejamos de mostrar
+  sirven en ese momento, en vez del formulario. Arriba están los datos de su
+  solicitud: la ruta, el día, qué va a mover (con su pista) y la ayuda que
+  pidió para cargar (`CLIENT_LABOR_SUMMARY` en `domain.ts`), menos con
+  paquetes o sobres.
+- "Ya no necesito este servicio" la cierra (pide confirmar: "¿Dejamos de mostrar
   tu solicitud a los transportistas?") y vuelve el formulario con los mismos
-  datos. "Hacer otra solicitud" devuelve el formulario; al enviarla, la nueva
+  datos. "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
   reemplaza la de antes.
 - Vale el día del viaje y 24 horas más, como la del transportista: después se
   olvida y vuelve el formulario.
@@ -253,7 +256,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Mientras la tenga, Muvia lo lleva siempre a esa pantalla: el inicio y la
   pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
-  nada. Cuando la cierra ("Ya conseguí transportista" o "Ya no voy a
+  nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no voy a
   trabajar") o se vence, vuelven el formulario y "← Inicio".
 - El servidor lo revisa con el número (`hasActiveTrip` y `hasOpenRequest` en
   `actions.ts`, textos en `src/lib/one-at-a-time.ts`): con un número que está

@@ -89,9 +89,9 @@ se probó en un teléfono:
   lista sin tener que recargar.
 - El cliente solicita y cierra la app. Al abrir otra vez `/solicitar` ve "Tu
   solicitud" con los transportistas de ese momento, no el formulario.
-- "Ya conseguí transportista" pide confirmar, vuelve el formulario con los
+- "Ya no necesito este servicio" pide confirmar, vuelve el formulario con los
   mismos datos y el cliente ya no le sale a ningún transportista.
-- "Hacer otra solicitud" y enviarla cambiando el día: al transportista del
+- "Cambiar mi solicitud" y enviarla cambiando el día: al transportista del
   día de antes ya no le sale ese cliente.
 - Un día después del viaje, "Tu solicitud" y "Estás disponible para este
   servicio" todavía se ven; dos días después vuelve el formulario con los
@@ -110,7 +110,7 @@ se probó en un teléfono:
   si no elige, sale "Elige si necesitas ayuda para cargar.".
 - Ninguna de las dos pantallas pregunta la jornada: solo "Hoy", "Mañana" u
   otra fecha. "Hoy" sale también de noche.
-- "Hacer otra solicitud" devuelve el formulario con lo que había llenado.
+- "Cambiar mi solicitud" devuelve el formulario con lo que había llenado.
 - Abrir un enlace viejo a `/cotizar`: debe llevar a `/solicitar`. También con
   la app instalada.
 - Negar el permiso de ubicación y tocar "Ubicarme": debe salir el aviso. Ahora

@@ -168,7 +168,7 @@ export type RequestResult =
  * Guarda lo que el cliente necesita mover y le devuelve los transportistas que
  * le sirven. No se calcula precio: lo acuerdan al hablar.
  *
- * Una solicitud a la vez: si el cliente tocó "Hacer otra solicitud", la nueva
+ * Una solicitud a la vez: si el cliente tocó "Cambiar mi solicitud", la nueva
  * reemplaza la que tenía en el teléfono (`replaces`), y esa deja de salirles a
  * los transportistas.
  */
@@ -250,7 +250,7 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
   });
 }
 
-/** "Ya conseguí transportista": la solicitud deja de salirles a los transportistas. */
+/** "Ya no necesito este servicio": la solicitud deja de salirles a los transportistas. */
 export async function closeRequest(input: {
   id: string;
   editToken: string;
