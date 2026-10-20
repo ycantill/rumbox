@@ -15,6 +15,22 @@ export function requestIsOpen(request: { date: string }, today: string): boolean
   return isStillValid(request.date, today);
 }
 
+/**
+ * La pantalla de lo que el teléfono tiene abierto, para ir directo ahí al abrir
+ * Muvia, o null si no tiene nada.
+ */
+export function activeScreen(
+  saved: {
+    request: { date: string } | null;
+    trip: { destination: string | null; date: string; space: string } | undefined;
+  },
+  today: string,
+): "/solicitar" | "/transportista" | null {
+  if (saved.request && requestIsOpen(saved.request, today)) return "/solicitar";
+  if (saved.trip && tripIsOn(saved.trip, today)) return "/transportista";
+  return null;
+}
+
 /** Lo que ve el cliente si su número ya está como transportista. */
 export const BUSY_AS_DRIVER_ERROR =
   "Este número está como transportista. Para pedir uno, primero toca “Ya no voy a trabajar”.";

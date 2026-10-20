@@ -251,5 +251,5 @@ se probó en un teléfono:
   Vercel.
 - **PR #36:** una cosa a la vez en cada teléfono: o es transportista o pide
   uno. Cada pantalla muestra lo que ya tiene abierto del otro papel, con el
-  botón para apagarlo, y el servidor lo revisa con el número. No necesita
-  migración.
+  botón para apagarlo, y el servidor lo revisa con el número. Al abrir Muvia
+  con algo abierto, va directo a esa pantalla. No necesita migración.

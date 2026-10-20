@@ -258,6 +258,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   `actions.ts`, textos en `src/lib/one-at-a-time.ts`): con un número que está
   como transportista no se solicita, y con uno que tiene una solicitud abierta
   no se pone disponible.
+- Si el teléfono tiene algo abierto, al abrir Muvia en el inicio va directo a
+  esa pantalla (`GoToActive`), sin pasar por el inicio (Yohany, octubre de
+  2026). Solo al abrir la app: "← Inicio" sí deja ver el inicio.
 
 **Las listas se actualizan solas**
 - Los transportistas que le sirven al cliente, y si la disponibilidad del

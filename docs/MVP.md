@@ -99,6 +99,8 @@ tiene una solicitud abierta, en `/transportista` ve "Tienes una solicitud
 abierta" con "Cerrar mi solicitud" y "Ver mi solicitud". El servidor lo
 revisa con el número: no deja solicitar con un número que está como
 transportista, ni ponerse disponible con uno que tiene una solicitud abierta.
+Si tiene algo abierto, al abrir Muvia va directo a esa pantalla en vez del
+inicio; "← Inicio" sí deja ver el inicio.
 
 Debajo le preguntamos "¿Te avisamos cuando aparezca un transportista?". Si
 toca "Sí, avísame" y acepta el permiso del celular, le llega un aviso

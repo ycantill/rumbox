@@ -5,6 +5,7 @@
 // apaga y le sale el formulario.
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { closeRequest, getMyAvailability, getMyRequest, updateAvailability } from "@/app/actions";
 import type { MyRequest } from "@/app/solicitar/client-form";
@@ -13,8 +14,37 @@ import { ErrorNote, useBogotaDates } from "@/components/ui";
 import { getCity } from "@/lib/cities";
 import { capitalize, whenText } from "@/lib/dates";
 import { destinationName } from "@/lib/domain";
-import { KEYS, save } from "@/lib/local-store";
+import { KEYS, load, save } from "@/lib/local-store";
+import { activeScreen } from "@/lib/one-at-a-time";
 import { callServer } from "@/lib/server-call";
+
+// Solo una vez por carga de la app: después, "← Inicio" sí deja ver el inicio.
+let enteredApp = false;
+
+/**
+ * Al abrir Muvia en el inicio, si el teléfono tiene una solicitud o un viaje
+ * abierto, va directo a esa pantalla.
+ */
+export function GoToActive() {
+  const router = useRouter();
+  const { today } = useBogotaDates();
+  useEffect(() => {
+    if (!today || enteredApp) return;
+    enteredApp = true;
+    // Solo si la app se abrió en el inicio, no si llegó con "← Inicio" desde otra pantalla.
+    const opened = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+    if (opened && new URL(opened.name).pathname !== "/") return;
+    const screen = activeScreen(
+      {
+        request: load<MyRequest | null>(KEYS.clientRequest, null),
+        trip: load<MyPost[]>(KEYS.driverPosts, [])[0],
+      },
+      today,
+    );
+    if (screen) router.replace(screen);
+  }, [today, router]);
+  return null;
+}
 
 /** En la pantalla del cliente: este teléfono está como transportista. */
 export function ActiveTripNotice({ post, onCleared }: { post: MyPost; onCleared: () => void }) {
