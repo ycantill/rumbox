@@ -306,7 +306,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Analíticas propias**
 - Yohany pidió analíticas en octubre de 2026. Son propias, en la tabla
-  `events` de Supabase, sin Google Analytics ni otro servicio de afuera.
+  `events` de Supabase.
 - Se cuentan las visitas a cada pantalla (`TrackVisit`), si ese navegador ya
   había entrado (`muvia.ya-vino` en localStorage) y los toques en "Escribir por
   WhatsApp" y "Llamar" de `ContactButtons`, con el transportista que se tocó.
@@ -314,6 +314,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   identificador del navegador. `/privacidad` lo dice.
 - Yohany ve los números en Supabase, en las vistas `analiticas_por_dia` y
   `analiticas_por_municipio`. No hay pantalla de estadísticas en la app.
+- Además está Vercel Web Analytics, en su plan gratis (`<Analytics />` en
+  `src/app/layout.tsx`): visitas, país, celular y de qué página llegan, sin
+  cookies. Los toques se cuentan en la tabla propia, no con eventos de
+  Vercel, porque esos son de pago. Nada de Google Analytics: usa cookies.
 
 **Sin precio**
 - En el MVP no se calcula ningún precio: el cliente y el transportista lo

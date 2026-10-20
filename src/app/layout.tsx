@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
 import { ServiceWorker } from "@/components/service-worker";
@@ -26,6 +27,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="flex min-h-full flex-col font-sans">
         {children}
         <ServiceWorker />
+        {/* Visitas y de dónde llegan, en el panel de Vercel. Sin cookies. */}
+        <Analytics />
       </body>
     </html>
   );

@@ -45,7 +45,8 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-2 text-muted">
             También contamos cuántas veces se abre cada pantalla y se tocan los botones de llamar y de WhatsApp,
-            para saber si la app sirve. Eso no dice quién fue.
+            para saber si la app sirve, y Vercel, donde vive la app, cuenta las visitas y de qué página llegan. Nada
+            de eso dice quién fue ni usa cookies.
           </p>
           <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación exacta.</p>
         </section>

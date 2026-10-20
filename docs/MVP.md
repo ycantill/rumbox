@@ -139,7 +139,8 @@ la tarjeta de un transportista. No guarda nada de la persona: ni teléfono, ni
 conexión, ni un identificador del navegador. Los números se ven en Supabase,
 por día (`analiticas_por_dia`) y por municipio de salida
 (`analiticas_por_municipio`), junto con las solicitudes y las
-disponibilidades.
+disponibilidades. Además, Vercel Web Analytics (gratis, sin cookies) muestra
+en su panel las visitas, el país, el celular y de qué página llega la gente.
 
 **PWA**: manifest instalable y service worker que guarda las páginas para que
 abran con mala señal.

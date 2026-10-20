@@ -213,3 +213,5 @@ se probó en un teléfono:
   por WhatsApp" y "Llamar" (17), sin guardar nada de la persona. Los números
   se ven en Supabase, en las vistas `analiticas_por_dia` y
   `analiticas_por_municipio`. Requiere la migración `0010_analiticas.sql`.
+  También Vercel Web Analytics (gratis), que hay que activar en el panel de
+  Vercel.
