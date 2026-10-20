@@ -267,6 +267,15 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Los límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda
   una huella (`ip_hash`), nunca la IP.
 
+**Los teléfonos se borran**
+- El teléfono se guarda solo mientras la solicitud o la disponibilidad vale
+  (Yohany, octubre de 2026). Cada hora, `borrar_telefonos_vencidos()` (pg_cron,
+  migración `0009_borrar_telefonos.sql`) borra el teléfono y el `ip_hash` de
+  las vencidas, y de las cerradas o apagadas una hora después de creadas (para
+  que el límite las siga contando), y las suscripciones a avisos de esas
+  solicitudes. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
+  apagada no se vuelve a encender.
+
 **Avisos al celular**
 - Yohany eligió Web Push estándar con llaves VAPID, sin Firebase (octubre de
   2026). El aviso es para el cliente: "Apareció un transportista" cuando uno

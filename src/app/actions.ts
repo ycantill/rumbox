@@ -99,15 +99,18 @@ export async function publishAvailability(input: {
   });
 }
 
-/** "Ya no voy a trabajar" (status llena), o actualizar el espacio que queda libre. */
+/**
+ * "Ya no voy a trabajar" (status llena), o actualizar el espacio que queda libre.
+ * Una apagada no se vuelve a encender: después se borra su teléfono.
+ */
 export async function updateAvailability(input: {
   id: string;
   editToken: string;
-  status?: "activa" | "llena";
+  status?: "llena";
   space?: string;
 }): Promise<{ ok: true } | Fail> {
   if (input.space !== undefined && !isKey(DRIVER_SPACES, input.space)) return fail("Algo salió mal. Intenta de nuevo.");
-  if (input.status !== undefined && input.status !== "activa" && input.status !== "llena") {
+  if (input.status !== undefined && input.status !== "llena") {
     return fail("Algo salió mal. Intenta de nuevo.");
   }
   return withDb(DRIVER_DB_ERROR, async () => {
@@ -418,6 +421,8 @@ async function findDrivers(r: {
     .not("destination_city", "is", null)
     .in("space", Object.keys(DRIVER_SPACES))
     .eq("status", "activa")
+    // Sin teléfono no sirve: ya se borró porque dejó de valer.
+    .not("whatsapp", "is", null)
     .order("created_at", { ascending: false })
     .limit(500);
   if (error) throw error;
