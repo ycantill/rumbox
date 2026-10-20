@@ -27,11 +27,14 @@ import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
   CLIENT_LABOR,
+  CLIENT_LABOR_SUMMARY,
   DRIVER_LABOR,
   ANY_DESTINATION,
   SAME_CITY_ERROR,
   VOLUMES,
+  isKey,
   spaceInSentence,
+  volumeInSentence,
   type ClientLabor,
   type Volume,
 } from "@/lib/domain";
@@ -70,7 +73,7 @@ export function ClientForm() {
   const [current, setCurrent] = useState<MyRequest | null>(null);
   // Los transportistas que salieron al solicitar; null si la solicitud viene guardada de antes.
   const [matches, setMatches] = useState<DriverMatch[] | null>(null);
-  // "Hacer otra solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
+  // "Cambiar mi solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
   const [editing, setEditing] = useState(false);
   // Una cosa a la vez en el teléfono: si está como transportista, se va a esa pantalla.
   const screen = useActiveScreen();
@@ -330,48 +333,76 @@ function MyRequestView({
   return (
     <div className="flex flex-col gap-5">
       <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
-        <p className="text-sm">Tu solicitud</p>
-        <p className="font-semibold">{route}</p>
-        <p className="text-sm">{capitalize(when)}</p>
+        <h2 className="text-lg font-bold">Tu solicitud</h2>
+        <dl className="mt-3 grid gap-1 text-sm">
+          <div>
+            <dt className="sr-only">Lugar</dt>
+            <dd className="font-semibold">{route}</dd>
+          </div>
+          <div>
+            <dt className="sr-only">Día</dt>
+            <dd>{capitalize(when)}</dd>
+          </div>
+          {/* Lo guardado por una versión vieja puede traer un tamaño que ya no existe. */}
+          {isKey(VOLUMES, request.volume) && (
+            <div>
+              <dt className="sr-only">Qué vas a mover</dt>
+              <dd>
+                Vas a mover {volumeInSentence(request.volume)}{" "}
+                <span className="text-brand-ink/70">({VOLUMES[request.volume].hint.toLowerCase()})</span>
+              </dd>
+            </div>
+          )}
+          {/* Con paquetes o sobres no se pregunta la ayuda para cargar. */}
+          {request.volume !== "sobres" && isKey(CLIENT_LABOR_SUMMARY, request.labor) && (
+            <div>
+              <dt className="sr-only">Ayuda para cargar</dt>
+              <dd>{CLIENT_LABOR_SUMMARY[request.labor]}</dd>
+            </div>
+          )}
+        </dl>
       </section>
 
-      {matches &&
-        (matches.length === 0 ? (
-          <section className="card">
-            <h2 className="font-semibold">Guardamos tu solicitud</h2>
-            <p className="mt-1 text-sm text-muted">
-              Ahora mismo no hay transportistas libres para ese viaje. Apenas aparezca uno, te sale aquí
-              para que lo llames o le escribas por WhatsApp. Vuelve cuando quieras a mirar. El precio lo
-              acuerdan cuando hablen.
-            </p>
-          </section>
-        ) : (
-          <section className="flex flex-col gap-3">
-            <div>
-              <h2 className="font-semibold">Transportistas libres ({matches.length})</h2>
-              <p className="text-sm text-muted">Llama o escribe por WhatsApp y acuerden el precio.</p>
-            </div>
-            {matches.map((m) => (
-              <article key={m.id} className="card">
-                <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
-                <p className="text-sm text-muted">
-                  Va de {getCity(m.origin_city)?.name} a{" "}
-                  {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name} ·{" "}
-                  {DRIVER_LABOR[m.labor]}
-                </p>
-                <div className="mt-3">
-                  <ContactButtons
-                    availabilityId={m.id}
-                    phone={m.whatsapp}
-                    message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
-                  />
-                </div>
-              </article>
-            ))}
-          </section>
-        ))}
+      {/* Es una pantalla de espera: mientras no haya transportistas, o hasta
+          que llegue la lista, se ve que seguimos buscando. */}
+      {!matches || matches.length === 0 ? (
+        <Searching>
+          {/* La invitación a los avisos va dentro de la espera, donde se ve sin bajar. */}
+          {vapidPublicKey !== undefined && (
+            <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} embedded />
+          )}
+        </Searching>
+      ) : (
+        <section className="flex flex-col gap-3">
+          <div>
+            <h2 className="font-semibold">Transportistas libres ({matches.length})</h2>
+            <p className="text-sm text-muted">Llama o escribe por WhatsApp y acuerden el precio.</p>
+          </div>
+          {matches.map((m) => (
+            <article key={m.id} className="card">
+              <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
+              <p className="text-sm text-muted">
+                Va de {getCity(m.origin_city)?.name} a{" "}
+                {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name} ·{" "}
+                {DRIVER_LABOR[m.labor]}
+              </p>
+              <div className="mt-3">
+                <ContactButtons
+                  availabilityId={m.id}
+                  phone={m.whatsapp}
+                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
+                />
+              </div>
+            </article>
+          ))}
+          <p role="status" className="flex items-center gap-2 text-sm text-muted">
+            <Radar size="small" />
+            Seguimos buscando más transportistas.
+          </p>
+        </section>
+      )}
 
-      {vapidPublicKey !== undefined && (
+      {matches && matches.length > 0 && vapidPublicKey !== undefined && (
         <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} />
       )}
 
@@ -391,33 +422,72 @@ function MyRequestView({
           </div>
         ) : (
           <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya conseguí transportista
+            Ya no necesito este servicio
           </button>
         )}
         <button type="button" className="btn-secondary" onClick={onRestart}>
-          Hacer otra solicitud
+          Cambiar mi solicitud
         </button>
       </div>
     </div>
   );
 }
 
+/** Mientras no hay transportistas: la solicitud quedó guardada y seguimos buscando. */
+function Searching({ children }: { children?: React.ReactNode }) {
+  return (
+    <section className="card flex flex-col items-center gap-3 py-5 text-center">
+      <div role="status" className="flex flex-col items-center gap-2">
+        <Radar size="large" />
+        <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
+        <p className="text-sm text-muted">
+          Tu solicitud quedó guardada. Apenas un transportista vaya para allá ese día, te sale aquí para
+          que lo llames o le escribas por WhatsApp.
+        </p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+/** Ondas que salen del centro: la app sigue buscando. */
+function Radar({ size }: { size: "large" | "small" }) {
+  const box = size === "large" ? "size-20" : "size-4";
+  const dot = size === "large" ? "size-5" : "size-2";
+  return (
+    <span aria-hidden className={`relative grid shrink-0 place-items-center ${box}`}>
+      {/* Tres ondas desfasadas. El retraso va en style: la clase animate-radar
+          trae la animación completa y pisaría un retraso puesto con clase. */}
+      {["0s", "-0.8s", "-1.6s"].map((delay) => (
+        <span
+          key={delay}
+          className="absolute inset-0 rounded-full bg-brand/40 motion-safe:animate-radar"
+          style={{ animationDelay: delay }}
+        />
+      ))}
+      <span className={`relative rounded-full bg-brand ${dot}`} />
+    </span>
+  );
+}
+
 /**
  * "Avísame": un aviso al celular cuando aparece un transportista, aunque tenga
  * la app cerrada. Si ya los aceptó, el teléfono queda ligado a esta solicitud
- * sin preguntar otra vez (por ejemplo, después de "Hacer otra solicitud").
+ * sin preguntar otra vez (por ejemplo, después de "Cambiar mi solicitud").
  */
 function AlertsOptIn({
   id,
   editToken,
   vapidPublicKey,
+  embedded = false,
 }: {
   id: string;
   editToken: string;
   vapidPublicKey: string | null;
+  /** Dentro de la tarjeta de espera, separada por una línea, en vez de en su propia tarjeta. */
+  embedded?: boolean;
 }) {
-  // "blocked": acaba de decir que no al permiso del celular.
-  const [state, setState] = useState<AlertState | "blocked">("no");
+  const [state, setState] = useState<AlertState>("no");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -472,17 +542,24 @@ function AlertsOptIn({
 
   if (state === "no") return null;
 
+  const box = embedded ? "w-full border-t border-line pt-4" : "card";
+
   if (state === "on") {
-    return <p className="text-sm text-muted">Te avisamos al celular cuando aparezca un transportista.</p>;
+    return (
+      <p className={embedded ? `${box} text-sm text-muted` : "text-sm text-muted"}>
+        Te avisamos al celular cuando aparezca un transportista.
+      </p>
+    );
   }
 
   if (state === "blocked") {
     return (
-      <section className="card">
+      <section className={box}>
         <h2 className="font-semibold">No te podemos avisar</h2>
         <p className="mt-1 text-sm text-muted">
           Tu celular no nos dio permiso. Vuelve a esta pantalla cuando quieras: aquí te salen los
-          transportistas que aparezcan.
+          transportistas que aparezcan. Si quieres los avisos, dale permiso a Muvia en los ajustes de tu
+          celular.
         </p>
       </section>
     );
@@ -490,7 +567,7 @@ function AlertsOptIn({
 
   if (state === "iphone") {
     return (
-      <section className="card">
+      <section className={box}>
         <h2 className="font-semibold">¿Quieres que te avisemos?</h2>
         <p className="mt-1 text-sm text-muted">
           En iPhone, primero agrega Muvia a tu pantalla de inicio: toca el botón de compartir y luego
@@ -502,7 +579,7 @@ function AlertsOptIn({
   }
 
   return (
-    <section className="card flex flex-col gap-3">
+    <section className={`${box} flex flex-col gap-3`}>
       <div>
         <h2 className="font-semibold">¿Te avisamos cuando aparezca un transportista?</h2>
         <p className="mt-1 text-sm text-muted">Te llega un aviso al celular, aunque tengas la app cerrada.</p>

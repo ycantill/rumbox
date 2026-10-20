@@ -105,11 +105,17 @@ disponible, aunque tenga la app cerrada. Al tocarlo se abre "Tu solicitud". Es
 Web Push, sin Firebase. En iPhone solo funciona con Muvia agregada a la
 pantalla de inicio: ahí se le explica cómo. El transportista no recibe avisos.
 
+Arriba ve los datos de su solicitud: la ruta, el día, qué va a mover y la
+ayuda que pidió para cargar (menos con paquetes o sobres).
+Es una pantalla de espera: mientras no hay transportistas ve "Buscando
+transportistas…" con una animación de radar, y con transportistas, "Seguimos
+buscando más transportistas." debajo de la lista.
+
 Tiene dos botones:
-- "Ya conseguí transportista": pide confirmar ("¿Dejamos de mostrar tu
+- "Ya no necesito este servicio": pide confirmar ("¿Dejamos de mostrar tu
   solicitud a los transportistas?"), deja de salirles a los transportistas y
   le devuelve el formulario con los mismos datos.
-- "Hacer otra solicitud": le devuelve el formulario con los mismos datos.
+- "Cambiar mi solicitud": le devuelve el formulario con los mismos datos.
   Al enviarla, la nueva reemplaza la de antes, que deja de salirles a los
   transportistas.
 

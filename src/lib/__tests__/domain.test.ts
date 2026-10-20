@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  CLIENT_LABOR,
+  CLIENT_LABOR_SUMMARY,
   DRIVER_SPACES,
   VOLUMES,
   spaceFitsVolume,
+  volumeInSentence,
   spaceInSentence,
   type DriverSpace,
   type Volume,
@@ -49,5 +52,16 @@ describe("tamaños de carga", () => {
   it("la etiqueta se puede poner dentro de una frase", () => {
     expect(spaceInSentence("camion_entero")).toBe("una casa de 2 habitaciones o más");
     expect(spaceInSentence("solo_paquetes")).toBe("paquetes o sobres");
+  });
+});
+
+describe("Tu solicitud", () => {
+  it("dice lo que va a mover dentro de una frase", () => {
+    expect(volumeInSentence("medio_camion")).toBe("una habitación o apartaestudio");
+    expect(volumeInSentence("sobres")).toBe("paquetes o sobres");
+  });
+
+  it("tiene una frase para cada ayuda que puede pedir", () => {
+    expect(Object.keys(CLIENT_LABOR_SUMMARY).sort()).toEqual(Object.keys(CLIENT_LABOR).sort());
   });
 });

@@ -68,6 +68,19 @@ export const CLIENT_LABOR = {
 } as const;
 export type ClientLabor = keyof typeof CLIENT_LABOR;
 
+/** La ayuda que pidió el cliente, dicha en "Tu solicitud". */
+export const CLIENT_LABOR_SUMMARY: Record<ClientLabor, string> = {
+  yo_cargo: "Tú cargas",
+  conductor: "Necesitas que el conductor ayude a cargar",
+  ayudantes: "Necesitas ayudantes extra para cargar",
+};
+
+/** La etiqueta dentro de una frase: "Vas a mover una habitación o apartaestudio". */
+export function volumeInSentence(volume: Volume): string {
+  const { label } = VOLUMES[volume];
+  return label.charAt(0).toLowerCase() + label.slice(1);
+}
+
 /** Capacidad relativa: un espacio sirve para volúmenes de nivel igual o menor. */
 export const SPACE_CAPACITY: Record<DriverSpace, number> = {
   camion_entero: 4,
