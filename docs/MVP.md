@@ -158,4 +158,5 @@ abran con mala señal.
 - Monetización (el detalle está en el documento de negocio, que es privado).
 - Autocompletado de direcciones y barrios (hoy se busca el municipio entre todos
   los de Colombia).
-- Protección anti-spam (límite de publicaciones por número, captcha).
+- El resto del anti-spam: captcha y límite de publicaciones del transportista.
+  El cliente ya tiene límite de solicitudes por teléfono y por conexión.

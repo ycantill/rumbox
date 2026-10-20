@@ -28,7 +28,7 @@ export function listenForDrivers(
     if (stopped) return;
     const client = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
     const channel = client
-      .channel(liveTopic(date), { config: { private: false } })
+      .channel(liveTopic(date), { config: { private: true } })
       .on("broadcast", { event: LIVE_EVENT }, () => {
         clearTimeout(timer);
         timer = setTimeout(onChange, SETTLE_MS);

@@ -250,10 +250,18 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   minuto mientras la pantalla se ve (`refreshWhileOpen`). Si falla una de esas
   consultas que se hacen solas, no se muestra el aviso de señal.
 - Además, la lista del cliente se pone al día sola con Supabase Realtime: un
-  trigger de la base manda un mensaje vacío al canal público del día del
+  trigger de la base manda un mensaje vacío al canal privado del día del
   viaje (`transportistas-AAAA-MM-DD`) cuando un transportista se pone
   disponible o cambia la suya, y la pantalla vuelve a pedir su lista al
-  servidor. El mensaje no lleva teléfonos ni ciudades.
+  servidor. El mensaje no lleva teléfonos ni ciudades. Con la anon key solo
+  se puede escuchar ese canal; escribir en él, solo la base de datos.
+
+**Límite de solicitudes**
+- Para que nadie junte los teléfonos de los transportistas haciendo muchas
+  solicitudes, el cliente puede hacer hasta 5 por hora desde un mismo
+  teléfono y 20 desde una misma conexión (Yohany, octubre de 2026). Los
+  límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda una
+  huella (`ip_hash`), nunca la IP.
 
 **Avisos al celular**
 - Yohany eligió Web Push estándar con llaves VAPID, sin Firebase (octubre de
@@ -281,4 +289,5 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
 fotos, API oficial de WhatsApp y avisos al transportista, reseñas automáticas,
 formularios offline, monetización (incluidas las disponibilidades
-programadas), autocompletado de direcciones y anti-spam.
+programadas), autocompletado de direcciones y el resto del anti-spam
+(captcha, límite para el transportista).

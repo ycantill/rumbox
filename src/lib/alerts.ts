@@ -6,8 +6,9 @@ import { getCity } from "./cities";
 import { matchesTrip, type AvailabilityLike, type RequestLike } from "./matching";
 
 /**
- * Canal público de Realtime de un día de viaje. Lo arma igual la migración
- * `0006_avisos.sql`: no se cambia sin cambiar las dos partes.
+ * Canal privado de Realtime de un día de viaje: la anon key solo puede
+ * escucharlo. Lo arman igual las migraciones `0006_avisos.sql` y
+ * `0007_proteger_datos.sql`: no se cambia sin cambiar las dos partes.
  */
 export function liveTopic(date: string): string {
   return `transportistas-${date}`;
