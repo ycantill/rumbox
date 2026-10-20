@@ -248,19 +248,17 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   olvida y vuelve el formulario.
 
 **Una cosa a la vez en cada teléfono**
-- Un teléfono no puede ser transportista y pedir uno al mismo tiempo (Yohany,
-  octubre de 2026). Si está como transportista, `/solicitar` muestra "Este
-  teléfono está como transportista" con su viaje, "Ya no voy a trabajar" y
-  "Ver mi viaje"; si tiene una solicitud abierta, `/transportista` muestra
-  "Tienes una solicitud abierta" con "Cerrar mi solicitud" y "Ver mi
-  solicitud". Al apagarla sale el formulario (`src/components/one-at-a-time.tsx`).
+- Un teléfono tiene una sola cosa abierta: una solicitud o un viaje como
+  transportista, nunca las dos (Yohany, octubre de 2026).
+- Mientras la tenga, Muvia lo lleva siempre a esa pantalla: el inicio y la
+  pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
+  `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
+  nada. Cuando la cierra ("Ya conseguí transportista" o "Ya no voy a
+  trabajar") o se vence, vuelven el formulario y "← Inicio".
 - El servidor lo revisa con el número (`hasActiveTrip` y `hasOpenRequest` en
   `actions.ts`, textos en `src/lib/one-at-a-time.ts`): con un número que está
   como transportista no se solicita, y con uno que tiene una solicitud abierta
   no se pone disponible.
-- Si el teléfono tiene algo abierto, al abrir Muvia en el inicio va directo a
-  esa pantalla (`GoToActive`), sin pasar por el inicio (Yohany, octubre de
-  2026). Solo al abrir la app: "← Inicio" sí deja ver el inicio.
 
 **Las listas se actualizan solas**
 - Los transportistas que le sirven al cliente, y si la disponibilidad del

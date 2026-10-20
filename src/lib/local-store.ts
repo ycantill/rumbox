@@ -13,10 +13,14 @@ export function load<T>(key: string, fallback: T): T {
 export function save(key: string, value: unknown): void {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
+    window.dispatchEvent(new Event(STORE_CHANGED));
   } catch {
     // Modo privado o almacenamiento lleno: la app funciona igual.
   }
 }
+
+/** Se avisa cada vez que algo se guarda, para las pantallas que dependen de eso. */
+export const STORE_CHANGED = "muvia:guardado";
 
 export const KEYS = {
   driverProfile: "muvia.transportista.perfil",
