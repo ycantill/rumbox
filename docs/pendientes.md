@@ -116,6 +116,15 @@ se probó en un teléfono:
   llevar?" entre los cuatro tamaños, y su tarjeta dice "Puedes llevar…".
 - Un transportista que puede llevar "Algunas cosas" le sale a un cliente que
   mueve algunas cosas, pero no a uno que mueve una habitación.
+- Tocar "Ponerme disponible" o "Solicitar transportista" sin llenar nada: sale
+  el mensaje de Muvia de lo primero que falta, no el globito del navegador.
+- Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
+  el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
+  pasó…".
+- Tocar "Solo queda espacio para paquetes" y luego "Ya no voy a trabajar": el
+  formulario vuelve con lo que podía llevar al empezar, no con paquetes.
+- Tocar "Sí, avísame" y no dar permiso: sale "No te podemos avisar".
+- Abrir una dirección que no existe: sale "No encontramos esta página".
 
 ## Menores
 

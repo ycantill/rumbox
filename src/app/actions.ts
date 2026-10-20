@@ -5,15 +5,9 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
-import { getCity } from "@/lib/cities";
 import { addDays } from "@/lib/dates";
 import {
-  ANY_DESTINATION,
-  CLIENT_LABOR,
-  DRIVER_LABOR,
   DRIVER_SPACES,
-  SAME_CITY_ERROR,
-  VOLUMES,
   isKey,
   type ClientLabor,
   type DriverLabor,
@@ -31,6 +25,7 @@ import {
   type LimitedTable,
 } from "@/lib/rate-limit";
 import { db } from "@/lib/supabase";
+import { driverInputError, requestInputError } from "@/lib/validate";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 
 type Fail = { ok: false; error: string };
@@ -59,13 +54,8 @@ export async function publishAvailability(input: {
   whatsapp: string;
 }): Promise<PublishResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
-  if (!getCity(input.origin)) return fail("Elige la ciudad donde estás.");
-  if (input.destination !== ANY_DESTINATION && !getCity(input.destination)) return fail("Elige hacia dónde vas.");
-  if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
-  if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
-  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto puedes llevar.");
-  if (!isKey(DRIVER_LABOR, input.labor)) return fail("Elige si ayudas a cargar.");
-  if (!whatsapp) return fail("Revisa el número de teléfono.");
+  const invalid = driverInputError(input, todayInBogota());
+  if (invalid || !whatsapp) return fail(invalid ?? "Revisa el número de teléfono.");
 
   const editToken = randomBytes(24).toString("base64url");
   const ipHash = hashIp(clientIp(await headers()));
@@ -189,12 +179,8 @@ export async function createRequest(input: {
   replaces?: { id: string; editToken: string };
 }): Promise<RequestResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
-  if (!getCity(input.origin) || !getCity(input.destination)) return fail("Elige origen y destino.");
-  if (input.destination === input.origin) return fail(SAME_CITY_ERROR);
-  if (!isValidServiceDate(input.date)) return fail("Elige un día de hoy en adelante.");
-  if (!isKey(VOLUMES, input.volume)) return fail("Elige qué vas a mover.");
-  if (!isKey(CLIENT_LABOR, input.labor)) return fail("Elige si necesitas ayuda para cargar.");
-  if (!whatsapp) return fail("Revisa el número de teléfono.");
+  const invalid = requestInputError(input, todayInBogota());
+  if (invalid || !whatsapp) return fail(invalid ?? "Revisa el número de teléfono.");
 
   const request = {
     origin_city: input.origin,
@@ -482,15 +468,6 @@ function tokenMatches(token: string, hash: string | null): boolean {
   const a = Buffer.from(hashToken(token ?? ""), "hex");
   const b = Buffer.from(hash, "hex");
   return a.length === b.length && timingSafeEqual(a, b);
-}
-
-/** Fecha YYYY-MM-DD entre hoy (hora Colombia) y 90 días adelante. */
-function isValidServiceDate(date: string): boolean {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) return false;
-  const today = todayInBogota();
-  const max = new Date(`${today}T00:00:00Z`);
-  max.setUTCDate(max.getUTCDate() + 90);
-  return date >= today && date <= max.toISOString().slice(0, 10);
 }
 
 function todayInBogota(): string {
