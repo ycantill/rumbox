@@ -5,10 +5,9 @@ const today = "2026-10-20";
 const trip = { destination: "sincelejo", date: today, space: "camion_entero" };
 
 describe("tripIsOn", () => {
-  it("vale el día del viaje y 24 horas más", () => {
+  it("vale hasta que termina el día del viaje", () => {
     expect(tripIsOn(trip, today)).toBe(true);
-    expect(tripIsOn({ ...trip, date: "2026-10-19" }, today)).toBe(true);
-    expect(tripIsOn({ ...trip, date: "2026-10-18" }, today)).toBe(false);
+    expect(tripIsOn({ ...trip, date: "2026-10-19" }, today)).toBe(false);
   });
 
   it("con cualquier destino también vale", () => {
@@ -22,10 +21,10 @@ describe("tripIsOn", () => {
 });
 
 describe("requestIsOpen", () => {
-  it("vale el día del viaje y 24 horas más", () => {
+  it("vale hasta que termina el día del viaje", () => {
     expect(requestIsOpen({ date: "2026-10-22" }, today)).toBe(true);
-    expect(requestIsOpen({ date: "2026-10-19" }, today)).toBe(true);
-    expect(requestIsOpen({ date: "2026-10-18" }, today)).toBe(false);
+    expect(requestIsOpen({ date: today }, today)).toBe(true);
+    expect(requestIsOpen({ date: "2026-10-19" }, today)).toBe(false);
   });
 });
 

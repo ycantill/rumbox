@@ -56,8 +56,8 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 - Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
   tamaños), mano de obra y teléfono. No hay jornadas: Yohany las quitó en
   octubre de 2026.
-  Su tarjeta dice "Viajas…" y vale ese día y 24 horas más: una para mañana se
-  vence pasado mañana. Cuando se vence, se apaga solo y vuelve el formulario
+  Su tarjeta dice "Viajas…" y vale hasta que termina ese día, a la medianoche
+  en hora de Colombia. Cuando se vence, se apaga solo y vuelve el formulario
   con sus datos. Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
@@ -119,7 +119,7 @@ Tiene dos botones:
   Al enviarla, la nueva reemplaza la de antes, que deja de salirles a los
   transportistas.
 
-Vale el día del viaje y 24 horas más: después se olvida y vuelve el formulario.
+Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir

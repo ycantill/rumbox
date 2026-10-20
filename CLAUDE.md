@@ -147,9 +147,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   "Estás disponible para este servicio" con sus datos ("Viajas…") y el
   aviso de que los clientes lo llaman o le escriben por WhatsApp, en vez del
   formulario. No hay lista de varios días.
-- Vale el día del viaje (`service_date`) y 24 horas más: una para mañana se
-  vence pasado mañana (Yohany, octubre de 2026). Solo le salen clientes de ese
-  mismo día. Cuando se vence, se apaga sola y vuelve el formulario con sus
+- Vale hasta que termina el día del viaje (`service_date`), a la medianoche
+  en hora de Colombia (Yohany, octubre de 2026; antes valía 24 horas más, pero
+  como el emparejamiento es del mismo día, ese día extra no traía nada). Solo
+  le salen clientes de ese mismo día. Cuando se vence, se apaga sola y vuelve el formulario con sus
   datos. Lo que quedó guardado sin destino, de cuando era opcional, también
   se apaga y vuelve el formulario para que elija hacia dónde va.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
@@ -252,8 +253,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   tu solicitud a los transportistas?") y vuelve el formulario con los mismos
   datos. "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
   reemplaza la de antes.
-- Vale el día del viaje y 24 horas más, como la del transportista: después se
-  olvida y vuelve el formulario.
+- Vale hasta que termina el día del viaje, como la del transportista: después
+  se olvida y vuelve el formulario.
 
 **Una cosa a la vez en cada teléfono**
 - Un teléfono tiene una sola cosa abierta: una solicitud o un viaje como
@@ -293,8 +294,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Los teléfonos se borran**
 - El teléfono se guarda solo mientras la solicitud o la disponibilidad vale
-  (Yohany, octubre de 2026). Cada hora, `borrar_telefonos_vencidos()` (pg_cron,
-  migración `0009_borrar_telefonos.sql`) borra el teléfono y el `ip_hash` de
+  (Yohany, octubre de 2026). Cada hora, `borrar_telefonos_vencidos()`
+  (pg_cron, migraciones `0009_borrar_telefonos.sql` y
+  `0011_vence_al_terminar_el_dia.sql`) borra el teléfono y el `ip_hash` de
   las vencidas, y de las cerradas o apagadas una hora después de creadas (para
   que el límite las siga contando), y las suscripciones a avisos de esas
   solicitudes. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
