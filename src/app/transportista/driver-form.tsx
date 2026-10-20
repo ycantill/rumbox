@@ -165,7 +165,13 @@ export function DriverForm() {
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-6">
         <Field label="¿Dónde estás?">
-          <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
+          <OriginCitySelect
+            name="origin"
+            value={origin}
+            onChange={setOrigin}
+            exclude={destination}
+            onClearExclude={() => setDestination("")}
+          />
         </Field>
 
         {/* El match va por el corredor del viaje (Modo Ruta) o, con "Cualquier
@@ -173,7 +179,7 @@ export function DriverForm() {
             transportista no la ve. */}
         <Field label="¿Hacia dónde vas?">
           {/* "Cualquier destino" es la primera opción de la lista. El origen no
-              sale en ella; aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
+              sale en ella y "Ubicarme" borra el destino si es el mismo. El aviso queda para lo guardado de antes. */}
           <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} anyDestination />
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>

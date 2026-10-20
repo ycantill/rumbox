@@ -183,11 +183,17 @@ export function ClientForm() {
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-6">
         <Field label="¿Desde dónde?">
-          <OriginCitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
+          <OriginCitySelect
+            name="origin"
+            value={origin}
+            onChange={setOrigin}
+            exclude={destination}
+            onClearExclude={() => setDestination("")}
+          />
         </Field>
 
         <Field label="¿Hacia dónde?">
-          {/* El origen no sale en la lista. Aun así "Ubicarme" puede dejar los dos iguales: ahí sale el aviso. */}
+          {/* El origen no sale en la lista y "Ubicarme" borra el destino si es el mismo. El aviso queda para lo guardado de antes. */}
           <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>

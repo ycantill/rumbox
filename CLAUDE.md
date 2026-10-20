@@ -170,10 +170,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
   (`exclude` de `CitySelect`); si lo escribe, sale "Ese municipio ya lo
-  elegiste. Elige otro.". Como "Ubicarme" sí puede dejar los dos iguales,
-  queda el aviso "Elige otro municipio: no puede ser el mismo de salida."
-  (`SAME_CITY_ERROR`) debajo del destino: el cliente no puede continuar y el
-  servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
+  elegiste. Elige otro.". Si "Ubicarme" cae en el municipio del destino, borra
+  el destino para que elija otro (Yohany, octubre de 2026). Si aun así quedan
+  iguales (datos guardados de antes), sale el aviso "Elige otro municipio: no
+  puede ser el mismo de salida." (`SAME_CITY_ERROR`) debajo del destino: no
+  puede continuar y el servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
   salen a ningún transportista.
 - Fuera de "Cualquier destino" no hay match por cercanía (el antiguo radio de
   40 km alrededor del origen), ni opción Local/Nacional.

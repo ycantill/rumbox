@@ -301,19 +301,23 @@ function matchesAny(text: string): boolean {
 
 /**
  * Municipio de origen con el botón "Ubicarme", que elige el municipio más
- * cercano según la ubicación del teléfono.
+ * cercano según la ubicación del teléfono. Si cae en el destino ya elegido,
+ * borra el destino para que elija otro.
  */
 export function OriginCitySelect({
   value,
   onChange,
   name,
   exclude,
+  onClearExclude,
 }: {
   value: string;
   onChange: (slug: string) => void;
   name: string;
   /** El destino ya elegido, que no sale en la lista. "Ubicarme" sí lo puede elegir. */
   exclude?: string;
+  /** Borra el destino cuando "Ubicarme" elige ese mismo municipio. */
+  onClearExclude?: () => void;
 }) {
   const [locating, setLocating] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -332,7 +336,9 @@ export function OriginCitySelect({
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        onChange(nearestCity(pos.coords.latitude, pos.coords.longitude).slug);
+        const slug = nearestCity(pos.coords.latitude, pos.coords.longitude).slug;
+        onChange(slug);
+        if (slug === exclude) onClearExclude?.();
         setLocating(false);
       },
       () => {

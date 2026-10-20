@@ -121,9 +121,7 @@ se probó en un teléfono:
   escribe sale "Ese municipio ya lo elegiste. Elige otro." (se probó en el
   navegador del computador).
 - Con un destino elegido, tocar "Ubicarme" estando en ese mismo municipio:
-  sale "Elige otro municipio: no puede ser el mismo de salida." debajo del
-  destino. El cliente no puede continuar y el transportista no puede ponerse
-  disponible.
+  el destino queda vacío para elegir otro, y no sale ningún aviso.
 - Sin elegir hacia dónde va, no deja ponerse disponible.
 - "Cualquier destino" sale de primero al tocar la flecha del destino y al
   escribir "cual"; al elegirlo, el campo lo muestra. La tarjeta dice "… → Cualquier destino", le salen los

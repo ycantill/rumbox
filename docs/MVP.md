@@ -76,7 +76,8 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 - La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
-  municipio; qué día (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; si
+  municipio (si "Ubicarme" cae en el destino, el destino se borra); qué día
+  (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; si
   necesita ayuda para cargar, que no sale con paquetes o sobres; y teléfono.
 
 Al tocar "Solicitar transportista" ve la lista de transportistas compatibles con
