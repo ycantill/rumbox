@@ -1,3 +1,5 @@
+import { ANY_DAY } from "./domain";
+
 /** "2026-10-18" → "sábado 18 de octubre". */
 export function formatDay(date: string): string {
   const parts = new Intl.DateTimeFormat("es-CO", {
@@ -29,12 +31,14 @@ export function addDays(date: string, days: number): string {
 }
 
 /**
- * Una solicitud o disponibilidad vale hasta que termina el día del servicio,
- * a la medianoche en hora de Colombia (Yohany, octubre de 2026). Después se
- * apaga sola.
+ * Una solicitud vale hasta que termina el día del servicio, a la medianoche
+ * en hora de Colombia (Yohany, octubre de 2026). Después se cierra sola. La de
+ * "Cualquier día" no se vence, ni la disponibilidad del transportista.
  */
 export function isStillValid(serviceDate: string, today: string): boolean {
+  if (serviceDate === ANY_DAY) return true;
   // Lo guardado en el teléfono por una versión vieja puede no traer la fecha.
   if (!/^\d{4}-\d{2}-\d{2}$/.test(serviceDate ?? "")) return false;
   return serviceDate >= today;
 }
+

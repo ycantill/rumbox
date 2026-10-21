@@ -14,8 +14,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-para un viaje, y vale hasta el día siguiente al viaje o hasta que diga "Ya no
-voy a trabajar".
+para un viaje, desde el día que elige y hasta que diga "Ya no estoy
+disponible": no se vence.
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -57,9 +57,9 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 - Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
   tamaños) y teléfono. No hay jornadas: Yohany las quitó en
   octubre de 2026.
-  Su tarjeta dice "Viajas…" y vale hasta que termina ese día, a la medianoche
-  en hora de Colombia. Cuando se vence, se apaga solo y vuelve el formulario
-  con sus datos. Las rutas que se repiten quedan para
+  "Hoy" viene elegido. Su tarjeta dice "Viajas desde…": el día es desde
+  cuándo viaja y no se vence (Yohany, 21 de octubre de 2026); sigue hasta
+  "Ya no estoy disponible". Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy
@@ -83,7 +83,7 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
   municipio (si "Ubicarme" cae en el destino, el destino se borra); qué día
-  (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
+  ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
   teléfono. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
   2026): la hablan por teléfono.
 
@@ -127,6 +127,8 @@ Tiene dos botones:
   transportistas.
 
 Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
+La de "Cualquier día" no se vence: le salen los transportistas de cualquier día
+(con el día en que viaja cada uno) hasta que diga "Ya no necesito este servicio".
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
@@ -143,7 +145,8 @@ preguntan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.
-- Además: el cliente pide el mismo día del viaje y lo que mueve es igual o más
+- Además: el cliente pide el día del transportista o uno después (o
+  "Cualquier día") y lo que mueve es igual o más
   chico que lo que al transportista le queda por llevar. La ayuda para cargar
   no cuenta: no se pregunta.
 

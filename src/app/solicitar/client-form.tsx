@@ -26,6 +26,8 @@ import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
+  ANY_DAY,
+  ANY_DAY_LABEL,
   ANY_DESTINATION,
   SAME_CITY_ERROR,
   VOLUMES,
@@ -56,8 +58,10 @@ export function ClientForm() {
   const { today } = useBogotaDates();
   const [origin, setOrigin] = useState("");
   const [destination, setDestination] = useState("");
-  const [pickedDate, setDate] = useState("");
-  const date = useServiceDay(pickedDate);
+  // "Cualquier día" viene elegido (Yohany, 21 de octubre de 2026).
+  const [pickedDate, setDate] = useState(ANY_DAY);
+  const day = useServiceDay(pickedDate);
+  const date = pickedDate === ANY_DAY ? ANY_DAY : day;
   const [volume, setVolume] = useState<Volume | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -188,7 +192,7 @@ export function ClientForm() {
         </Field>
 
         <Field label="¿Qué día?">
-          <DayPicker value={date} onChange={setDate} />
+          <DayPicker value={date} onChange={setDate} anyDay />
         </Field>
 
         {/* La misma lista de tamaños que elige el transportista. */}
@@ -246,7 +250,7 @@ function MyRequestView({
 
   // Transportistas que le sirven ahora, desde el servidor: al abrir la
   // pantalla, al volver a la app, cada minuto mientras la tiene abierta y
-  // apenas un transportista de ese día se pone disponible o cambia la suya.
+  // apenas un transportista se pone disponible o cambia la suya.
   const { id, editToken, date } = request;
   const fresh = initialMatches !== null;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva.
@@ -287,7 +291,9 @@ function MyRequestView({
         return;
       }
       setVapidPublicKey(config.vapidPublicKey);
-      if (config.live) unlisten = listenForDrivers(config.live, date, () => refresh(true));
+      // Un transportista le sirve desde su día en adelante: se escucha el canal
+      // de todos los días, no solo el de la solicitud.
+      if (config.live) unlisten = listenForDrivers(config.live, () => refresh(true));
     });
     if (!fresh) refresh(false);
     const stop = refreshWhileOpen(() => refresh(true));
@@ -316,7 +322,9 @@ function MyRequestView({
   }
 
   const route = `${getCity(request.origin)?.name} → ${getCity(request.destination)?.name}`;
-  const when = whenText(request.date, today, tomorrow);
+  const anyDay = request.date === ANY_DAY;
+  // Con "Cualquier día", el transportista que sale después de hoy dice desde cuándo.
+  const whenOf = (date: string) => whenText(date, today, tomorrow);
 
   // No hay precio: lo acuerdan el cliente y el transportista cuando hablan.
   return (
@@ -330,7 +338,7 @@ function MyRequestView({
           </div>
           <div>
             <dt className="sr-only">Día</dt>
-            <dd>{capitalize(when)}</dd>
+            <dd>{anyDay ? ANY_DAY_LABEL : capitalize(whenOf(request.date))}</dd>
           </div>
           {/* Lo guardado por una versión vieja puede traer un tamaño que ya no existe. */}
           {isKey(VOLUMES, request.volume) && (
@@ -348,7 +356,7 @@ function MyRequestView({
       {/* Es una pantalla de espera: mientras no haya transportistas, o hasta
           que llegue la lista, se ve que seguimos buscando. */}
       {!matches || matches.length === 0 ? (
-        <Searching>
+        <Searching anyDay={anyDay}>
           {/* La invitación a los avisos va dentro de la espera, donde se ve sin bajar. */}
           {vapidPublicKey !== undefined && (
             <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} embedded />
@@ -366,12 +374,14 @@ function MyRequestView({
               <p className="text-sm text-muted">
                 Va de {getCity(m.origin_city)?.name} a{" "}
                 {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name}
+                {/* Si todavía no sale, se le dice desde cuándo. */}
+                {anyDay && m.service_date > today && `, desde ${whenOf(m.service_date)}`}
               </p>
               <div className="mt-3">
                 <ContactButtons
                   availabilityId={m.id}
                   phone={m.whatsapp}
-                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${when}. ¿Me puedes ayudar?`}
+                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puedes ayudar?`}
                 />
               </div>
             </article>
@@ -415,15 +425,15 @@ function MyRequestView({
 }
 
 /** Mientras no hay transportistas: la solicitud quedó guardada y seguimos buscando. */
-function Searching({ children }: { children?: React.ReactNode }) {
+function Searching({ anyDay, children }: { anyDay: boolean; children?: React.ReactNode }) {
   return (
     <section className="card flex flex-col items-center gap-3 py-5 text-center">
       <div role="status" className="flex flex-col items-center gap-2">
         <Radar size="large" />
         <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
         <p className="text-sm text-muted">
-          Tu solicitud quedó guardada. Apenas un transportista vaya para allá ese día, te sale aquí para
-          que lo llames o le escribas por WhatsApp.
+          Tu solicitud quedó guardada. Apenas un transportista vaya para allá{anyDay ? "" : " ese día"}, te
+          sale aquí para que lo llames o le escribas por WhatsApp.
         </p>
       </div>
       {children}

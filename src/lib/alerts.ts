@@ -15,6 +15,13 @@ export function liveTopic(date: string): string {
 }
 
 /**
+ * El canal que recibe los cambios de transportistas de todos los días
+ * (`0015_cualquier_dia_sin_vencer.sql`). Es el que escucha la pantalla del
+ * cliente: un transportista le sirve desde su día en adelante.
+ */
+export const ALL_DAYS_TOPIC = "transportistas-cualquier_dia";
+
+/**
  * Los servicios de avisos de los navegadores (Chrome y Android, Firefox,
  * Safari y iPhone, Edge). El servidor de Muvia les manda los avisos a las
  * direcciones que guarda: solo se aceptan las de estos servicios, para que

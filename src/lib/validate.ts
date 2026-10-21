@@ -3,7 +3,7 @@
 
 import { getCity } from "./cities";
 import { addDays } from "./dates";
-import { ANY_DESTINATION, DRIVER_SPACES, SAME_CITY_ERROR, VOLUMES, isKey } from "./domain";
+import { ANY_DAY, ANY_DESTINATION, DRIVER_SPACES, SAME_CITY_ERROR, VOLUMES, isKey } from "./domain";
 import { normalizeWhatsApp } from "./whatsapp";
 
 type Trip = {
@@ -29,7 +29,8 @@ export function requestInputError(input: Trip & { volume: string }, today: strin
   if (!getCity(input.origin)) return "Elige desde dónde.";
   if (!getCity(input.destination)) return "Elige hacia dónde.";
   if (input.destination === input.origin) return SAME_CITY_ERROR;
-  if (!isValidServiceDate(input.date, today)) return "Elige un día de hoy en adelante.";
+  // El cliente puede dejar "Cualquier día"; el transportista siempre dice qué día viaja.
+  if (input.date !== ANY_DAY && !isValidServiceDate(input.date, today)) return "Elige un día de hoy en adelante.";
   if (!isKey(VOLUMES, input.volume)) return "Elige qué vas a mover.";
   if (!normalizeWhatsApp(input.whatsapp ?? "")) return "Revisa el número de teléfono.";
   return null;

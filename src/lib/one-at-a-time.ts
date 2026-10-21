@@ -5,9 +5,12 @@
 import { isStillValid } from "./dates";
 import { DRIVER_SPACES, isKey } from "./domain";
 
-/** Si el viaje guardado en el teléfono todavía vale: con destino, un espacio de hoy y sin vencer. */
-export function tripIsOn(post: { destination: string | null; date: string; space: string }, today: string): boolean {
-  return Boolean(post.destination) && isKey(DRIVER_SPACES, post.space) && isStillValid(post.date, today);
+/**
+ * Si el viaje guardado en el teléfono todavía vale: con destino y un espacio
+ * de hoy. No se vence (Yohany, 21 de octubre de 2026).
+ */
+export function tripIsOn(post: { destination: string | null; space: string }): boolean {
+  return Boolean(post.destination) && isKey(DRIVER_SPACES, post.space);
 }
 
 /** Si la solicitud guardada en el teléfono todavía vale. */
@@ -22,12 +25,12 @@ export function requestIsOpen(request: { date: string }, today: string): boolean
 export function activeScreen(
   saved: {
     request: { date: string } | null;
-    trip: { destination: string | null; date: string; space: string } | undefined;
+    trip: { destination: string | null; space: string } | undefined;
   },
   today: string,
 ): "/solicitar" | "/transportista" | null {
   if (saved.request && requestIsOpen(saved.request, today)) return "/solicitar";
-  if (saved.trip && tripIsOn(saved.trip, today)) return "/transportista";
+  if (saved.trip && tripIsOn(saved.trip)) return "/transportista";
   return null;
 }
 

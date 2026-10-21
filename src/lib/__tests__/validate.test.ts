@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SAME_CITY_ERROR } from "../domain";
+import { ANY_DAY, SAME_CITY_ERROR } from "../domain";
 import { driverInputError, isValidServiceDate, requestInputError } from "../validate";
 
 const today = "2026-10-20";
@@ -48,6 +48,11 @@ describe("requestInputError", () => {
     expect(requestInputError({ ...request, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
     expect(requestInputError({ ...request, volume: "" }, today)).toBe("Elige qué vas a mover.");
     expect(requestInputError({ ...request, whatsapp: "" }, today)).toBe("Revisa el número de teléfono.");
+  });
+
+  it("el cliente puede dejar cualquier día; el transportista no", () => {
+    expect(requestInputError({ ...request, date: ANY_DAY }, today)).toBeNull();
+    expect(driverInputError({ ...driver, date: ANY_DAY }, today)).toBe("Elige un día de hoy en adelante.");
   });
 
   it("el cliente no puede pedir cualquier destino", () => {

@@ -25,6 +25,15 @@ export const ANY_DESTINATION = "cualquiera";
 export const ANY_DESTINATION_LABEL = "Cualquier destino";
 export const ANY_DESTINATION_HINT = "Vas a donde te pidan";
 
+/**
+ * "Cualquier día": la opción que viene elegida en "¿Qué día?" del cliente
+ * (Yohany, 21 de octubre de 2026). Le sirven los transportistas de cualquier
+ * día y no se vence: sigue abierta hasta que diga "Ya no necesito este
+ * servicio". En la base se guarda con `service_date` vacío.
+ */
+export const ANY_DAY = "cualquier_dia";
+export const ANY_DAY_LABEL = "Cualquier día";
+
 /** El nombre del destino del transportista, o "Cualquier destino". */
 export function destinationName(slug: string | null): string | undefined {
   return slug === ANY_DESTINATION ? ANY_DESTINATION_LABEL : getCity(slug ?? "")?.name;

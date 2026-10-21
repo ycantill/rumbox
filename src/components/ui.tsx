@@ -3,7 +3,13 @@
 import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
-import { ANY_DESTINATION, ANY_DESTINATION_HINT, ANY_DESTINATION_LABEL } from "@/lib/domain";
+import {
+  ANY_DAY,
+  ANY_DAY_LABEL,
+  ANY_DESTINATION,
+  ANY_DESTINATION_HINT,
+  ANY_DESTINATION_LABEL,
+} from "@/lib/domain";
 import type { Page } from "@/lib/analytics";
 import { KEYS, load, save } from "@/lib/local-store";
 import { track } from "@/lib/track";
@@ -421,18 +427,34 @@ export function useServiceDay(pickedDate: string): string {
   return pickedDate && pickedDate >= today ? pickedDate : today;
 }
 
-/** El día: "Hoy", "Mañana" u otro en el calendario. No hay jornadas. */
-export function DayPicker({ value, onChange }: { value: string; onChange: (date: string) => void }) {
+/**
+ * El día: "Hoy", "Mañana" u otro en el calendario. No hay jornadas. El
+ * cliente tiene además "Cualquier día" (`anyDay`), arriba y a lo ancho.
+ */
+export function DayPicker({
+  value,
+  onChange,
+  anyDay = false,
+}: {
+  value: string;
+  onChange: (date: string) => void;
+  anyDay?: boolean;
+}) {
   const { today, tomorrow } = useBogotaDates();
   return (
     <div className="grid grid-cols-3 gap-2">
+      {anyDay && (
+        <div className="col-span-3 grid">
+          <QuickDate label={ANY_DAY_LABEL} value={ANY_DAY} current={value} onPick={onChange} />
+        </div>
+      )}
       <QuickDate label="Hoy" value={today} current={value} onPick={onChange} />
       <QuickDate label="Mañana" value={tomorrow} current={value} onPick={onChange} />
       <input
         type="date"
         className="input"
         min={today}
-        value={value}
+        value={value === ANY_DAY ? "" : value}
         onChange={(e) => onChange(e.target.value)}
         aria-label="Otra fecha"
       />
