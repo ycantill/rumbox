@@ -11,7 +11,7 @@ export default function Home() {
         <span className="grid size-9 place-items-center rounded-xl bg-brand font-bold text-white dark:text-bg">
           M
         </span>
-        <span className="text-lg font-bold">Muvia</span>
+        <span className="text-lg font-bold">Mudavía</span>
       </header>
 
       <section className="mt-10">
@@ -40,7 +40,7 @@ export default function Home() {
         </li>
         <li className="card">
           <strong>El precio lo acuerdan ustedes.</strong>
-          <span className="block text-muted">Muvia no pone precios: lo hablan entre los dos.</span>
+          <span className="block text-muted">Mudavía no pone precios: lo hablan entre los dos.</span>
         </li>
         <li className="card">
           <strong>Directo por llamada o WhatsApp.</strong>

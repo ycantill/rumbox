@@ -10,11 +10,11 @@ const geistSans = Geist({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Muvia · Mudanzas y fletes", template: "%s · Muvia" },
+  title: { default: "Mudavía · Mudanzas y fletes", template: "%s · Mudavía" },
   description:
     "Mira cuánto cuesta tu mudanza, flete o envío y habla por llamada o WhatsApp con transportistas que ya van para donde tú vas.",
-  applicationName: "Muvia",
-  appleWebApp: { capable: true, title: "Muvia", statusBarStyle: "default" },
+  applicationName: "Mudavía",
+  appleWebApp: { capable: true, title: "Mudavía", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = {

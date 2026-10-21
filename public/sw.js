@@ -1,4 +1,4 @@
-// Service worker mínimo de Muvia: guarda las páginas visitadas para que la app
+// Service worker mínimo de Mudavía: guarda las páginas visitadas para que la app
 // abra aunque la señal sea mala. Red primero; si falla, se usa la copia guardada.
 const CACHE = "muvia-v1";
 const SHELL = ["/", "/solicitar", "/transportista"];
@@ -42,7 +42,7 @@ self.addEventListener("push", (event) => {
     // Un aviso sin datos igual se muestra.
   }
   event.waitUntil(
-    self.registration.showNotification(msg.title || "Muvia", {
+    self.registration.showNotification(msg.title || "Mudavía", {
       body: msg.body || "Apareció un transportista para tu viaje.",
       icon: "/icon-192.png",
       badge: "/icon-192.png",

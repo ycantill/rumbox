@@ -1,4 +1,4 @@
-# Muvia · Alcance del MVP
+# Mudavía · Alcance del MVP
 
 Basado en el documento de producto "Plataforma Web de Logística Inteligente:
 Mudanzas y Fletes Híbridos". El objetivo del MVP es validar que transportistas
@@ -106,7 +106,7 @@ apenas un transportista de ese día se pone disponible o cambia la suya
 
 Una cosa a la vez en cada teléfono, también entre los dos papeles (Yohany,
 octubre de 2026): o tiene una solicitud o un viaje como transportista. Mientras
-la tenga, Muvia lo lleva siempre a esa pantalla; el inicio y la pantalla del
+la tenga, Mudavía lo lleva siempre a esa pantalla; el inicio y la pantalla del
 otro papel no se ven hasta que la cierre o se venza. El servidor lo revisa con
 el número: no deja solicitar con un número que está como transportista, ni
 ponerse disponible con uno que tiene una solicitud abierta.
@@ -115,7 +115,7 @@ Debajo le preguntamos "¿Te avisamos cuando aparezca un transportista?". Si
 toca "Sí, avísame" y acepta el permiso del celular, le llega un aviso
 ("Apareció un transportista") cuando un transportista que le sirve se pone
 disponible, aunque tenga la app cerrada. Al tocarlo se abre "Tu solicitud". Es
-Web Push, sin Firebase. En iPhone solo funciona con Muvia agregada a la
+Web Push, sin Firebase. En iPhone solo funciona con Mudavía agregada a la
 pantalla de inicio: ahí se le explica cómo. El transportista no recibe avisos.
 
 Arriba ve los datos de su solicitud: la ruta, el día y qué va a mover.

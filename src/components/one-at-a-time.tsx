@@ -1,7 +1,7 @@
 "use client";
 
 // Una cosa a la vez en cada teléfono: si tiene una solicitud o un viaje
-// abierto, Muvia lo lleva siempre a esa pantalla. El inicio y la pantalla del
+// abierto, Mudavía lo lleva siempre a esa pantalla. El inicio y la pantalla del
 // otro papel no se ven hasta que lo cierre: desde ahí no podría hacer nada.
 
 import Link from "next/link";

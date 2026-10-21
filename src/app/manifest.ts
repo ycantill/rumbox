@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Muvia · Mudanzas y fletes",
-    short_name: "Muvia",
+    name: "Mudavía · Mudanzas y fletes",
+    short_name: "Mudavía",
     description: "Mira cuánto cuesta tu mudanza, flete o envío y habla con transportistas por llamada o WhatsApp.",
     lang: "es-CO",
     start_url: "/",

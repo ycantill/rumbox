@@ -381,7 +381,7 @@ function MyRequestView({
                 <ContactButtons
                   availabilityId={m.id}
                   phone={m.whatsapp}
-                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puedes ayudar?`}
+                  message={`Hola, te encontré en Mudavía. Necesito un servicio ${route}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puedes ayudar?`}
                 />
               </div>
             </article>
@@ -549,7 +549,7 @@ function AlertsOptIn({
         <h2 className="font-semibold">No te podemos avisar</h2>
         <p className="mt-1 text-sm text-muted">
           Tu celular no nos dio permiso. Vuelve a esta pantalla cuando quieras: aquí te salen los
-          transportistas que aparezcan. Si quieres los avisos, dale permiso a Muvia en los ajustes de tu
+          transportistas que aparezcan. Si quieres los avisos, dale permiso a Mudavía en los ajustes de tu
           celular.
         </p>
       </section>
@@ -561,7 +561,7 @@ function AlertsOptIn({
       <section className={box}>
         <h2 className="font-semibold">¿Quieres que te avisemos?</h2>
         <p className="mt-1 text-sm text-muted">
-          En iPhone, primero agrega Muvia a tu pantalla de inicio: toca el botón de compartir y luego
+          En iPhone, primero agrega Mudavía a tu pantalla de inicio: toca el botón de compartir y luego
           &ldquo;Agregar a inicio&rdquo;. Ábrela desde ahí y te podremos avisar cuando aparezca un
           transportista.
         </p>
