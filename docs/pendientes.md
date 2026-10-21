@@ -64,6 +64,13 @@ de rutas (OpenRouteService tiene plan gratis con llave; Google y Mapbox
 cobran) daría los pueblos de verdad y un match más certero. Falta que Yohany
 decida si vale la pena la cuenta y la dependencia.
 
+Con la línea recta, el corredor tiene que ser ancho en los viajes largos (una
+cuarta parte del viaje a cada lado) para no dejar por fuera pueblos que sí
+están en la carretera, como Pailitas o Bosconia de Bogotá a Barranquilla. Lo
+malo es que también entran viajes que no van por ahí: a quien va de Bogotá a
+Barranquilla le sale un cliente de Medellín a Cartagena, o de Ibagué a
+Barranquilla. Con la ruta por carretera eso se arregla.
+
 ### 18. Compartir por WhatsApp o con código QR
 
 Un botón en el inicio para compartir el enlace de la app, y un código QR para

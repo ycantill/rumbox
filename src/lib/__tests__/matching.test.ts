@@ -106,6 +106,80 @@ describe("matchesTrip", () => {
   });
 });
 
+// Cada situación del match con municipios reales: el transportista, el cliente
+// y si le debe salir. Lo que no se dice queda como en `driver()` y `request()`.
+type Case = [string, Partial<AvailabilityLike>, Partial<RequestLike>, boolean];
+const trip = (origin_city: string, destination_city: string) => ({ origin_city, destination_city });
+
+describe("casos con municipios reales", () => {
+  const route: Case[] = [
+    ["sale de donde sale él y queda de camino", {}, {}, true],
+    ["sale de un pueblo vecino de su origen", {}, trip("cerete", "cartagena"), true],
+    ["recoge y entrega a mitad de camino", {}, trip("sincelejo", "turbaco"), true],
+    ["un tramo corto en el camino", {}, trip("lorica", "san-antero"), true],
+    ["va en sentido contrario", {}, trip("cartagena", "monteria"), false],
+    ["va en sentido contrario, a mitad de camino", {}, trip("sincelejo", "monteria"), false],
+    ["va para otro lado", {}, trip("monteria", "medellin"), false],
+    ["sale de un pueblo que queda detrás de su origen", {}, trip("planeta-rica", "cartagena"), false],
+    ["sigue después de su destino", {}, trip("cartagena", "barranquilla"), false],
+    ["Bogotá → Medellín: de Honda a Rionegro", trip("bogota", "medellin"), trip("honda", "rionegro-antioquia"), true],
+    ["Bogotá → Medellín: de Envigado a Bello, ya llegando", trip("bogota", "medellin"), trip("envigado", "bello"), true],
+    ["Bogotá → Medellín: de Bello a Medellín, devolviéndose", trip("bogota", "medellin"), trip("bello", "medellin"), false],
+    ["Bogotá → Barranquilla: de Soacha, pegado a su origen", trip("bogota", "barranquilla"), trip("soacha", "barranquilla"), true],
+    ["Bogotá → Barranquilla: de Ciénaga a Barranquilla, llegando", trip("bogota", "barranquilla"), trip("cienaga", "barranquilla"), true],
+    ["Bogotá → Barranquilla: de Barranquilla a Ciénaga, devolviéndose", trip("bogota", "barranquilla"), trip("barranquilla", "cienaga"), false],
+    ["Bogotá → Barranquilla: de Girardot a Fusagasugá, detrás de su origen", trip("bogota", "barranquilla"), trip("girardot", "fusagasuga"), false],
+    ["Bogotá → Barranquilla: de Villavicencio, detrás de su origen", trip("bogota", "barranquilla"), trip("villavicencio", "barranquilla"), false],
+    ["Cali → Pasto: de Popayán a Pasto", trip("cali", "pasto"), trip("popayan", "pasto"), true],
+    ["Cali → Pasto: de Pasto a Popayán", trip("cali", "pasto"), trip("pasto", "popayan"), false],
+    ["viaje corto Montería → Cereté: a San Pelayo, al lado de Cereté", trip("monteria", "cerete"), trip("monteria", "san-pelayo"), true],
+    ["viaje corto Montería → Cereté: a Sincelejo, mucho más allá", trip("monteria", "cerete"), trip("monteria", "sincelejo"), false],
+    ["origen y destino en el mismo municipio", {}, trip("sincelejo", "sincelejo"), false],
+    ["un municipio que no existe", {}, trip("monteria", "no-existe"), false],
+  ];
+
+  const anywhere = { destination_city: ANY_DESTINATION };
+  const anyDestination: Case[] = [
+    ["cualquier destino: sale de su municipio", anywhere, trip("monteria", "bogota"), true],
+    ["cualquier destino: sale de un pueblo vecino", anywhere, trip("cerete", "medellin"), true],
+    ["cualquier destino: sale de un pueblo lejos", anywhere, trip("sincelejo", "cartagena"), false],
+    ["cualquier destino: va por Sincelejo y el cliente sale de Corozal", { ...anywhere, current_city: "sincelejo" }, trip("corozal", "medellin"), true],
+    ["cualquier destino: va por Sincelejo y el cliente sale de Montería", { ...anywhere, current_city: "sincelejo" }, {}, false],
+  ];
+
+  const whereNow: Case[] = [
+    ["va por Tolú: el cliente de Montería quedó atrás", { current_city: "tolu" }, {}, false],
+    ["va por Tolú: sale de Tolú", { current_city: "tolu" }, trip("tolu", "cartagena"), true],
+    ["va por Tolú: sale de San Onofre, más adelante", { current_city: "tolu" }, trip("san-onofre", "turbaco"), true],
+    ["va por Tolú: Sincelejo quedó a pocos km", { current_city: "tolu" }, trip("sincelejo", "cartagena"), true],
+    ["marcó que sigue en Montería", { current_city: "monteria" }, {}, true],
+  ];
+
+  const dates: Case[] = [
+    ["el cliente quiere cualquier día", {}, { service_date: null }, true],
+    ["el cliente quiere cualquier día y él viaja en enero", { service_date: "2027-01-15" }, { service_date: null }, true],
+    ["el mismo día", {}, { service_date: date }, true],
+    ["el cliente quiere un día después del suyo", {}, { service_date: "2026-11-20" }, true],
+    ["el cliente quiere un día antes del suyo", {}, { service_date: "2026-10-31" }, false],
+  ];
+
+  it.each([...route, ...anyDestination, ...whereNow, ...dates])("%s", (_, a, r, expected) => {
+    expect(matchesTrip(driver(a), request(r))).toBe(expected);
+  });
+
+  // Todas las combinaciones de lo que el cliente mueve y lo que le queda.
+  const order = ["sobres", "carga_parcial", "medio_camion", "camion_entero"] as const;
+  const spaces = ["solo_paquetes", "carga_parcial", "medio_camion", "camion_entero"] as const;
+  it.each(spaces.flatMap((space, i) => order.map((volume, j) => [space, volume, j <= i] as const)))(
+    "le queda %s y el cliente mueve %s: %s",
+    (space, volume, expected) => {
+      expect(matchesTrip(driver({ space }), request({ volume }))).toBe(expected);
+      // Lo mismo con cualquier destino.
+      expect(matchesTrip(driver({ space, destination_city: ANY_DESTINATION }), request({ volume }))).toBe(expected);
+    },
+  );
+});
+
 describe("newestBy", () => {
   it("un transportista que quedó dos veces sale una sola, con lo último que guardó", () => {
     // Llegan de la más nueva a la más vieja, como en la consulta.
