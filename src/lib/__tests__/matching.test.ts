@@ -80,6 +80,30 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver({ destination_city: ANY_DESTINATION, space: "solo_paquetes" }), request())).toBe(false);
     expect(matchesTrip(anywhere, request({ destination_city: "monteria" }))).toBe(false);
   });
+
+  it("si marcó por dónde va, no le salen los clientes que dejó atrás", () => {
+    // Ya va por Tolú, camino a Cartagena.
+    const onTheWay = driver({ current_city: "tolu" });
+    expect(matchesTrip(onTheWay, request({ origin_city: "tolu", destination_city: "cartagena" }))).toBe(true);
+    expect(matchesTrip(onTheWay, request({ origin_city: "san-onofre", destination_city: "turbaco" }))).toBe(true);
+    // Montería y Cereté ya quedaron atrás.
+    expect(matchesTrip(onTheWay, request())).toBe(false);
+    expect(matchesTrip(onTheWay, request({ destination_city: "cartagena" }))).toBe(false);
+    expect(matchesTrip(onTheWay, request({ origin_city: "cerete", destination_city: "cartagena" }))).toBe(false);
+    // Sincelejo quedó unos pocos km atrás: todavía le sirve.
+    expect(matchesTrip(onTheWay, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(true);
+    // Sin marcar, o todavía en el origen, todo sigue igual.
+    expect(matchesTrip(driver({ current_city: null }), request())).toBe(true);
+    expect(matchesTrip(driver({ current_city: "monteria" }), request())).toBe(true);
+  });
+
+  it("con cualquier destino y marcado por dónde va, atiende a los que salen de cerca de ahí", () => {
+    const anywhere = driver({ destination_city: ANY_DESTINATION, current_city: "sincelejo" });
+    expect(matchesTrip(anywhere, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(true);
+    expect(matchesTrip(anywhere, request({ origin_city: "corozal", destination_city: "medellin" }))).toBe(true);
+    // Montería ya le queda lejos.
+    expect(matchesTrip(anywhere, request())).toBe(false);
+  });
 });
 
 describe("newestBy", () => {
