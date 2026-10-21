@@ -61,6 +61,11 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   cuándo viaja y no se vence (Yohany, 21 de octubre de 2026); sigue hasta
   "Ya no estoy disponible". Las rutas que se repiten quedan para
   después, como mejora futura.
+- "¿Por dónde vas?": en su tarjeta ve su ruta pueblo por pueblo y marca por
+  dónde va con la ubicación del teléfono (botón, y sola mientras tiene la app
+  abierta si ya dio permiso). Deja de salirles a los clientes que ya dejó
+  atrás. Se guarda solo el municipio; el cliente no lo ve (Yohany, 21 de
+  octubre de 2026).
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy
   disponible". Ese botón (que también sirve

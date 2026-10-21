@@ -55,6 +55,15 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Propuestas
 
+### 20. La ruta por carretera
+
+Los pueblos de "¿Por dónde vas?" y el corredor del match salen de la línea
+recta entre origen y destino, no de la carretera: de Bogotá a Cartagena la
+lista pasa por Pacho y Puerto Berrío, no por Honda o Bucaramanga. Un servicio
+de rutas (OpenRouteService tiene plan gratis con llave; Google y Mapbox
+cobran) daría los pueblos de verdad y un match más certero. Falta que Yohany
+decida si vale la pena la cuenta y la dependencia.
+
 ### 18. Compartir por WhatsApp o con código QR
 
 Un botón en el inicio para compartir el enlace de la app, y un código QR para

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   getMyAvailability,
   publishAvailability,
   updateAvailability,
+  updateLocation,
   updateSpace,
 } from "@/app/actions";
 import {
@@ -19,7 +20,7 @@ import {
   useServiceDay,
 } from "@/components/ui";
 import { useActiveScreen } from "@/components/one-at-a-time";
-import { getCity } from "@/lib/cities";
+import { getCity, nearestCity } from "@/lib/cities";
 import { whenText } from "@/lib/dates";
 import {
   DRIVER_SPACES,
@@ -30,6 +31,7 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
+import { routeProgress, routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
@@ -49,6 +51,8 @@ export type MyPost = {
   // Lo que podía llevar al ponerse disponible; `space` es lo que le queda, que
   // él cambia en su tarjeta. Con esto vuelve el formulario, para el próximo viaje.
   fullSpace?: DriverSpace;
+  // El municipio por donde va, si ya lo marcó con la ubicación del teléfono.
+  current?: string | null;
 };
 
 export function DriverForm() {
@@ -84,6 +88,17 @@ export function DriverForm() {
     setPosts([p]);
     save(KEYS.driverPosts, [p]);
   }
+
+  // Cambia solo una parte, sobre lo último guardado: lo que llega de una
+  // consulta o de la ubicación no pisa lo que cambió mientras tanto.
+  const patchCurrent = useCallback((patch: Partial<MyPost>) => {
+    setPosts((ps) => {
+      if (!ps[0]) return ps;
+      const p = { ...ps[0], ...patch };
+      save(KEYS.driverPosts, [p]);
+      return [p];
+    });
+  }, []);
 
   function endCurrent() {
     // El formulario vuelve con los datos de antes, para ponerse otra vez con un toque.
@@ -142,6 +157,7 @@ export function DriverForm() {
         phone={normalizeWhatsApp(whatsapp)}
         justPublished={justPublished}
         onChange={updateCurrent}
+        onPatch={patchCurrent}
         onEnd={endCurrent}
       />
     );
@@ -212,6 +228,7 @@ function CurrentWork({
   phone,
   justPublished,
   onChange,
+  onPatch,
   onEnd,
 }: {
   post: MyPost;
@@ -219,6 +236,7 @@ function CurrentWork({
   phone: string | null;
   justPublished: boolean;
   onChange: (p: MyPost) => void;
+  onPatch: (patch: Partial<MyPost>) => void;
   onEnd: () => void;
 }) {
   const { today, tomorrow } = useBogotaDates();
@@ -259,7 +277,7 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
-          onChange({ ...post, space: res.space, fullSpace: res.fullSpace });
+          onPatch({ space: res.space, fullSpace: res.fullSpace, current: res.currentCity });
         },
         () => {
           // Sin señal se queda lo guardado en el teléfono, con el aviso. Si
@@ -344,6 +362,8 @@ function CurrentWork({
         </p>
       </section>
 
+      <WhereYouAre post={post} latest={latest} onPatch={onPatch} />
+
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
 
       <ErrorNote message={error} />
@@ -407,5 +427,153 @@ function SpaceLeft({
       </select>
       <p className="text-sm text-muted">Cámbialo cuando cargues o descargues. Solo te ven los clientes a los que les cabe.</p>
     </section>
+  );
+}
+
+/**
+ * "¿Por dónde vas?": su ruta pueblo por pueblo y por dónde va. La ubicación
+ * se pide con el botón y, si ya dio permiso, se actualiza sola al abrir la
+ * pantalla, al volver a la app y cada minuto mientras la tiene abierta. Solo
+ * se guarda el municipio más cercano. Los clientes no lo ven (Yohany, 21 de
+ * octubre de 2026): les deja de salir si su pueblo ya quedó atrás.
+ */
+function WhereYouAre({
+  post,
+  latest,
+  onPatch,
+}: {
+  post: MyPost;
+  /** El número de la última consulta de la tarjeta: una vieja no pisa por dónde va. */
+  latest: React.RefObject<number>;
+  onPatch: (patch: Partial<MyPost>) => void;
+}) {
+  const [locating, setLocating] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const { id, editToken, origin } = post;
+  const destination = post.destination ?? "";
+  const stops = useMemo(() => routeStops(origin, destination), [origin, destination]);
+  const here = getCity(post.current);
+  const progress = post.current ? routeProgress(origin, destination, post.current) : null;
+
+  // Lo último que se mandó al servidor, para no mandar dos veces el mismo pueblo.
+  const sent = useRef(post.current ?? null);
+
+  const locate = useCallback(
+    (quiet: boolean) => {
+      if (!navigator.geolocation) {
+        if (!quiet) setFailed(true);
+        return;
+      }
+      if (!quiet) {
+        setLocating(true);
+        setFailed(false);
+      }
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          setLocating(false);
+          setFailed(false);
+          const slug = nearestCity(pos.coords.latitude, pos.coords.longitude).slug;
+          onPatch({ current: slug });
+          if (sent.current === slug) return;
+          latest.current++;
+          const res = await callServer(() => updateLocation({ id, editToken, city: slug }));
+          latest.current++;
+          if (res.ok) sent.current = slug;
+        },
+        () => {
+          // No dio permiso, el teléfono no supo dónde está o se demoró.
+          setLocating(false);
+          if (!quiet) setFailed(true);
+        },
+        { timeout: 15_000, maximumAge: 60_000 },
+      );
+    },
+    [id, editToken, latest, onPatch],
+  );
+
+  // Si ya dio permiso, se actualiza solo. Si no, espera a que toque el botón:
+  // el teléfono no le pregunta nada sin que él lo pida.
+  useEffect(() => {
+    let cancelled = false;
+    async function ifAllowed() {
+      try {
+        const status = await navigator.permissions?.query({ name: "geolocation" });
+        if (!cancelled && status?.state === "granted") locate(true);
+      } catch {
+        // Un navegador que no deja preguntar por el permiso: solo con el botón.
+      }
+    }
+    void ifAllowed();
+    const stop = refreshWhileOpen(() => void ifAllowed());
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [locate]);
+
+  // Por dónde va, dentro de la lista: en el pueblo de la ruta donde está, o
+  // entre los dos pueblos por donde pasa.
+  const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
+  const passed = (t: number) => progress !== null && t < progress;
+  const next = progress === null ? -1 : stops.findIndex((s) => s.t > progress);
+  const between = !here || hereIndex !== -1 || progress === null ? -1 : next === -1 ? stops.length : next;
+
+  return (
+    <section className="card flex flex-col gap-3">
+      <h2 className="font-semibold">¿Por dónde vas?</h2>
+      {stops.length > 0 ? (
+        <ol className="flex flex-col">
+          {stops.map((stop, i) => (
+            <Fragment key={stop.city.slug}>
+              {i === between && here && <HereRow name={here.name} />}
+              <li className="flex items-center gap-3 py-1.5">
+                <span
+                  aria-hidden
+                  className={
+                    i === hereIndex
+                      ? "size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft"
+                      : passed(stop.t)
+                        ? "size-3 shrink-0 rounded-full bg-muted/40"
+                        : "size-3 shrink-0 rounded-full border-2 border-brand"
+                  }
+                />
+                <span
+                  className={
+                    i === hereIndex ? "font-semibold" : passed(stop.t) ? "text-muted line-through" : undefined
+                  }
+                >
+                  {stop.city.name}
+                </span>
+                {i === hereIndex && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
+              </li>
+            </Fragment>
+          ))}
+          {between === stops.length && here && <HereRow name={here.name} />}
+        </ol>
+      ) : (
+        here && <p className="font-semibold">Vas por {here.name}</p>
+      )}
+      <p className="text-sm text-muted">
+        {here
+          ? "Mientras tengas Muvia abierta, se actualiza sola."
+          : "Toca el botón para que tu teléfono diga por dónde vas. Así te llaman los clientes que te quedan de camino."}
+      </p>
+      <button type="button" className="btn-secondary" disabled={locating} onClick={() => locate(false)}>
+        {locating ? "Un momento…" : here ? "Actualizar por dónde voy" : "Marcar por dónde voy"}
+      </button>
+      <ErrorNote
+        message={failed ? "No pudimos saber dónde estás. Revisa que Muvia tenga permiso para ver tu ubicación." : null}
+      />
+    </section>
+  );
+}
+
+/** "Vas por …" entre dos pueblos de la ruta. */
+function HereRow({ name }: { name: string }) {
+  return (
+    <li className="flex items-center gap-3 py-1.5">
+      <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
+      <span className="font-semibold">Vas por {name}</span>
+    </li>
   );
 }

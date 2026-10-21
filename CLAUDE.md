@@ -43,12 +43,13 @@ src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
-                                 getMyAvailability, updateSpace, createRequest,
+                                 getMyAvailability, updateSpace, updateLocation, createRequest,
                                  getMyRequest, closeRequest,
                                  getAlertsConfig, subscribeToAlerts, trackEvent)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
+src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -181,6 +182,19 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Con "Cualquier destino" el match es por origen: los mismos clientes, si
   salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
   corredor), vayan a donde vayan (Yohany, octubre de 2026).
+- "¿Por dónde vas?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
+  transportista ve su ruta pueblo por pueblo (`routeStops`: los municipios
+  más cercanos a la línea entre origen y destino, uno cada ~40 km, como
+  mucho 12) y marca por dónde va con "Marcar por dónde voy". Si ya dio
+  permiso de ubicación, se actualiza sola al abrir la pantalla, al volver a
+  la app y cada minuto mientras está abierta; sin permiso, el teléfono no le
+  pregunta hasta que toca el botón. Es una PWA: con la app cerrada no se
+  actualiza. Solo se guarda el municipio más cercano (`current_city`,
+  migración `0016_por_donde_va.sql`); las coordenadas no salen del teléfono.
+  Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
+  (`BEHIND_TOLERANCE_KM`). Con "Cualquier destino" no hay lista: dice "Vas
+  por…" y el match es por cercanía a donde va, no a donde salió. El cliente
+  no ve por dónde va (Yohany): solo sirve para el match.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro

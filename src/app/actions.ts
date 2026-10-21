@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
+import { getCity } from "@/lib/cities";
 import {
   ANY_DAY,
   DRIVER_SPACES,
@@ -126,6 +127,8 @@ export type MyAvailabilityResult =
       space: DriverSpace;
       /** Lo que podía llevar al ponerse disponible. */
       fullSpace: DriverSpace;
+      /** El municipio por donde va, si ya lo marcó. */
+      currentCity: string | null;
     }
   | (Fail & { gone?: true });
 
@@ -137,7 +140,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, full_space, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, full_space, current_city, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -150,7 +153,47 @@ export async function getMyAvailability(input: { id: string; editToken: string }
     const active =
       data.status === "activa" && Boolean(data.destination_city) && isKey(DRIVER_SPACES, data.space);
     const status = active ? "activa" : "llena";
-    return { ok: true as const, status, space: data.space, fullSpace: fullSpace(data) };
+    return {
+      ok: true as const,
+      status,
+      space: data.space,
+      fullSpace: fullSpace(data),
+      currentCity: getCity(data.current_city) ? (data.current_city as string) : null,
+    };
+  });
+}
+
+/**
+ * "¿Por dónde vas?": el municipio más cercano a la ubicación del teléfono. El
+ * teléfono lo calcula: las coordenadas no salen de ahí. Con eso no les sale a
+ * los clientes que ya dejó atrás. Los clientes no lo ven (Yohany, 21 de
+ * octubre de 2026).
+ */
+export async function updateLocation(input: {
+  id: string;
+  editToken: string;
+  city: string;
+}): Promise<{ ok: true } | Fail> {
+  if (!getCity(input.city)) return fail("No pudimos saber dónde estás.");
+  return withDb(DRIVER_DB_ERROR, async () => {
+    const { data, error } = await db()
+      .from("availabilities")
+      .select("current_city, edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return fail("No encontramos tus datos en este teléfono.");
+    }
+    // Si sigue en el mismo municipio no se guarda: así no se les avisa a las
+    // pantallas de los clientes cada vez que se actualiza.
+    if (data.current_city === input.city) return { ok: true as const };
+    const { error: upErr } = await db()
+      .from("availabilities")
+      .update({ current_city: input.city })
+      .eq("id", input.id);
+    if (upErr) throw upErr;
+    return { ok: true as const };
   });
 }
 
@@ -490,7 +533,7 @@ async function findDrivers(r: {
 }): Promise<DriverMatch[]> {
   const drivers = db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, space, whatsapp");
+    .select("id, origin_city, destination_city, service_date, space, current_city, whatsapp");
   const { data, error } = await (r.service_date === null ? drivers : drivers.lte("service_date", r.service_date))
     // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
     .not("destination_city", "is", null)
@@ -506,7 +549,9 @@ async function findDrivers(r: {
   // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
   // disponible desde dos navegadores): vale lo último que guardó.
   for (const a of newestBy(data ?? [], (a) => a.whatsapp)) {
-    if (matchesTrip(a, r)) matches.push(a);
+    // Por dónde va no se le muestra al cliente (Yohany, 21 de octubre de 2026).
+    const { current_city, ...driver } = a;
+    if (matchesTrip({ ...driver, current_city }, r)) matches.push(driver);
   }
   return matches.slice(0, 20);
 }

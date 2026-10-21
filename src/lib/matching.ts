@@ -5,7 +5,8 @@
 // ese día o de después, y las de "Cualquier día", cuyo origen y destino quedan
 // sobre su corredor vial y en el mismo sentido de viaje. Si eligió "Cualquier
 // destino", atiende las que salen de su municipio o de uno cercano, vayan a
-// donde vayan. No hay jornadas. Las rutas que se repiten (diarias o semanales)
+// donde vayan. Si el transportista ya marcó por dónde va, no le salen los
+// clientes que dejó atrás. No hay jornadas. Las rutas que se repiten (diarias o semanales)
 // son una mejora futura para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
@@ -24,11 +25,20 @@ import {
 export const CORRIDOR_MIN_TOLERANCE_KM = 35;
 export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 
+/**
+ * Cuánto puede haber quedado atrás el pueblo del cliente y todavía servirle.
+ * Por dónde va se guarda como el municipio más cercano, que puede quedar un
+ * poco adelante de él.
+ */
+export const BEHIND_TOLERANCE_KM = 20;
+
 export type AvailabilityLike = {
   origin_city: string;
   destination_city: string;
   service_date: string; // YYYY-MM-DD: desde qué día viaja
   space: DriverSpace;
+  /** El municipio por donde va, si ya lo marcó. */
+  current_city?: string | null;
 };
 
 export type RequestLike = {
@@ -49,12 +59,15 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.
   if (r.origin_city === r.destination_city) return false;
   const driverFrom = getCity(a.origin_city);
-  // Va a donde le pidan: basta con que el cliente salga de su municipio o de
-  // uno cercano, con la misma tolerancia mínima del corredor.
+  const driverNow = getCity(a.current_city);
+  // Va a donde le pidan: basta con que el cliente salga de donde está (el
+  // municipio por donde va o, si no lo ha marcado, el de donde salió) o de uno
+  // cercano, con la misma tolerancia mínima del corredor.
   if (a.destination_city === ANY_DESTINATION) {
+    const here = driverNow ?? driverFrom;
     const from = getCity(r.origin_city);
-    if (!driverFrom || !from || !getCity(r.destination_city)) return false;
-    return haversineKm(driverFrom.lat, driverFrom.lng, from.lat, from.lng) <= CORRIDOR_MIN_TOLERANCE_KM;
+    if (!here || !from || !getCity(r.destination_city)) return false;
+    return haversineKm(here.lat, here.lng, from.lat, from.lng) <= CORRIDOR_MIN_TOLERANCE_KM;
   }
 
   const driverTo = getCity(a.destination_city);
@@ -68,7 +81,13 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   const pTo = projectOnSegment(driverFrom, driverTo, to);
   const onCorridor = pFrom.offKm <= tolerance && pTo.offKm <= tolerance;
   // Mismo sentido: la recogida va antes que la entrega sobre el trayecto.
-  return onCorridor && pFrom.t <= pTo.t;
+  if (!onCorridor || pFrom.t > pTo.t) return false;
+  // Si ya marcó por dónde va, el pueblo del cliente no puede haber quedado atrás.
+  if (driverNow) {
+    const pNow = projectOnSegment(driverFrom, driverTo, driverNow);
+    if ((pNow.t - pFrom.t) * corridorKm > BEHIND_TOLERANCE_KM) return false;
+  }
+  return true;
 }
 
 /**
