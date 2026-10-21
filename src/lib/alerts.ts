@@ -23,7 +23,7 @@ export const ALL_DAYS_TOPIC = "transportistas-cualquier_dia";
 
 /**
  * Los servicios de avisos de los navegadores (Chrome y Android, Firefox,
- * Safari y iPhone, Edge). El servidor de Muvia les manda los avisos a las
+ * Safari y iPhone, Edge). El servidor de Mudavía les manda los avisos a las
  * direcciones que guarda: solo se aceptan las de estos servicios, para que
  * nadie lo use para mandar mensajes a otra página.
  */

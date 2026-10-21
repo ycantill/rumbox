@@ -20,7 +20,7 @@ export function requestIsOpen(request: { date: string }, today: string): boolean
 
 /**
  * La pantalla de lo que el teléfono tiene abierto, para ir directo ahí al abrir
- * Muvia, o null si no tiene nada.
+ * Mudavía, o null si no tiene nada.
  */
 export function activeScreen(
   saved: {

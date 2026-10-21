@@ -1,13 +1,13 @@
 // Avisos al celular desde el navegador: pedir permiso y suscribir el teléfono.
-// En iPhone solo funcionan con Muvia agregada a la pantalla de inicio.
+// En iPhone solo funcionan con Mudavía agregada a la pantalla de inicio.
 
 import type { AlertSubscription } from "@/app/actions";
 
 /** Cómo están los avisos en este teléfono. */
 export type AlertState =
   | "no" // el navegador no los permite
-  | "blocked" // la persona no le dio permiso a Muvia
-  | "iphone" // iPhone sin agregar Muvia a la pantalla de inicio
+  | "blocked" // la persona no le dio permiso a Mudavía
+  | "iphone" // iPhone sin agregar Mudavía a la pantalla de inicio
   | "ask" // se le puede preguntar
   | "on"; // ya aceptó
 

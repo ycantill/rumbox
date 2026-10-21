@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   redirects() {
     return [{ source: "/cotizar", destination: "/solicitar", permanent: true }];
   },
-  // Protecciones básicas: que ninguna otra página meta Muvia dentro de la suya
+  // Protecciones básicas: que ninguna otra página meta Mudavía dentro de la suya
   // para engañar con los toques, y que el navegador no adivine tipos de
   // archivo ni le cuente a otras páginas desde dónde llegó la persona.
   headers() {
