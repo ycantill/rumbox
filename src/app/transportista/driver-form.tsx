@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
-  answerContact,
   getMyAvailability,
   publishAvailability,
   updateAvailability,
-  type DriverContact,
+  updateSpace,
 } from "@/app/actions";
 import {
   CitySelect,
@@ -22,15 +21,12 @@ import {
 } from "@/components/ui";
 import { useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
-import type { ContactAnswer } from "@/lib/contacts";
 import { isStillValid, whenText } from "@/lib/dates";
 import {
   DRIVER_SPACES,
-  VOLUMES,
   SAME_CITY_ERROR,
   destinationName,
   isKey,
-  spaceInSentence,
   type DriverSpace,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -51,8 +47,8 @@ export type MyPost = {
   destination: string | null;
   date: string; // el día del viaje
   space: DriverSpace;
-  // Lo que podía llevar al ponerse disponible; `space` es lo que le queda
-  // después de "Lo llevo". Con esto vuelve el formulario, para el próximo viaje.
+  // Lo que podía llevar al ponerse disponible; `space` es lo que le queda, que
+  // él cambia en su tarjeta. Con esto vuelve el formulario, para el próximo viaje.
   fullSpace?: DriverSpace;
 };
 
@@ -238,8 +234,6 @@ function CurrentWork({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // "Te encontraron": los clientes que tocaron su tarjeta, desde el servidor.
-  const [contacts, setContacts] = useState<DriverContact[]>([]);
 
   // Un viaje vale hasta que termina su día. Si ya pasó, se apagó solo y vuelve el formulario
   // con sus datos; no hace falta preguntarle al servidor. Lo mismo con lo
@@ -248,14 +242,13 @@ function CurrentWork({
   const expired = !isStillValid(post.date, today);
   const ended = !post.destination || expired || !isKey(DRIVER_SPACES, post.space);
 
-  // Si sigue encendida, el espacio y "Te encontraron" al día, desde el servidor:
-  // al abrir la pantalla, al volver a la app y cada minuto mientras la tiene
-  // abierta. No ve a los clientes que esperan: por su privacidad, ellos son
-  // los que lo llaman. Solo ve a los que tocaron su tarjeta, sin su teléfono.
+  // Si sigue encendida y con cuánto espacio, desde el servidor: al abrir la
+  // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No ve
+  // a los clientes: por su privacidad, ellos son los que lo llaman.
   const { id, editToken } = post;
   const fresh = justPublished;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva ni
-  // lo que acaba de cambiar con los botones.
+  // lo que acaba de cambiar.
   const latest = useRef(0);
   useEffect(() => {
     if (ended) {
@@ -277,7 +270,6 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
-          setContacts(res.contacts);
           onChange({ ...post, space: res.space, fullSpace: res.fullSpace });
         },
         () => {
@@ -302,25 +294,20 @@ function CurrentWork({
   if (ended) return null;
 
 
-  async function answer(requestId: string, value: ContactAnswer | null) {
+  // "¿Cuánto espacio te queda?": a los clientes solo les sale si les cabe.
+  async function changeSpace(space: DriverSpace) {
+    const before = post;
     setBusy(true);
     setError(null);
     latest.current++;
-    const res = await callServer(() => answerContact({ id, editToken, requestId, answer: value }));
+    onChange({ ...post, space, fullSpace: post.fullSpace ?? post.space });
+    const res = await callServer(() => updateSpace({ id, editToken, space }));
     latest.current++;
     setBusy(false);
     if (!res.ok) {
+      onChange(before);
       setError(res.error);
-      return;
     }
-    // Muvia resta lo que lleva: a los clientes solo les sale si les cabe.
-    onChange({ ...post, space: res.space, fullSpace: post.fullSpace ?? post.space });
-    // "No lo llevo" lo saca de la lista; "Lo llevo" lo deja marcado.
-    setContacts((list) =>
-      value === "no_lo_llevo"
-        ? list.filter((c) => c.requestId !== requestId)
-        : list.map((c) => (c.requestId === requestId ? { ...c, answer: value } : c)),
-    );
   }
 
   async function end() {
@@ -353,14 +340,6 @@ function CurrentWork({
           Viajas {whenText(post.date, today, tomorrow)}
         </dd>
       </div>
-      <div>
-        <dt className="sr-only">Cuánto puedes llevar</dt>
-        <dd>
-          {post.fullSpace && post.fullSpace !== post.space
-            ? `Te queda espacio para ${spaceInSentence(post.space)}`
-            : `Puedes llevar ${spaceInSentence(post.space)}`}
-        </dd>
-      </div>
     </dl>
   );
 
@@ -377,7 +356,7 @@ function CurrentWork({
         </p>
       </section>
 
-      {contacts.length > 0 && <TheyLookedForYou contacts={contacts} busy={busy} onAnswer={answer} />}
+      <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
@@ -405,69 +384,40 @@ function CurrentWork({
 }
 
 /**
- * "Te encontraron": los clientes que tocaron "Escribir por WhatsApp" o "Llamar"
- * en su tarjeta, con los dos últimos números de su teléfono para reconocerlos.
- * El número completo no sale: un toque no quiere decir que de verdad escribió.
+ * "¿Cuánto espacio te queda?": cuando carga o descarga, él mismo cambia lo que
+ * le queda, y los clientes solo lo ven si les cabe. Tiene todas las opciones:
+ * pudo empezar lleno y descargar en el camino.
  */
-function TheyLookedForYou({
-  contacts,
+function SpaceLeft({
+  space,
   busy,
-  onAnswer,
+  onChange,
 }: {
-  contacts: DriverContact[];
+  space: DriverSpace;
   busy: boolean;
-  onAnswer: (requestId: string, answer: ContactAnswer | null) => void;
+  onChange: (space: DriverSpace) => void;
 }) {
   return (
-    <section className="flex flex-col gap-3">
-      <div>
-        <h2 className="font-semibold">Te encontraron ({contacts.length})</h2>
-        <p className="text-sm text-muted">
-          Estos clientes tocaron para llamarte o escribirte. Si alguno no te ha escrito, puede que se haya
-          arrepentido. Cuando tocas &quot;Lo llevo&quot;, te descontamos ese espacio.
-        </p>
-      </div>
-      {contacts.map((c) => (
-        <article key={c.requestId} className="card">
-          <p className="font-semibold">
-            {getCity(c.origin_city)?.name} → {getCity(c.destination_city)?.name}
-          </p>
-          {isKey(VOLUMES, c.volume) && <p className="text-sm text-muted">{VOLUMES[c.volume].label}</p>}
-          {c.phoneEnd && <p className="text-sm text-muted">Su teléfono termina en {c.phoneEnd}</p>}
-          {c.answer === "lo_llevo" ? (
-            <div className="mt-3 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-brand-ink">Lo llevas</p>
-              <button
-                type="button"
-                className="text-sm text-muted underline"
-                disabled={busy}
-                onClick={() => onAnswer(c.requestId, null)}
-              >
-                Cambiar
-              </button>
-            </div>
-          ) : (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={busy}
-                onClick={() => onAnswer(c.requestId, "lo_llevo")}
-              >
-                Lo llevo
-              </button>
-              <button
-                type="button"
-                className="btn-secondary"
-                disabled={busy}
-                onClick={() => onAnswer(c.requestId, "no_lo_llevo")}
-              >
-                No lo llevo
-              </button>
-            </div>
-          )}
-        </article>
-      ))}
+    <section className="card flex flex-col gap-2">
+      <label htmlFor="space-left" className="font-semibold">
+        ¿Cuánto espacio te queda?
+      </label>
+      <select
+        id="space-left"
+        className="input"
+        value={space}
+        disabled={busy}
+        onChange={(e) => {
+          if (isKey(DRIVER_SPACES, e.target.value)) onChange(e.target.value);
+        }}
+      >
+        {(Object.keys(DRIVER_SPACES) as DriverSpace[]).map((s) => (
+          <option key={s} value={s}>
+            {DRIVER_SPACES[s].label}
+          </option>
+        ))}
+      </select>
+      <p className="text-sm text-muted">Cámbialo cuando cargues o descargues. Solo te ven los clientes a los que les cabe.</p>
     </section>
   );
 }
