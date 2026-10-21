@@ -70,12 +70,11 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 - La pantalla revisa sola, al volver a la app y cada minuto, si su
   disponibilidad sigue encendida. Los clientes que solicitan después de que
   él se puso disponible lo ven en su lista y lo llaman.
-- "Te encontraron" (Yohany, 20 de octubre de 2026): debajo de sus datos ve a los
-  clientes que tocaron "Escribir por WhatsApp" o "Llamar" en su tarjeta, con
-  la ruta, qué van a mover y los dos últimos números del teléfono, nunca el número completo. Contesta "Lo llevo" o "No lo llevo".
-  Con "Lo llevo", Muvia le resta ese espacio con puntos (casa 4, habitación
-  2, algunas cosas 1, paquetes 0) y su tarjeta dice "Te queda espacio
-  para…". Ya no existe "Solo queda espacio para paquetes".
+- "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
+  datos tiene una lista desplegable con las mismas opciones de "¿Cuánto puedes
+  llevar?", hasta lo que podía llevar al empezar. Cuando consigue carga, la
+  baja, y los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
+  (la lista de clientes que tocaron su tarjeta, con "Lo llevo"), que se quitó.
 
 **Pantalla del cliente** (`/solicitar`)
 - Una sola pantalla, casi igual a la del transportista: sin pasos, con las

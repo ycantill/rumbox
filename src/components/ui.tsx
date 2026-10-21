@@ -501,13 +501,10 @@ export function ContactButtons({
   phone,
   message,
   availabilityId,
-  onContact,
 }: {
   phone: string;
   message: string;
   availabilityId: string;
-  /** Al tocar cualquiera de los dos: el transportista lo ve en "Te encontraron". */
-  onContact?: () => void;
 }) {
   return (
     <div className="flex flex-wrap gap-2">
@@ -515,20 +512,14 @@ export function ContactButtons({
         href={waLink(phone, message)}
         target="_blank"
         rel="noopener noreferrer"
-        onClick={() => {
-          track({ kind: "whatsapp", availabilityId });
-          onContact?.();
-        }}
+        onClick={() => track({ kind: "whatsapp", availabilityId })}
         className="inline-flex items-center justify-center rounded-xl border border-transparent bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
       >
         Escribir por WhatsApp
       </a>
       <a
         href={telLink(phone)}
-        onClick={() => {
-          track({ kind: "llamada", availabilityId });
-          onContact?.();
-        }}
+        onClick={() => track({ kind: "llamada", availabilityId })}
         className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink"
       >
         Llamar

@@ -5,10 +5,10 @@ import { headers } from "next/headers";
 import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
-import { isContactAnswer, phoneEnding, spaceLeft, type ContactAnswer } from "@/lib/contacts";
 import {
   DRIVER_SPACES,
   isKey,
+  spacesUpTo,
   type DriverSpace,
   type Volume,
 } from "@/lib/domain";
@@ -63,7 +63,7 @@ export async function publishAvailability(input: {
     // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
     time_slot: "todo_el_dia",
     space: input.space,
-    // Lo que podía llevar al empezar: con "Lo llevo" se resta y `space` guarda lo que queda.
+    // Lo que podía llevar al empezar: `space` es lo que le queda y él lo baja en su tarjeta.
     full_space: input.space,
     whatsapp,
     edit_token_hash: hashToken(editToken),
@@ -82,9 +82,8 @@ export async function publishAvailability(input: {
       .select("id")
       .single();
     if (error) throw error;
-    // No se le muestran los clientes que esperan: por su privacidad, ellos lo
-    // ven a él (Vía B) y son los que llaman o escriben. Solo ve, en "Te
-    // encontraron", a los que tocan su tarjeta. A los que pidieron aviso les
+    // No se le muestran los clientes: por su privacidad, ellos lo ven a él
+    // (Vía B) y son los que llaman o escriben. A los que pidieron aviso les
     // llega uno al celular, después de responderle al transportista.
     after(() => alertClients(row as AvailabilityLike));
     return { ok: true as const, id: data.id as string, editToken };
@@ -117,26 +116,14 @@ export async function updateAvailability(input: {
   });
 }
 
-/** Un cliente que tocó "Escribir por WhatsApp" o "Llamar" en su tarjeta. Nunca lleva el teléfono. */
-export type DriverContact = {
-  requestId: string;
-  origin_city: string;
-  destination_city: string;
-  volume: Volume;
-  /** Los dos últimos números del teléfono del cliente, para reconocerlo. */
-  phoneEnd: string | null;
-  answer: "lo_llevo" | null;
-};
-
 export type MyAvailabilityResult =
   | {
       ok: true;
       status: "activa" | "llena";
-      /** Lo que le queda, después de restar lo que lleva. */
+      /** Lo que le queda: él mismo lo baja en su tarjeta. */
       space: DriverSpace;
       /** Lo que podía llevar al ponerse disponible. */
       fullSpace: DriverSpace;
-      contacts: DriverContact[];
     }
   | (Fail & { gone?: true });
 
@@ -164,25 +151,22 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       isKey(DRIVER_SPACES, data.space) &&
       data.service_date >= todayInBogota();
     const status = active ? "activa" : "llena";
-    const contacts = active ? await findContacts(input.id) : [];
-    // Las de antes no guardaban lo que podía llevar al empezar.
-    const fullSpace = isKey(DRIVER_SPACES, data.full_space) ? data.full_space : data.space;
-    return { ok: true as const, status, space: data.space, fullSpace, contacts };
+    return { ok: true as const, status, space: data.space, fullSpace: fullSpace(data) };
   });
 }
 
 /**
- * "Lo llevo" o "No lo llevo" de un cliente de "Te encontraron"; null lo deja
- * otra vez sin contestar. Después vuelve a calcular el espacio que le queda,
- * que es lo que miran los clientes, y lo devuelve.
+ * "¿Cuánto espacio te queda?": el transportista cambia lo que le queda, que es
+ * lo que miran los clientes. Puede subirlo otra vez, pero nunca por encima de
+ * lo que podía llevar al ponerse disponible.
  */
-export async function answerContact(input: {
+export async function updateSpace(input: {
   id: string;
   editToken: string;
-  requestId: string;
-  answer: ContactAnswer | null;
-}): Promise<{ ok: true; space: DriverSpace } | Fail> {
-  if (input.answer !== null && !isContactAnswer(input.answer)) return fail("Algo salió mal. Intenta de nuevo.");
+  space: string;
+}): Promise<{ ok: true } | Fail> {
+  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto espacio te queda.");
+  const space = input.space;
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
@@ -193,29 +177,14 @@ export async function answerContact(input: {
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos tus datos en este teléfono.");
     }
-    const { error: upErr } = await db()
-      .from("contacts")
-      .update({ answer: input.answer })
-      .eq("availability_id", input.id)
-      .eq("request_id", input.requestId);
-    if (upErr) throw upErr;
-
-    // Lo que lleva, aunque el cliente ya haya cerrado la solicitud: igual ocupa espacio.
-    const { data: taken, error: takenErr } = await db()
-      .from("contacts")
-      .select("request:requests!inner(volume)")
-      .eq("availability_id", input.id)
-      .eq("answer", "lo_llevo");
-    if (takenErr) throw takenErr;
-    const volumes = ((taken ?? []) as unknown as { request: { volume: Volume } }[]).map((t) => t.request.volume);
-    // Las de antes no guardaban lo que podía llevar al empezar.
-    const full: DriverSpace = isKey(DRIVER_SPACES, data.full_space) ? data.full_space : data.space;
-    const space = spaceLeft(full, volumes);
+    const full = fullSpace(data);
+    if (!spacesUpTo(full).includes(space)) return fail("Algo salió mal. Intenta de nuevo.");
     const patch: Record<string, string> = { space };
+    // Las de antes no guardaban lo que podía llevar al empezar.
     if (!data.full_space) patch.full_space = full;
-    const { error: spaceErr } = await db().from("availabilities").update(patch).eq("id", input.id);
-    if (spaceErr) throw spaceErr;
-    return { ok: true as const, space };
+    const { error: upErr } = await db().from("availabilities").update(patch).eq("id", input.id);
+    if (upErr) throw upErr;
+    return { ok: true as const };
   });
 }
 
@@ -384,44 +353,6 @@ export async function subscribeToAlerts(input: {
   });
 }
 
-/**
- * El cliente tocó "Escribir por WhatsApp" o "Llamar" en la tarjeta de un
- * transportista: él lo ve en "Te encontraron". Solo cuenta si la solicitud es
- * suya, sigue abierta y ese transportista de verdad le sirve, para que nadie
- * le llene la lista a otro. Si falla, no pasa nada: el cliente ya está
- * escribiendo o llamando.
- */
-export async function recordContact(input: { id: string; editToken: string; availabilityId: string }): Promise<void> {
-  try {
-    const [{ data: r, error: rErr }, { data: a, error: aErr }] = await Promise.all([
-      db()
-        .from("requests")
-        .select("origin_city, destination_city, service_date, volume, status, edit_token_hash")
-        .eq("id", input.id)
-        .maybeSingle(),
-      db()
-        .from("availabilities")
-        .select("origin_city, destination_city, service_date, space, status")
-        .eq("id", input.availabilityId)
-        .maybeSingle(),
-    ]);
-    if (rErr) throw rErr;
-    if (aErr) throw aErr;
-    if (!r || !a || !tokenMatches(input.editToken, r.edit_token_hash)) return;
-    if (r.status !== "abierta" || a.status !== "activa" || r.service_date < todayInBogota()) return;
-    if (!a.destination_city || !isKey(DRIVER_SPACES, a.space) || !matchesTrip(a, r)) return;
-    const { error } = await db()
-      .from("contacts")
-      .upsert(
-        { availability_id: input.availabilityId, request_id: input.id },
-        { onConflict: "availability_id,request_id", ignoreDuplicates: true },
-      );
-    if (error) throw error;
-  } catch (err) {
-    console.error(err);
-  }
-}
-
 // ------------------------------------------------------------------- Analíticas
 
 /**
@@ -537,50 +468,6 @@ async function closeOwnRequest(input: { id: string; editToken: string }): Promis
   return true;
 }
 
-/**
- * Los clientes que buscaron a este transportista. Los que contestó "No lo
- * llevo" ya no salen, ni los que no ha contestado y cerraron la solicitud
- * ("Ya no necesito este servicio") o la cambiaron. Los que lleva siguen
- * saliendo: ocupan espacio aunque el cliente ya haya cerrado la solicitud.
- */
-async function findContacts(availabilityId: string): Promise<DriverContact[]> {
-  const { data, error } = await db()
-    .from("contacts")
-    .select(
-      "request_id, answer, request:requests!inner(origin_city, destination_city, volume, status, service_date, whatsapp)",
-    )
-    .eq("availability_id", availabilityId)
-    .or("answer.is.null,answer.eq.lo_llevo")
-    .order("created_at", { ascending: true })
-    .limit(100);
-  if (error) throw error;
-  type Row = {
-    request_id: string;
-    answer: "lo_llevo" | null;
-    request: {
-      origin_city: string;
-      destination_city: string;
-      volume: Volume;
-      status: string;
-      service_date: string;
-      whatsapp: string | null;
-    };
-  };
-  const today = todayInBogota();
-  const rows = ((data ?? []) as unknown as Row[]).filter(
-    (c) => c.answer === "lo_llevo" || (c.request.status === "abierta" && c.request.service_date >= today),
-  );
-  return rows.map((c) => ({
-    requestId: c.request_id,
-    origin_city: c.request.origin_city,
-    destination_city: c.request.destination_city,
-    volume: c.request.volume,
-    // Solo los dos últimos números: el teléfono completo nunca sale del servidor.
-    phoneEnd: phoneEnding(c.request.whatsapp),
-    answer: c.answer,
-  }));
-}
-
 /** Los transportistas que viajan el día de la solicitud y le sirven. */
 async function findDrivers(r: {
   origin_city: string;
@@ -609,6 +496,11 @@ async function findDrivers(r: {
     if (matchesTrip(a, r)) matches.push(a);
   }
   return matches.slice(0, 20);
+}
+
+/** Lo que podía llevar al ponerse disponible. Las de antes no lo guardaban. */
+function fullSpace(a: { space: string; full_space: string | null }): DriverSpace {
+  return (isKey(DRIVER_SPACES, a.full_space) ? a.full_space : a.space) as DriverSpace;
 }
 
 function fail(error: string): Fail {

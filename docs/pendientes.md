@@ -141,8 +141,9 @@ se probó en un teléfono:
 - Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
   el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
   pasó…".
-- Tocar "Lo llevo" y luego "Ya no estoy disponible": el formulario vuelve con
-  lo que podía llevar al empezar, no con lo que le quedaba.
+- Bajar "¿Cuánto espacio te queda?" y luego "Ya no estoy disponible": el
+  formulario vuelve con lo que podía llevar al empezar, no con lo que le
+  quedaba.
 - Tocar "Sí, avísame" y no dar permiso: sale "No te podemos avisar".
 - Abrir una dirección que no existe: sale "No encontramos esta página".
 
@@ -266,3 +267,7 @@ se probó en un teléfono:
 - **Sin ayuda para cargar (20 de octubre de 2026):** ni el cliente ni el
   transportista la eligen; la hablan por teléfono. Ya no filtra el
   emparejamiento. Requiere la migración `0013_sin_ayuda_para_cargar.sql`.
+- **"¿Cuánto espacio te queda?" (21 de octubre de 2026):** se quita "Te
+  encontraron" (la lista de clientes con "Lo llevo"). El transportista cambia
+  lo que le queda en una lista desplegable. Requiere la migración
+  `0014_sin_te_encontraron.sql`.

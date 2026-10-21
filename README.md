@@ -11,8 +11,8 @@ Colombia. Todavía no está definido dónde será el piloto.
   acuerdan el precio.
 - **Transportista** (`/transportista`): se pone disponible para un viaje (de
   dónde sale, hacia dónde va y qué día) con cuánto puede llevar. Hasta que
-  termina el día del viaje, o hasta que toque "Ya no estoy disponible", ve en
-  "Te encontraron" a los clientes que tocaron para llamarlo o escribirle.
+  termina el día del viaje, o hasta que toque "Ya no estoy disponible", los
+  clientes lo llaman o le escriben, y él cambia cuánto espacio le queda.
 
 El alcance del MVP y lo que queda para después está en
 [docs/MVP.md](docs/MVP.md). La visión de negocio completa está en

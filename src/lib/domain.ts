@@ -83,6 +83,14 @@ export function spaceFitsVolume(space: DriverSpace, volume: Volume): boolean {
   return SPACE_CAPACITY[space] >= VOLUME_LEVEL[volume];
 }
 
+/**
+ * Lo que puede elegir en "¿Cuánto espacio te queda?": de paquetes a lo que
+ * podía llevar al ponerse disponible.
+ */
+export function spacesUpTo(full: DriverSpace): DriverSpace[] {
+  return (Object.keys(DRIVER_SPACES) as DriverSpace[]).filter((s) => SPACE_CAPACITY[s] <= SPACE_CAPACITY[full]);
+}
+
 export function isKey<T extends object>(obj: T, key: unknown): key is keyof T {
   return typeof key === "string" && Object.prototype.hasOwnProperty.call(obj, key);
 }
