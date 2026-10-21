@@ -43,12 +43,11 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver(), request({ origin_city: "cerete", destination_city: "medellin" }))).toBe(false);
   });
 
-  it("es un viaje: vale solo ese día", () => {
-    // El día siguiente ya no va para allá, ni el anterior.
-    expect(matchesTrip(driver(), request({ service_date: "2026-11-02" }))).toBe(false);
+  it("viaja desde su día en adelante: no se vence", () => {
+    expect(matchesTrip(driver(), request({ service_date: "2026-11-02" }))).toBe(true);
+    expect(matchesTrip(driver(), request({ service_date: "2027-01-15" }))).toBe(true);
+    // Antes de su día todavía no va para allá.
     expect(matchesTrip(driver(), request({ service_date: "2026-10-31" }))).toBe(false);
-    // Meses después, menos.
-    expect(matchesTrip(driver(), request({ service_date: "2027-01-15" }))).toBe(false);
   });
 
   it("con \"Cualquier día\" le sirve el viaje de cualquier día", () => {
@@ -77,7 +76,7 @@ describe("matchesTrip", () => {
     // Sincelejo ya queda lejos, aunque vaya para el mismo lado.
     expect(matchesTrip(anywhere, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(false);
     // Lo demás se sigue respetando: el día, la carga y el mismo municipio.
-    expect(matchesTrip(anywhere, request({ service_date: "2026-11-02" }))).toBe(false);
+    expect(matchesTrip(anywhere, request({ service_date: "2026-10-31" }))).toBe(false);
     expect(matchesTrip(driver({ destination_city: ANY_DESTINATION, space: "solo_paquetes" }), request())).toBe(false);
     expect(matchesTrip(anywhere, request({ destination_city: "monteria" }))).toBe(false);
   });

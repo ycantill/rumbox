@@ -250,7 +250,7 @@ function MyRequestView({
 
   // Transportistas que le sirven ahora, desde el servidor: al abrir la
   // pantalla, al volver a la app, cada minuto mientras la tiene abierta y
-  // apenas un transportista de ese día se pone disponible o cambia la suya.
+  // apenas un transportista se pone disponible o cambia la suya.
   const { id, editToken, date } = request;
   const fresh = initialMatches !== null;
   // Número de la última consulta: una respuesta vieja no pisa una más nueva.
@@ -291,7 +291,9 @@ function MyRequestView({
         return;
       }
       setVapidPublicKey(config.vapidPublicKey);
-      if (config.live) unlisten = listenForDrivers(config.live, date, () => refresh(true));
+      // Un transportista le sirve desde su día en adelante: se escucha el canal
+      // de todos los días, no solo el de la solicitud.
+      if (config.live) unlisten = listenForDrivers(config.live, () => refresh(true));
     });
     if (!fresh) refresh(false);
     const stop = refreshWhileOpen(() => refresh(true));
@@ -321,7 +323,7 @@ function MyRequestView({
 
   const route = `${getCity(request.origin)?.name} → ${getCity(request.destination)?.name}`;
   const anyDay = request.date === ANY_DAY;
-  // Con "Cualquier día", cada transportista dice qué día viaja.
+  // Con "Cualquier día", el transportista que sale después de hoy dice desde cuándo.
   const whenOf = (date: string) => whenText(date, today, tomorrow);
 
   // No hay precio: lo acuerdan el cliente y el transportista cuando hablan.
@@ -372,13 +374,14 @@ function MyRequestView({
               <p className="text-sm text-muted">
                 Va de {getCity(m.origin_city)?.name} a{" "}
                 {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name}
-                {anyDay && `, ${whenOf(m.service_date)}`}
+                {/* Si todavía no sale, se le dice desde cuándo. */}
+                {anyDay && m.service_date > today && `, desde ${whenOf(m.service_date)}`}
               </p>
               <div className="mt-3">
                 <ContactButtons
                   availabilityId={m.id}
                   phone={m.whatsapp}
-                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route} para ${whenOf(m.service_date)}. ¿Me puedes ayudar?`}
+                  message={`Hola, te encontré en Muvia. Necesito un servicio ${route}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puedes ayudar?`}
                 />
               </div>
             </article>

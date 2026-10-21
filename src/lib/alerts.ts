@@ -7,14 +7,19 @@ import { matchesTrip, type AvailabilityLike, type RequestLike } from "./matching
 
 /**
  * Canal privado de Realtime de un día de viaje: la anon key solo puede
- * escucharlo. Lo arman igual las migraciones `0006_avisos.sql`,
- * `0007_proteger_datos.sql` y `0015_cualquier_dia.sql`: no se cambia sin
- * cambiar las dos partes. Las solicitudes de "Cualquier día" escuchan
- * `transportistas-cualquier_dia`, que recibe los cambios de todos los días.
+ * escucharlo. Lo arman igual las migraciones `0006_avisos.sql` y
+ * `0007_proteger_datos.sql`: no se cambia sin cambiar las dos partes.
  */
 export function liveTopic(date: string): string {
   return `transportistas-${date}`;
 }
+
+/**
+ * El canal que recibe los cambios de transportistas de todos los días
+ * (`0015_cualquier_dia_sin_vencer.sql`). Es el que escucha la pantalla del
+ * cliente: un transportista le sirve desde su día en adelante.
+ */
+export const ALL_DAYS_TOPIC = "transportistas-cualquier_dia";
 
 /**
  * Los servicios de avisos de los navegadores (Chrome y Android, Firefox,

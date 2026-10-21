@@ -159,12 +159,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   "Estás disponible para este servicio" con sus datos ("Viajas…") y el
   aviso de que los clientes lo llaman o le escriben por WhatsApp, en vez del
   formulario. No hay lista de varios días.
-- Vale hasta que termina el día del viaje (`service_date`), a la medianoche
-  en hora de Colombia (Yohany, octubre de 2026; antes valía 24 horas más, pero
-  como el emparejamiento es del mismo día, ese día extra no traía nada). Solo
-  le salen clientes de ese mismo día. Cuando se vence, se apaga sola y vuelve el formulario con sus
-  datos. Lo que quedó guardado sin destino, de cuando era opcional, también
-  se apaga y vuelve el formulario para que elija hacia dónde va.
+- "Hoy" viene elegido. No se vence (Yohany, 21 de octubre de 2026): el día
+  que elige (`service_date`) es desde cuándo viaja, y sigue encendida hasta
+  "Ya no estoy disponible". Les sale a los clientes de ese día o de después y
+  a los de "Cualquier día". Su tarjeta dice "Viajas desde hoy" (o desde el
+  día que eligió, si todavía no llega). Antes se apagaba a la medianoche de
+  su día. Lo que quedó guardado sin destino, de cuando era opcional, se
+  apaga y vuelve el formulario para que elija hacia dónde va.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
   futura para el transportista: las "disponibilidades programadas". No van
   en el MVP: quien repite una ruta registra cada viaje.
@@ -174,10 +175,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   eso está "¿Cuánto espacio te queda?".
 
 **Emparejamiento**
-- El match es por ruta (el Modo Ruta, por debajo): clientes del día del viaje
-  cuyo origen y destino quedan sobre el corredor y en el mismo sentido.
-- Con "Cualquier destino" el match es por origen: clientes del día del viaje
-  que salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
+- El match es por ruta (el Modo Ruta, por debajo): clientes de su día en
+  adelante (o de "Cualquier día") cuyo origen y destino quedan sobre el
+  corredor y en el mismo sentido.
+- Con "Cualquier destino" el match es por origen: los mismos clientes, si
+  salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
   corredor), vayan a donde vayan (Yohany, octubre de 2026).
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
@@ -201,9 +203,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   (Yohany, 21 de octubre de 2026; `ANY_DAY` en `src/lib/domain.ts`). Le
   sirven los transportistas de cualquier día, de hoy en adelante, y en su
   tarjeta dice qué día viaja cada uno. Se guarda con `service_date` vacío
-  (migración `0015_cualquier_dia.sql`) y no se vence (Yohany): sigue abierta
-  hasta "Ya no necesito este servicio". Escucha el canal de Realtime
-  `transportistas-cualquier_dia`, que recibe los cambios de todos los días.
+  (migración `0015_cualquier_dia_sin_vencer.sql`) y no se vence (Yohany): sigue abierta
+  hasta "Ya no necesito este servicio".
 - La columna `time_slot` queda en la base: las disponibilidades nuevas guardan
   `todo_el_dia` (la columna no puede quedar vacía) y las solicitudes nuevas la
   dejan vacía. El emparejamiento ya no la mira.
@@ -275,8 +276,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   tu solicitud a los transportistas?") y vuelve el formulario con los mismos
   datos. "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
   reemplaza la de antes.
-- Vale hasta que termina el día del viaje, como la del transportista: después
-  se olvida y vuelve el formulario. La de "Cualquier día" no se vence.
+- Vale hasta que termina el día del viaje: después se olvida y vuelve el
+  formulario. La de "Cualquier día" no se vence.
 
 **Una cosa a la vez en cada teléfono**
 - Un teléfono tiene una sola cosa abierta: una solicitud o un viaje como
@@ -297,10 +298,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   minuto mientras la pantalla se ve (`refreshWhileOpen`). Si falla una de esas
   consultas que se hacen solas, no se muestra el aviso de señal.
 - Además, la lista del cliente se pone al día sola con Supabase Realtime: un
-  trigger de la base manda un mensaje vacío al canal privado del día del
-  viaje (`transportistas-AAAA-MM-DD`) cuando un transportista se pone
-  disponible o cambia la suya, y la pantalla vuelve a pedir su lista al
-  servidor. El mensaje no lleva teléfonos ni ciudades. Con la anon key solo
+  trigger de la base manda un mensaje vacío al canal privado
+  `transportistas-cualquier_dia` (y al del día, `transportistas-AAAA-MM-DD`,
+  de antes) cuando un transportista se pone disponible o cambia la suya, y la
+  pantalla vuelve a pedir su lista al servidor. Escucha el de todos los días
+  porque un transportista le sirve desde su día en adelante. El mensaje no lleva teléfonos ni ciudades. Con la anon key solo
   se puede escuchar ese canal; escribir en él, solo la base de datos.
 
 **Límites sin cuenta**
@@ -316,7 +318,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Los teléfonos se borran**
 - El teléfono se guarda solo mientras la solicitud o la disponibilidad vale
-  (Yohany, octubre de 2026). Cada hora, `borrar_telefonos_vencidos()`
+  (Yohany, octubre de 2026); como la disponibilidad y la solicitud de
+  "Cualquier día" no se vencen, eso es hasta que se apagan o se cierran
+  (`0015_cualquier_dia_sin_vencer.sql`). Cada hora, `borrar_telefonos_vencidos()`
   (pg_cron, migraciones `0009_borrar_telefonos.sql` y
   `0011_vence_al_terminar_el_dia.sql` y `0014_sin_te_encontraron.sql`) borra el
   teléfono y el `ip_hash` de las vencidas, y de las cerradas o apagadas una

@@ -31,9 +31,9 @@ export function addDays(date: string, days: number): string {
 }
 
 /**
- * Una solicitud o disponibilidad vale hasta que termina el día del servicio,
- * a la medianoche en hora de Colombia (Yohany, octubre de 2026). Después se
- * apaga sola. La solicitud de "Cualquier día" no se vence.
+ * Una solicitud vale hasta que termina el día del servicio, a la medianoche
+ * en hora de Colombia (Yohany, octubre de 2026). Después se cierra sola. La de
+ * "Cualquier día" no se vence, ni la disponibilidad del transportista.
  */
 export function isStillValid(serviceDate: string, today: string): boolean {
   if (serviceDate === ANY_DAY) return true;

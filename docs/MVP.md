@@ -14,8 +14,8 @@ la pantalla.
 
 **Disponible, no "publicación".** En el sistema cada registro es una
 publicación, pero para el transportista es un estado: "se pone disponible"
-para un viaje, y vale hasta el día siguiente al viaje o hasta que diga "Ya no
-voy a trabajar".
+para un viaje, desde el día que elige y hasta que diga "Ya no estoy
+disponible": no se vence.
 La pantalla nunca habla de publicar, y la palabra "disponible" se usa solo en
 el botón principal y en el título de su servicio para no repetirla. Tampoco le
 promete clientes: dice que está disponible, no que está recibiendo clientes.
@@ -57,9 +57,9 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
 - Qué día viaja (hoy, mañana u otro día), cuánto puede llevar (la lista de
   tamaños) y teléfono. No hay jornadas: Yohany las quitó en
   octubre de 2026.
-  Su tarjeta dice "Viajas…" y vale hasta que termina ese día, a la medianoche
-  en hora de Colombia. Cuando se vence, se apaga solo y vuelve el formulario
-  con sus datos. Las rutas que se repiten quedan para
+  "Hoy" viene elegido. Su tarjeta dice "Viajas desde…": el día es desde
+  cuándo viaja y no se vence (Yohany, 21 de octubre de 2026); sigue hasta
+  "Ya no estoy disponible". Las rutas que se repiten quedan para
   después, como mejora futura.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy
@@ -145,7 +145,8 @@ preguntan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el
   transportista: no hay trasteos dentro del mismo pueblo. El municipio elegido
   en un campo no sale en la lista del otro.
-- Además: el cliente pide el mismo día del viaje y lo que mueve es igual o más
+- Además: el cliente pide el día del transportista o uno después (o
+  "Cualquier día") y lo que mueve es igual o más
   chico que lo que al transportista le queda por llevar. La ayuda para cargar
   no cuenta: no se pregunta.
 

@@ -31,10 +31,14 @@ describe("alertsFor", () => {
   it("avisa solo a los clientes cuya solicitud le sirve al viaje", () => {
     const rows = [
       row("ruta", {}),
-      row("otro-dia", { service_date: "2026-10-21" }),
+      // Antes de su día todavía no va para allá.
+      row("dia-antes", { service_date: "2026-10-19" }),
       row("al-reves", { origin_city: "sincelejo", destination_city: "monteria" }),
     ];
     expect(alertsFor(driver, rows).map((a) => a.row.id)).toEqual(["ruta"]);
+    // Desde su día en adelante, y cualquier día.
+    const later = [row("despues", { service_date: "2026-10-25" }), row("cualquier-dia", { service_date: null })];
+    expect(alertsFor(driver, later)).toHaveLength(2);
   });
 
   it("con cualquier destino avisa a los que salen de su municipio", () => {
