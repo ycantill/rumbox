@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ANY_DESTINATION } from "../domain";
 import { matchesTrip, newestBy, type AvailabilityLike, type RequestLike } from "../matching";
+import { BOGOTA_BARRANQUILLA_ROUTE } from "./road-fixture";
 
 const date = "2026-11-01";
 
@@ -178,6 +179,47 @@ describe("casos con municipios reales", () => {
       expect(matchesTrip(driver({ space, destination_city: ANY_DESTINATION }), request({ volume }))).toBe(expected);
     },
   );
+});
+
+describe("con la carretera guardada", () => {
+  // Bogotá → Barranquilla por la Ruta del Sol.
+  const road = driver({ ...trip("bogota", "barranquilla"), route: BOGOTA_BARRANQUILLA_ROUTE });
+  const straight = driver({ ...trip("bogota", "barranquilla"), route: null });
+
+  const cases: [string, Partial<RequestLike>, boolean][] = [
+    ["de Bogotá a Barranquilla", {}, true],
+    ["de Guaduas a Aguachica, sobre la carretera", trip("guaduas", "aguachica"), true],
+    ["de Pailitas a Bosconia, sobre la carretera", trip("pailitas", "bosconia"), true],
+    ["de Honda, a unos km de la carretera, a Ciénaga", trip("honda", "cienaga"), true],
+    ["de Soacha, pegado a su origen", trip("soacha", "barranquilla"), true],
+    ["de Aguachica a Guaduas, devolviéndose", trip("aguachica", "guaduas"), false],
+    ["de Medellín a Cartagena, que no va por ahí", trip("medellin", "cartagena"), false],
+    ["de Ibagué a Barranquilla, lejos de la carretera", trip("ibague", "barranquilla"), false],
+    ["de Villavicencio, detrás de su origen", trip("villavicencio", "barranquilla"), false],
+  ];
+
+  it.each(cases)("%s", (_, r, expected) => {
+    expect(matchesTrip(road, request({ ...trip("bogota", "barranquilla"), ...r }))).toBe(expected);
+  });
+
+  it("arregla lo que la línea recta dejaba pasar", () => {
+    const medellinCartagena = request(trip("medellin", "cartagena"));
+    expect(matchesTrip(straight, medellinCartagena)).toBe(true);
+    expect(matchesTrip(road, medellinCartagena)).toBe(false);
+  });
+
+  it("si marcó por dónde va, cuenta los km sobre la carretera", () => {
+    const inAguachica = { ...road, current_city: "aguachica" };
+    expect(matchesTrip(inAguachica, request(trip("pailitas", "barranquilla")))).toBe(true);
+    // Pelaya queda más adelante, Puerto Salgar quedó muy atrás.
+    expect(matchesTrip(inAguachica, request(trip("pelaya", "bosconia")))).toBe(true);
+    expect(matchesTrip(inAguachica, request(trip("puerto-salgar", "barranquilla")))).toBe(false);
+  });
+
+  it("una carretera dañada vale como si no hubiera: la línea recta", () => {
+    const broken = { ...road, route: "dañada" };
+    expect(matchesTrip(broken, request(trip("medellin", "cartagena")))).toBe(true);
+  });
 });
 
 describe("newestBy", () => {

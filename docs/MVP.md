@@ -65,7 +65,9 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   dónde va con la ubicación del teléfono (botón, y sola mientras tiene la app
   abierta si ya dio permiso). Deja de salirles a los clientes que ya dejó
   atrás. Se guarda solo el municipio; el cliente no lo ve (Yohany, 21 de
-  octubre de 2026).
+  octubre de 2026). Los pueblos son los de la carretera de verdad, y el match
+  también la sigue: se calcula una vez al ponerse disponible con
+  OpenRouteService (gratis) y, si no responde, se usa la línea recta.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy
   disponible". Ese botón (que también sirve

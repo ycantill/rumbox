@@ -6,8 +6,10 @@ import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
 import { getCity } from "@/lib/cities";
+import { roadRoute } from "@/lib/directions";
 import {
   ANY_DAY,
+  ANY_DESTINATION,
   DRIVER_SPACES,
   isKey,
   type DriverSpace,
@@ -43,7 +45,13 @@ export type DriverMatch = {
 // ---------------------------------------------------------------- Transportista
 
 export type PublishResult =
-  | { ok: true; id: string; editToken: string }
+  | {
+      ok: true;
+      id: string;
+      editToken: string;
+      /** La carretera de su viaje (`encodePath`), o null si va por la línea recta. */
+      route: string | null;
+    }
   | Fail;
 
 export async function publishAvailability(input: {
@@ -79,17 +87,18 @@ export async function publishAvailability(input: {
     // Una cosa a la vez: un número con una solicitud abierta no se pone de transportista.
     if (await hasOpenRequest(whatsapp)) return fail(BUSY_AS_CLIENT_ERROR);
 
+    const route = await tripRoute(input.origin, input.destination);
     const { data, error } = await db()
       .from("availabilities")
-      .insert({ ...row, ip_hash: ipHash })
+      .insert({ ...row, route, ip_hash: ipHash })
       .select("id")
       .single();
     if (error) throw error;
     // No se le muestran los clientes: por su privacidad, ellos lo ven a él
     // (Vía B) y son los que llaman o escriben. A los que pidieron aviso les
     // llega uno al celular, después de responderle al transportista.
-    after(() => alertClients(row as AvailabilityLike));
-    return { ok: true as const, id: data.id as string, editToken };
+    after(() => alertClients({ ...row, route } as AvailabilityLike));
+    return { ok: true as const, id: data.id as string, editToken, route };
   });
 }
 
@@ -129,6 +138,8 @@ export type MyAvailabilityResult =
       fullSpace: DriverSpace;
       /** El municipio por donde va, si ya lo marcó. */
       currentCity: string | null;
+      /** La carretera de su viaje, o null si va por la línea recta. */
+      route: string | null;
     }
   | (Fail & { gone?: true });
 
@@ -140,7 +151,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, full_space, current_city, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, full_space, current_city, route, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -159,6 +170,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       space: data.space,
       fullSpace: fullSpace(data),
       currentCity: getCity(data.current_city) ? (data.current_city as string) : null,
+      route: (data.route as string | null) ?? null,
     };
   });
 }
@@ -533,7 +545,7 @@ async function findDrivers(r: {
 }): Promise<DriverMatch[]> {
   const drivers = db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, space, current_city, whatsapp");
+    .select("id, origin_city, destination_city, service_date, space, current_city, route, whatsapp");
   const { data, error } = await (r.service_date === null ? drivers : drivers.lte("service_date", r.service_date))
     // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
     .not("destination_city", "is", null)
@@ -549,11 +561,34 @@ async function findDrivers(r: {
   // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
   // disponible desde dos navegadores): vale lo último que guardó.
   for (const a of newestBy(data ?? [], (a) => a.whatsapp)) {
-    // Por dónde va no se le muestra al cliente (Yohany, 21 de octubre de 2026).
-    const { current_city, ...driver } = a;
-    if (matchesTrip({ ...driver, current_city }, r)) matches.push(driver);
+    // Por dónde va no se le muestra al cliente (Yohany, 21 de octubre de 2026),
+    // y la carretera solo sirve para el match.
+    const { current_city, route, ...driver } = a;
+    if (matchesTrip({ ...driver, current_city, route }, r)) matches.push(driver);
   }
   return matches.slice(0, 20);
+}
+
+/**
+ * La carretera del viaje, para "¿Por dónde vas?" y el match. Si otro
+ * transportista ya hizo el mismo viaje se usa la que quedó guardada; si no, se
+ * le pide al servicio de rutas. Si no responde, null: va por la línea recta.
+ */
+async function tripRoute(origin: string, destination: string): Promise<string | null> {
+  const from = getCity(origin);
+  const to = getCity(destination);
+  if (!from || !to || destination === ANY_DESTINATION) return null;
+  const { data, error } = await db()
+    .from("availabilities")
+    .select("route")
+    .eq("origin_city", origin)
+    .eq("destination_city", destination)
+    .not("route", "is", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.route as string | undefined) ?? (await roadRoute(from, to));
 }
 
 /** Lo que podía llevar al ponerse disponible. Las de antes no lo guardaban. */

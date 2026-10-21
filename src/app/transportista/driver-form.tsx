@@ -53,6 +53,9 @@ export type MyPost = {
   fullSpace?: DriverSpace;
   // El municipio por donde va, si ya lo marcó con la ubicación del teléfono.
   current?: string | null;
+  // La carretera de su viaje (`encodePath`), para "¿Por dónde vas?". Sin ella,
+  // la línea recta.
+  route?: string | null;
 };
 
 export function DriverForm() {
@@ -140,6 +143,7 @@ export function DriverForm() {
         destination,
         date,
         space: space as DriverSpace,
+        route: res.route,
       };
       updateCurrent(post);
       setJustPublished(true);
@@ -277,7 +281,7 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
-          onPatch({ space: res.space, fullSpace: res.fullSpace, current: res.currentCity });
+          onPatch({ space: res.space, fullSpace: res.fullSpace, current: res.currentCity, route: res.route });
         },
         () => {
           // Sin señal se queda lo guardado en el teléfono, con el aviso. Si
@@ -451,9 +455,10 @@ function WhereYouAre({
   const [failed, setFailed] = useState(false);
   const { id, editToken, origin } = post;
   const destination = post.destination ?? "";
-  const stops = useMemo(() => routeStops(origin, destination), [origin, destination]);
+  const route = post.route;
+  const stops = useMemo(() => routeStops(origin, destination, route), [origin, destination, route]);
   const here = getCity(post.current);
-  const progress = post.current ? routeProgress(origin, destination, post.current) : null;
+  const progress = post.current ? routeProgress(origin, destination, post.current, route) : null;
 
   // Lo último que se mandó al servidor, para no mandar dos veces el mismo pueblo.
   const sent = useRef(post.current ?? null);
