@@ -55,22 +55,6 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Propuestas
 
-### 20. La ruta por carretera
-
-Los pueblos de "¿Por dónde vas?" y el corredor del match salen de la línea
-recta entre origen y destino, no de la carretera: de Bogotá a Cartagena la
-lista pasa por Pacho y Puerto Berrío, no por Honda o Bucaramanga. Un servicio
-de rutas (OpenRouteService tiene plan gratis con llave; Google y Mapbox
-cobran) daría los pueblos de verdad y un match más certero. Falta que Yohany
-decida si vale la pena la cuenta y la dependencia.
-
-Con la línea recta, el corredor tiene que ser ancho en los viajes largos (una
-cuarta parte del viaje a cada lado) para no dejar por fuera pueblos que sí
-están en la carretera, como Pailitas o Bosconia de Bogotá a Barranquilla. Lo
-malo es que también entran viajes que no van por ahí: a quien va de Bogotá a
-Barranquilla le sale un cliente de Medellín a Cartagena, o de Ibagué a
-Barranquilla. Con la ruta por carretera eso se arregla.
-
 ### 18. Compartir por WhatsApp o con código QR
 
 Un botón en el inicio para compartir el enlace de la app, y un código QR para
@@ -113,6 +97,9 @@ se probó en un teléfono:
   se ven hasta la medianoche; al día siguiente vuelve el formulario con los
   datos de antes, sin el día.
 
+- Con la llave de OpenRouteService puesta en Vercel, ponerse disponible de
+  Bogotá a Cartagena: "¿Por dónde vas?" muestra pueblos de la carretera
+  (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
 - Instalar la app en Android y en iPhone y ver el logo de Muvia.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
   salir el aviso de señal sin perder lo llenado.
@@ -287,3 +274,6 @@ se probó en un teléfono:
   encontraron" (la lista de clientes con "Lo llevo"). El transportista cambia
   lo que le queda en una lista desplegable. Requiere la migración
   `0014_sin_te_encontraron.sql`.
+- **PR #48:** la ruta por carretera (20): OpenRouteService al ponerse
+  disponible, guardada en `route` (migración 0017); los pueblos de "¿Por
+  dónde vas?" y el match siguen la carretera, con la línea recta de respaldo.
