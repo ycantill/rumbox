@@ -5,9 +5,9 @@
 // ese día o de después, y las de "Cualquier día", cuyo origen y destino quedan
 // sobre su corredor vial y en el mismo sentido de viaje. Si eligió "Cualquier
 // destino", atiende las que salen de su municipio o de uno cercano, vayan a
-// donde vayan. Si el transportista ya marcó por dónde va, no le salen los
-// clientes que dejó atrás. No hay jornadas. Las rutas que se repiten (diarias o semanales)
-// son una mejora futura para después del MVP.
+// donde vayan. No le salen los clientes que quedaron atrás de donde sale o,
+// si ya marcó por dónde va, de por dónde va. No hay jornadas. Las rutas que
+// se repiten (diarias o semanales) son una mejora futura para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
 import {
@@ -26,9 +26,9 @@ export const CORRIDOR_MIN_TOLERANCE_KM = 35;
 export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 
 /**
- * Cuánto puede haber quedado atrás el pueblo del cliente y todavía servirle.
- * Por dónde va se guarda como el municipio más cercano, que puede quedar un
- * poco adelante de él.
+ * Cuánto puede haber quedado atrás el pueblo del cliente y todavía servirle,
+ * de donde sale o de por dónde va. Por dónde va se guarda como el municipio
+ * más cercano, que puede quedar un poco adelante de él.
  */
 export const BEHIND_TOLERANCE_KM = 20;
 
@@ -80,13 +80,14 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   const pFrom = projectOnSegment(driverFrom, driverTo, from);
   const pTo = projectOnSegment(driverFrom, driverTo, to);
   const onCorridor = pFrom.offKm <= tolerance && pTo.offKm <= tolerance;
-  // Mismo sentido: la recogida va antes que la entrega sobre el trayecto.
-  if (!onCorridor || pFrom.t > pTo.t) return false;
-  // Si ya marcó por dónde va, el pueblo del cliente no puede haber quedado atrás.
-  if (driverNow) {
-    const pNow = projectOnSegment(driverFrom, driverTo, driverNow);
-    if ((pNow.t - pFrom.t) * corridorKm > BEHIND_TOLERANCE_KM) return false;
-  }
+  // Mismo sentido: la recogida va antes que la entrega sobre el trayecto. Se
+  // mira sin recortar: dos pueblos detrás del origen, o después del destino,
+  // también tienen un orden.
+  if (!onCorridor || pFrom.along > pTo.along) return false;
+  // El pueblo del cliente no puede haber quedado atrás de donde está: el
+  // municipio por donde va o, si no lo ha marcado, el de donde sale.
+  const here = driverNow ? projectOnSegment(driverFrom, driverTo, driverNow).along : 0;
+  if ((here - pFrom.along) * corridorKm > BEHIND_TOLERANCE_KM) return false;
   return true;
 }
 
@@ -111,9 +112,10 @@ type Point = { lat: number; lng: number };
 /**
  * Proyecta p sobre el segmento a→b usando una proyección equirectangular local
  * (suficiente para distancias de cientos de km). Devuelve la posición relativa
- * t ∈ [0, 1] y la distancia perpendicular en km.
+ * t ∈ [0, 1], la misma sin recortar (`along`: negativa detrás de a, mayor que 1
+ * después de b) y la distancia al segmento en km.
  */
-export function projectOnSegment(a: Point, b: Point, p: Point): { t: number; offKm: number } {
+export function projectOnSegment(a: Point, b: Point, p: Point): { t: number; along: number; offKm: number } {
   const kmPerDegLat = 110.574;
   const kmPerDegLng = 111.32 * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
   const bx = (b.lng - a.lng) * kmPerDegLng;
@@ -125,5 +127,5 @@ export function projectOnSegment(a: Point, b: Point, p: Point): { t: number; off
   const t = Math.max(0, Math.min(1, raw));
   const dx = px - t * bx;
   const dy = py - t * by;
-  return { t, offKm: Math.sqrt(dx * dx + dy * dy) };
+  return { t, along: raw, offKm: Math.sqrt(dx * dx + dy * dy) };
 }

@@ -143,8 +143,10 @@ preguntan.
 
 **Emparejamiento** (`src/lib/matching.ts`)
 - Ruta: origen y destino del cliente quedan cerca del corredor del
-  transportista y en el mismo sentido de viaje. No hay match por cercanía al
-  origen.
+  transportista y en el mismo sentido de viaje, también cerca de las puntas
+  (de Bello a Medellín no le sirve a quien va de Bogotá a Medellín). No le
+  salen los clientes que quedan más de 20 km detrás de donde sale, o de por
+  dónde va si ya lo marcó. No hay match por cercanía al origen.
 - Cualquier destino: le salen los clientes de ese día que salen de su
   municipio o de uno cercano (a 35 km o menos), vayan a donde vayan.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para el

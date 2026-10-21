@@ -192,7 +192,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   actualiza. Solo se guarda el municipio más cercano (`current_city`,
   migración `0016_por_donde_va.sql`); las coordenadas no salen del teléfono.
   Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
-  (`BEHIND_TOLERANCE_KM`). Con "Cualquier destino" no hay lista: dice "Vas
+  (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
+  salen los que quedan más de 20 km detrás de donde sale. Con "Cualquier destino" no hay lista: dice "Vas
   por…" y el match es por cercanía a donde va, no a donde salió. El cliente
   no ve por dónde va (Yohany): solo sirve para el match.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
