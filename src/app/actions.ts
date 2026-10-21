@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
 import {
+  ANY_DAY,
   DRIVER_SPACES,
   isKey,
   type DriverSpace,
@@ -32,6 +33,8 @@ export type DriverMatch = {
   id: string;
   origin_city: string;
   destination_city: string;
+  /** El día que viaja: con "Cualquier día" el cliente lo ve en la tarjeta. */
+  service_date: string;
   space: DriverSpace;
   whatsapp: string;
 };
@@ -189,12 +192,19 @@ export async function updateSpace(input: {
 // ---------------------------------------------------------------------- Cliente
 
 export type RequestResult =
-  | { ok: true; id: string; editToken: string; matches: DriverMatch[] }
+  | {
+      ok: true;
+      id: string;
+      editToken: string;
+      matches: DriverMatch[];
+    }
   | Fail;
 
 /**
  * Guarda lo que el cliente necesita mover y le devuelve los transportistas que
  * le sirven. No se calcula precio: lo acuerdan al hablar.
+ *
+ * Con "Cualquier día" le sirven los viajes de cualquier día y no se vence.
  *
  * Una solicitud a la vez: si el cliente tocó "Cambiar mi solicitud", la nueva
  * reemplaza la que tenía en el teléfono (`replaces`), y esa deja de salirles a
@@ -215,7 +225,9 @@ export async function createRequest(input: {
   const request = {
     origin_city: input.origin,
     destination_city: input.destination,
-    service_date: input.date,
+    // "Cualquier día" queda sin día: no se vence y su teléfono no se borra
+    // hasta que la cierre.
+    service_date: input.date === ANY_DAY ? null : input.date,
     volume: input.volume as Volume,
   };
 
@@ -244,7 +256,7 @@ export async function createRequest(input: {
       }
     }
 
-    // Vía A (match inmediato): transportistas que viajan justo ese día.
+    // Vía A (match inmediato): transportistas que viajan justo ese día, o cualquier día.
     const matches = await findDrivers(request);
     return { ok: true as const, id: data.id as string, editToken, matches };
   });
@@ -269,8 +281,10 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
     }
-    // Vale hasta que termina el día del viaje: después ya no les sale a los transportistas.
-    const open = data.status === "abierta" && data.service_date >= todayInBogota();
+    // Vale hasta que termina el día del viaje: después ya no les sale a los
+    // transportistas. La de "Cualquier día" no se vence.
+    const open =
+      data.status === "abierta" && (data.service_date === null || data.service_date >= todayInBogota());
     const matches = open ? await findDrivers(data) : [];
     return { ok: true as const, status: open ? "abierta" : "cerrada", matches };
   });
@@ -383,7 +397,8 @@ async function alertClients(availability: AvailabilityLike): Promise<void> {
       .select(
         "id, endpoint, p256dh, auth, request:requests!inner(id, origin_city, destination_city, service_date, volume, status)",
       )
-      .eq("request.service_date", availability.service_date)
+      // Las de ese día y las de "Cualquier día", que no tienen día.
+      .or(`service_date.eq.${availability.service_date},service_date.is.null`, { referencedTable: "request" })
       .eq("request.status", "abierta")
       .limit(1000);
     if (error) throw error;
@@ -437,7 +452,8 @@ async function hasOpenRequest(whatsapp: string): Promise<boolean> {
     .select("id", { count: "exact", head: true })
     .eq("whatsapp", whatsapp)
     .eq("status", "abierta")
-    .gte("service_date", todayInBogota());
+    // La de "Cualquier día" no tiene día: vale hasta que la cierre.
+    .or(`service_date.gte.${todayInBogota()},service_date.is.null`);
   if (error) throw error;
   return (count ?? 0) > 0;
 }
@@ -466,18 +482,24 @@ async function closeOwnRequest(input: { id: string; editToken: string }): Promis
   return true;
 }
 
-/** Los transportistas que viajan el día de la solicitud y le sirven. */
+/**
+ * Los transportistas que viajan el día de la solicitud y le sirven. Con
+ * "Cualquier día", los de hoy en adelante, primero los que viajan antes.
+ */
 async function findDrivers(r: {
   origin_city: string;
   destination_city: string;
-  service_date: string;
+  service_date: string | null;
   volume: Volume;
 }): Promise<DriverMatch[]> {
-  // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
-  const { data, error } = await db()
+  const days = db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, space, whatsapp")
-    .eq("service_date", r.service_date)
+    .select("id, origin_city, destination_city, service_date, space, whatsapp");
+  const { data, error } = await (r.service_date === null
+    ? days.gte("service_date", todayInBogota())
+    : days.eq("service_date", r.service_date)
+  )
+    // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
     .not("destination_city", "is", null)
     .in("space", Object.keys(DRIVER_SPACES))
     .eq("status", "activa")
@@ -493,7 +515,8 @@ async function findDrivers(r: {
   for (const a of newestBy(data ?? [], (a) => a.whatsapp)) {
     if (matchesTrip(a, r)) matches.push(a);
   }
-  return matches.slice(0, 20);
+  // sort es estable: el mismo día, siguen primero los más nuevos.
+  return matches.sort((a, b) => a.service_date.localeCompare(b.service_date)).slice(0, 20);
 }
 
 /** Lo que podía llevar al ponerse disponible. Las de antes no lo guardaban. */

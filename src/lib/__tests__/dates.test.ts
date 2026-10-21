@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addDays, capitalize, formatDay, isStillValid, whenText } from "../dates";
+import { ANY_DAY } from "../domain";
 
 describe("whenText", () => {
   const today = "2026-10-16";
@@ -38,6 +39,10 @@ describe("isStillValid", () => {
     expect(isStillValid(tomorrow, today)).toBe(true);
     expect(isStillValid(tomorrow, tomorrow)).toBe(true);
     expect(isStillValid(tomorrow, "2026-10-20")).toBe(false);
+  });
+
+  it("la solicitud de cualquier día no se vence", () => {
+    expect(isStillValid(ANY_DAY, "2027-05-01")).toBe(true);
   });
 
   it("sin fecha, o con una que no sirve, ya no vale", () => {

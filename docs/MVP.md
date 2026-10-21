@@ -83,7 +83,7 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
   municipio (si "Ubicarme" cae en el destino, el destino se borra); qué día
-  (Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
+  ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
   teléfono. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
   2026): la hablan por teléfono.
 
@@ -127,6 +127,8 @@ Tiene dos botones:
   transportistas.
 
 Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
+La de "Cualquier día" no se vence: le salen los transportistas de cualquier día
+(con el día en que viaja cada uno) hasta que diga "Ya no necesito este servicio".
 
 **Sin precio.** La app no calcula ningún precio: el cliente y el transportista
 lo acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir

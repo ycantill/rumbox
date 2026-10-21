@@ -51,6 +51,15 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver(), request({ service_date: "2027-01-15" }))).toBe(false);
   });
 
+  it("con \"Cualquier día\" le sirve el viaje de cualquier día", () => {
+    const anyDay = request({ service_date: null });
+    expect(matchesTrip(driver(), anyDay)).toBe(true);
+    expect(matchesTrip(driver({ service_date: "2027-01-15" }), anyDay)).toBe(true);
+    // Lo demás se sigue mirando igual.
+    expect(matchesTrip(driver(), request({ service_date: null, origin_city: "cartagena", destination_city: "monteria" }))).toBe(false);
+    expect(matchesTrip(driver({ space: "solo_paquetes" }), anyDay)).toBe(false);
+  });
+
   it("respeta cuánto puede llevar", () => {
     expect(matchesTrip(driver({ space: "solo_paquetes" }), request())).toBe(false);
     expect(matchesTrip(driver({ space: "solo_paquetes" }), request({ volume: "sobres" }))).toBe(true);

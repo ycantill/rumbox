@@ -7,8 +7,10 @@ import { matchesTrip, type AvailabilityLike, type RequestLike } from "./matching
 
 /**
  * Canal privado de Realtime de un día de viaje: la anon key solo puede
- * escucharlo. Lo arman igual las migraciones `0006_avisos.sql` y
- * `0007_proteger_datos.sql`: no se cambia sin cambiar las dos partes.
+ * escucharlo. Lo arman igual las migraciones `0006_avisos.sql`,
+ * `0007_proteger_datos.sql` y `0015_cualquier_dia.sql`: no se cambia sin
+ * cambiar las dos partes. Las solicitudes de "Cualquier día" escuchan
+ * `transportistas-cualquier_dia`, que recibe los cambios de todos los días.
  */
 export function liveTopic(date: string): string {
   return `transportistas-${date}`;

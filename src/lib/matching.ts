@@ -1,11 +1,12 @@
 // Motor de emparejamiento (documento de producto, sección 8).
 //
 // En el MVP el transportista siempre va de viaje (Modo Ruta): dice de dónde
-// sale, hacia dónde va y qué día. Atiende solicitudes de ese mismo día cuyo
-// origen y destino quedan sobre su corredor vial y en el mismo sentido de
-// viaje. Si eligió "Cualquier destino", atiende las solicitudes de ese día que
-// salen de su municipio o de uno cercano, vayan a donde vayan. No hay jornadas. Las rutas que se repiten (diarias o semanales) son una mejora futura
-// para después del MVP.
+// sale, hacia dónde va y qué día. Atiende solicitudes de ese mismo día, y las
+// de "Cualquier día", cuyo origen y destino quedan sobre su
+// corredor vial y en el mismo sentido de viaje. Si eligió "Cualquier destino",
+// atiende las de ese día que salen de su municipio o de uno cercano, vayan a
+// donde vayan. No hay jornadas. Las rutas que se repiten (diarias o semanales)
+// son una mejora futura para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
 import {
@@ -33,13 +34,16 @@ export type AvailabilityLike = {
 export type RequestLike = {
   origin_city: string;
   destination_city: string;
-  service_date: string;
+  /** El día del viaje, o null si es "Cualquier día". */
+  service_date: string | null;
   volume: Volume;
 };
 
 /** Si el servicio que pide el cliente le sirve al transportista en su viaje. */
 export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
-  if (r.service_date !== a.service_date) return false;
+  // Con "Cualquier día" le sirve el viaje de cualquier día. Los que ya
+  // pasaron no llegan hasta aquí: se apagaron solos.
+  if (r.service_date !== null && r.service_date !== a.service_date) return false;
   if (!spaceFitsVolume(a.space, r.volume)) return false;
   // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas
   // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.

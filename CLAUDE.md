@@ -197,6 +197,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Los dos eligen solo el día: "Hoy", "Mañana" u otra fecha en el calendario.
   Yohany quitó las jornadas (mañana, tarde, noche) en octubre de 2026. "Hoy"
   sale a cualquier hora.
+- El cliente tiene además "Cualquier día", arriba y elegido por defecto
+  (Yohany, 21 de octubre de 2026; `ANY_DAY` en `src/lib/domain.ts`). Le
+  sirven los transportistas de cualquier día, de hoy en adelante, y en su
+  tarjeta dice qué día viaja cada uno. Se guarda con `service_date` vacío
+  (migración `0015_cualquier_dia.sql`) y no se vence (Yohany): sigue abierta
+  hasta "Ya no necesito este servicio". Escucha el canal de Realtime
+  `transportistas-cualquier_dia`, que recibe los cambios de todos los días.
 - La columna `time_slot` queda en la base: las disponibilidades nuevas guardan
   `todo_el_dia` (la columna no puede quedar vacía) y las solicitudes nuevas la
   dejan vacía. El emparejamiento ya no la mira.
@@ -269,7 +276,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   datos. "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
   reemplaza la de antes.
 - Vale hasta que termina el día del viaje, como la del transportista: después
-  se olvida y vuelve el formulario.
+  se olvida y vuelve el formulario. La de "Cualquier día" no se vence.
 
 **Una cosa a la vez en cada teléfono**
 - Un teléfono tiene una sola cosa abierta: una solicitud o un viaje como
