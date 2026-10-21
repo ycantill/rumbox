@@ -72,8 +72,8 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   él se puso disponible lo ven en su lista y lo llaman.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
   datos tiene una lista desplegable con las mismas opciones de "¿Cuánto puedes
-  llevar?", hasta lo que podía llevar al empezar. Cuando consigue carga, la
-  baja, y los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
+  llevar?", las cuatro siempre. Cuando carga, la baja, y cuando descarga, la
+  sube, aunque haya salido lleno. Los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
   (la lista de clientes que tocaron su tarjeta, con "Lo llevo"), que se quitó.
 
 **Pantalla del cliente** (`/solicitar`)

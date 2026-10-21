@@ -27,7 +27,6 @@ import {
   SAME_CITY_ERROR,
   destinationName,
   isKey,
-  spacesUpTo,
   type DriverSpace,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -357,7 +356,7 @@ function CurrentWork({
         </p>
       </section>
 
-      <SpaceLeft space={post.space} full={post.fullSpace ?? post.space} busy={busy} onChange={changeSpace} />
+      <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
@@ -385,18 +384,16 @@ function CurrentWork({
 }
 
 /**
- * "¿Cuánto espacio te queda?": cuando consigue carga, él mismo baja lo que le
- * queda, y los clientes solo lo ven si les cabe. Puede volver a subirlo hasta lo
- * que podía llevar al ponerse disponible.
+ * "¿Cuánto espacio te queda?": cuando carga o descarga, él mismo cambia lo que
+ * le queda, y los clientes solo lo ven si les cabe. Tiene todas las opciones:
+ * pudo empezar lleno y descargar en el camino.
  */
 function SpaceLeft({
   space,
-  full,
   busy,
   onChange,
 }: {
   space: DriverSpace;
-  full: DriverSpace;
   busy: boolean;
   onChange: (space: DriverSpace) => void;
 }) {
@@ -414,13 +411,13 @@ function SpaceLeft({
           if (isKey(DRIVER_SPACES, e.target.value)) onChange(e.target.value);
         }}
       >
-        {spacesUpTo(full).map((s) => (
+        {(Object.keys(DRIVER_SPACES) as DriverSpace[]).map((s) => (
           <option key={s} value={s}>
             {DRIVER_SPACES[s].label}
           </option>
         ))}
       </select>
-      <p className="text-sm text-muted">Cámbialo cuando consigas carga. Solo te ven los clientes a los que les cabe.</p>
+      <p className="text-sm text-muted">Cámbialo cuando cargues o descargues. Solo te ven los clientes a los que les cabe.</p>
     </section>
   );
 }

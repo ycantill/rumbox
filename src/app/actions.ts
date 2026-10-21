@@ -8,7 +8,6 @@ import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
 import {
   DRIVER_SPACES,
   isKey,
-  spacesUpTo,
   type DriverSpace,
   type Volume,
 } from "@/lib/domain";
@@ -157,8 +156,9 @@ export async function getMyAvailability(input: { id: string; editToken: string }
 
 /**
  * "¿Cuánto espacio te queda?": el transportista cambia lo que le queda, que es
- * lo que miran los clientes. Puede subirlo otra vez, pero nunca por encima de
- * lo que podía llevar al ponerse disponible.
+ * lo que miran los clientes. Puede elegir cualquiera: si descarga en el camino,
+ * puede quedar con más espacio del que tenía al empezar (Yohany, 21 de
+ * octubre de 2026).
  */
 export async function updateSpace(input: {
   id: string;
@@ -177,11 +177,9 @@ export async function updateSpace(input: {
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos tus datos en este teléfono.");
     }
-    const full = fullSpace(data);
-    if (!spacesUpTo(full).includes(space)) return fail("Algo salió mal. Intenta de nuevo.");
     const patch: Record<string, string> = { space };
-    // Las de antes no guardaban lo que podía llevar al empezar.
-    if (!data.full_space) patch.full_space = full;
+    // Las de antes no guardaban lo que podía llevar al empezar: con eso vuelve el formulario.
+    if (!data.full_space) patch.full_space = fullSpace(data);
     const { error: upErr } = await db().from("availabilities").update(patch).eq("id", input.id);
     if (upErr) throw upErr;
     return { ok: true as const };

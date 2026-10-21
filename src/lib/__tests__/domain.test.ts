@@ -5,7 +5,6 @@ import {
   spaceFitsVolume,
   volumeInSentence,
   spaceInSentence,
-  spacesUpTo,
   type DriverSpace,
   type Volume,
 } from "../domain";
@@ -61,13 +60,3 @@ describe("Tu solicitud", () => {
   });
 });
 
-describe("spacesUpTo", () => {
-  it("con una casa puede elegir todo, de paquetes a la casa", () => {
-    expect(spacesUpTo("camion_entero")).toEqual(["solo_paquetes", "carga_parcial", "medio_camion", "camion_entero"]);
-  });
-
-  it("no puede subir por encima de lo que podía llevar al empezar", () => {
-    expect(spacesUpTo("carga_parcial")).toEqual(["solo_paquetes", "carga_parcial"]);
-    expect(spacesUpTo("solo_paquetes")).toEqual(["solo_paquetes"]);
-  });
-});

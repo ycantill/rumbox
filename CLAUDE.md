@@ -123,9 +123,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   cliente se le dice que los transportistas no ven su teléfono.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
   datos, el transportista tiene una lista desplegable con las opciones de
-  "¿Cuánto puedes llevar?", desde paquetes hasta lo que podía llevar al
-  ponerse disponible (`spacesUpTo`, `updateSpace`). Cuando consigue carga, la
-  baja; `space` guarda lo que le queda (lo que miran los clientes) y
+  "¿Cuánto puedes llevar?", las cuatro siempre (`updateSpace`): cuando carga,
+  la baja, y cuando descarga, la sube, aunque quede con más espacio del que
+  tenía al empezar, porque pudo salir lleno (Yohany, 21 de octubre de 2026).
+  `space` guarda lo que le queda (lo que miran los clientes) y
   `full_space` lo que podía llevar al empezar, que es con lo que vuelve el
   formulario. Reemplazó a "Te encontraron" (la lista de clientes que tocaron
   su tarjeta, con "Lo llevo" y el espacio calculado por puntos), que se quitó
