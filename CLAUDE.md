@@ -50,6 +50,7 @@ src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
+src/lib/path.ts, directions.ts   La carretera: guardarla y medir sobre ella; pedirla a OpenRouteService
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -192,8 +193,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   corredor), vayan a donde vayan (Yohany, octubre de 2026).
 - "¿Por dónde vas?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
   transportista ve su ruta pueblo por pueblo (`routeStops`: los municipios
-  más cercanos a la línea entre origen y destino, uno cada ~40 km, como
-  mucho 12) y marca por dónde va con "Marcar por dónde voy". Si ya dio
+  por donde pasa la carretera, uno cada ~40 km, como mucho 12) y marca por dónde va con "Marcar por dónde voy". Si ya dio
   permiso de ubicación, se actualiza sola al abrir la pantalla, al volver a
   la app y cada minuto mientras está abierta; sin permiso, el teléfono no le
   pregunta hasta que toca el botón. Es una PWA: con la app cerrada no se
@@ -204,6 +204,17 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   salen los que quedan más de 20 km detrás de donde sale. Con "Cualquier destino" no hay lista: dice "Vas
   por…" y el match es por cercanía a donde va, no a donde salió. El cliente
   no ve por dónde va (Yohany): solo sirve para el match.
+- La ruta es por carretera (Yohany, 21 de octubre de 2026): al ponerse
+  disponible, el servidor le pide la carretera a OpenRouteService (gratis con
+  llave, `OPENROUTESERVICE_API_KEY` en Vercel, `src/lib/directions.ts`) y la
+  guarda simplificada en `route` (migración `0017_ruta_por_carretera.sql`).
+  Si otro ya hizo el mismo viaje, reusa la guardada. Con ella salen los
+  pueblos de "¿Por dónde vas?" y el match mira la carretera: el pueblo del
+  cliente a 35 km o menos (`CORRIDOR_ROAD_TOLERANCE_KM`), y los 20 km atrás
+  se cuentan sobre la carretera. Si no hay llave, el servicio no responde en
+  5 segundos o la disponibilidad es de antes, todo sigue con la línea recta
+  y su corredor ancho (una cuarta parte del viaje a cada lado). Solo se le
+  mandan las coordenadas de los dos municipios, nada de la persona.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro

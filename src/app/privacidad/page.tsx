@@ -48,6 +48,10 @@ export default function PrivacyPage() {
             para saber si la app sirve, y Vercel, donde vive la app, cuenta las visitas y de qué página llegan. Nada
             de eso dice quién fue ni usa cookies.
           </p>
+          <p className="mt-2 text-muted">
+            Para saber por qué carretera va el transportista, le preguntamos el camino entre sus dos municipios a
+            OpenRouteService, que usa los mapas de OpenStreetMap. No le mandamos tu teléfono ni nada tuyo.
+          </p>
           <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación exacta.</p>
         </section>
 

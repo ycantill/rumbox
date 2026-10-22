@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ROUTE_MAX_STOPS, routeProgress, routeStops } from "../route";
+import { getCity } from "../cities";
+import { decodePath, pathKm } from "../path";
+import { ROUTE_MAX_STOPS, routeFromGeoJson, routeProgress, routeStops } from "../route";
+import { BOGOTA_BARRANQUILLA, BOGOTA_BARRANQUILLA_ROUTE } from "./road-fixture";
 
 describe("routeStops", () => {
   it("va del origen al destino, con pueblos en el camino y en orden", () => {
@@ -32,5 +35,63 @@ describe("routeProgress", () => {
     expect(middle).toBeGreaterThan(0.2);
     expect(middle).toBeLessThan(0.8);
     expect(routeProgress("monteria", "cualquiera", "sincelejo")).toBeNull();
+  });
+});
+
+describe("con la carretera guardada", () => {
+  it("los pueblos son los de la carretera, no los de la línea recta", () => {
+    const stops = routeStops("bogota", "barranquilla", BOGOTA_BARRANQUILLA_ROUTE);
+    const slugs = stops.map((s) => s.city.slug);
+    expect(slugs[0]).toBe("bogota");
+    expect(slugs.at(-1)).toBe("barranquilla");
+    expect(stops.length).toBeGreaterThan(8);
+    expect(stops.length).toBeLessThanOrEqual(ROUTE_MAX_STOPS + 2);
+    const ts = stops.map((s) => s.t);
+    expect(ts).toEqual([...ts].sort((a, b) => a - b));
+    expect(new Set(slugs).size).toBe(slugs.length);
+    // Todos quedan sobre la carretera.
+    for (const s of stops) expect(BOGOTA_BARRANQUILLA.some((p) => Math.abs(p.lat - s.city.lat) < 0.5)).toBe(true);
+    expect(slugs).toContain("aguachica");
+    // La línea recta pasa por Pacho y Puerto Berrío.
+    expect(routeStops("bogota", "barranquilla").map((s) => s.city.slug)).toContain("pacho");
+    expect(slugs).not.toContain("pacho");
+    expect(slugs).not.toContain("puerto-berrio");
+  });
+
+  it("dice qué tanto lleva sobre la carretera", () => {
+    const at = (slug: string) => routeProgress("bogota", "barranquilla", slug, BOGOTA_BARRANQUILLA_ROUTE)!;
+    expect(at("bogota")).toBe(0);
+    expect(at("barranquilla")).toBe(1);
+    expect(at("aguachica")).toBeGreaterThan(at("puerto-boyaca"));
+    expect(at("bosconia")).toBeGreaterThan(at("aguachica"));
+    expect(at("bosconia")).toBeLessThan(1);
+  });
+});
+
+describe("routeFromGeoJson", () => {
+  const bogota = getCity("bogota")!;
+  const barranquilla = getCity("barranquilla")!;
+  const geojson = (coords: unknown) => ({ type: "FeatureCollection", features: [{ geometry: { coordinates: coords } }] });
+  // Una carretera con muchos puntos, como la que manda el servicio.
+  const dense = BOGOTA_BARRANQUILLA.flatMap((p, i) => {
+    const q = BOGOTA_BARRANQUILLA[i + 1];
+    if (!q) return [[p.lng, p.lat]];
+    return Array.from({ length: 50 }, (_, k) => [p.lng + ((q.lng - p.lng) * k) / 50, p.lat + ((q.lat - p.lat) * k) / 50]);
+  });
+
+  it("guarda la carretera simplificada", () => {
+    const route = routeFromGeoJson(geojson(dense), bogota, barranquilla)!;
+    const path = decodePath(route);
+    expect(path.length).toBeLessThan(dense.length / 10);
+    expect(pathKm(path)).toBeCloseTo(pathKm(BOGOTA_BARRANQUILLA), 0);
+  });
+
+  it("si la respuesta no se ve bien, no hay carretera", () => {
+    expect(routeFromGeoJson({}, bogota, barranquilla)).toBeNull();
+    expect(routeFromGeoJson(geojson([[1, 2]]), bogota, barranquilla)).toBeNull();
+    expect(routeFromGeoJson(geojson([["a", 2], [3, 4]]), bogota, barranquilla)).toBeNull();
+    // Mucho más larga que la línea recta: da la vuelta por otro lado.
+    const detour = [[bogota.lng, bogota.lat], [-68, 2], [-80, 12], [barranquilla.lng, barranquilla.lat]];
+    expect(routeFromGeoJson(geojson(detour), bogota, barranquilla)).toBeNull();
   });
 });

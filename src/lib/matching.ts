@@ -3,13 +3,14 @@
 // En el MVP el transportista siempre va de viaje (Modo Ruta): dice de dónde
 // sale, hacia dónde va y desde qué día. No se vence: atiende solicitudes de
 // ese día o de después, y las de "Cualquier día", cuyo origen y destino quedan
-// sobre su corredor vial y en el mismo sentido de viaje. Si eligió "Cualquier
+// cerca de su carretera y en el mismo sentido de viaje. Si eligió "Cualquier
 // destino", atiende las que salen de su municipio o de uno cercano, vayan a
 // donde vayan. No le salen los clientes que quedaron atrás de donde sale o,
 // si ya marcó por dónde va, de por dónde va. No hay jornadas. Las rutas que
 // se repiten (diarias o semanales) son una mejora futura para después del MVP.
 
 import { getCity, haversineKm } from "./cities";
+import { decodePath, projectOnPath, projectOnSegment, type Point } from "./path";
 import {
   ANY_DESTINATION,
   spaceFitsVolume,
@@ -18,11 +19,17 @@ import {
 } from "./domain";
 
 /**
- * Desvío máximo respecto a la línea recta del corredor. Las carreteras se
- * alejan más de la línea recta en trayectos largos, así que la tolerancia
- * crece con la longitud del corredor.
+ * Qué tan lejos de la carretera puede quedar el pueblo del cliente. También es
+ * lo cerca que tiene que salir el cliente con "Cualquier destino".
  */
-export const CORRIDOR_MIN_TOLERANCE_KM = 35;
+export const CORRIDOR_ROAD_TOLERANCE_KM = 35;
+
+/**
+ * Sin la carretera (si el servicio de rutas no respondió, o es de antes), el
+ * corredor es la línea recta. Las carreteras se alejan más de la línea recta
+ * en trayectos largos, así que la tolerancia crece con la longitud del viaje.
+ */
+export const CORRIDOR_MIN_TOLERANCE_KM = CORRIDOR_ROAD_TOLERANCE_KM;
 export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 
 /**
@@ -39,6 +46,8 @@ export type AvailabilityLike = {
   space: DriverSpace;
   /** El municipio por donde va, si ya lo marcó. */
   current_city?: string | null;
+  /** La carretera de su viaje (`encodePath`), si se pudo calcular. */
+  route?: string | null;
 };
 
 export type RequestLike = {
@@ -75,20 +84,51 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   const to = getCity(r.destination_city);
   if (!driverFrom || !driverTo || !from || !to) return false;
 
-  const corridorKm = haversineKm(driverFrom.lat, driverFrom.lng, driverTo.lat, driverTo.lng);
-  const tolerance = Math.max(CORRIDOR_MIN_TOLERANCE_KM, corridorKm * CORRIDOR_TOLERANCE_RATIO);
-  const pFrom = projectOnSegment(driverFrom, driverTo, from);
-  const pTo = projectOnSegment(driverFrom, driverTo, to);
-  const onCorridor = pFrom.offKm <= tolerance && pTo.offKm <= tolerance;
+  const corridor = tripCorridor(driverFrom, driverTo, a.route);
+  const pFrom = corridor.place(from);
+  const pTo = corridor.place(to);
+  const onCorridor = pFrom.offKm <= corridor.toleranceKm && pTo.offKm <= corridor.toleranceKm;
   // Mismo sentido: la recogida va antes que la entrega sobre el trayecto. Se
   // mira sin recortar: dos pueblos detrás del origen, o después del destino,
   // también tienen un orden.
-  if (!onCorridor || pFrom.along > pTo.along) return false;
+  if (!onCorridor || pFrom.alongKm > pTo.alongKm) return false;
   // El pueblo del cliente no puede haber quedado atrás de donde está: el
   // municipio por donde va o, si no lo ha marcado, el de donde sale.
-  const here = driverNow ? projectOnSegment(driverFrom, driverTo, driverNow).along : 0;
-  if ((here - pFrom.along) * corridorKm > BEHIND_TOLERANCE_KM) return false;
+  const here = driverNow ? corridor.place(driverNow).alongKm : 0;
+  if (here - pFrom.alongKm > BEHIND_TOLERANCE_KM) return false;
   return true;
+}
+
+type Corridor = {
+  /** Qué tan lejos del camino puede quedar el pueblo del cliente. */
+  toleranceKm: number;
+  /** Cuántos km del viaje lleva al pasar por p (sin recortar) y qué tan lejos queda del camino. */
+  place: (p: Point) => { alongKm: number; offKm: number };
+};
+
+/**
+ * El camino del transportista: la carretera que se guardó al ponerse
+ * disponible o, si no se pudo calcular (o es de antes), la línea recta.
+ */
+export function tripCorridor(from: Point, to: Point, route?: string | null): Corridor {
+  const path = decodePath(route);
+  if (path.length >= 2) {
+    return {
+      toleranceKm: CORRIDOR_ROAD_TOLERANCE_KM,
+      place: (p) => {
+        const { along, offKm } = projectOnPath(path, p);
+        return { alongKm: along, offKm };
+      },
+    };
+  }
+  const km = haversineKm(from.lat, from.lng, to.lat, to.lng);
+  return {
+    toleranceKm: Math.max(CORRIDOR_MIN_TOLERANCE_KM, km * CORRIDOR_TOLERANCE_RATIO),
+    place: (p) => {
+      const { along, offKm } = projectOnSegment(from, to, p);
+      return { alongKm: along * km, offKm };
+    },
+  };
 }
 
 /**
@@ -105,27 +145,4 @@ export function newestBy<T>(rows: readonly T[], key: (row: T) => string): T[] {
     seen.add(k);
     return true;
   });
-}
-
-type Point = { lat: number; lng: number };
-
-/**
- * Proyecta p sobre el segmento a→b usando una proyección equirectangular local
- * (suficiente para distancias de cientos de km). Devuelve la posición relativa
- * t ∈ [0, 1], la misma sin recortar (`along`: negativa detrás de a, mayor que 1
- * después de b) y la distancia al segmento en km.
- */
-export function projectOnSegment(a: Point, b: Point, p: Point): { t: number; along: number; offKm: number } {
-  const kmPerDegLat = 110.574;
-  const kmPerDegLng = 111.32 * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
-  const bx = (b.lng - a.lng) * kmPerDegLng;
-  const by = (b.lat - a.lat) * kmPerDegLat;
-  const px = (p.lng - a.lng) * kmPerDegLng;
-  const py = (p.lat - a.lat) * kmPerDegLat;
-  const len2 = bx * bx + by * by;
-  const raw = len2 === 0 ? 0 : (px * bx + py * by) / len2;
-  const t = Math.max(0, Math.min(1, raw));
-  const dx = px - t * bx;
-  const dy = py - t * by;
-  return { t, along: raw, offKm: Math.sqrt(dx * dx + dy * dy) };
 }

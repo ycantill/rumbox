@@ -92,7 +92,8 @@ El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request.
 2. En **Settings → Environment Variables**, agrega `SUPABASE_URL` y
    `SUPABASE_SERVICE_ROLE_KEY` para Production y Preview, y las de avisos de
    `.env.example` (`SUPABASE_ANON_KEY`, `VAPID_PUBLIC_KEY`,
-   `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`).
+   `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`) y la de la ruta por carretera
+   (`OPENROUTESERVICE_API_KEY`).
 3. Despliega. Cada push a `main` publica en producción y cada pull request
    tiene su vista previa.
 
@@ -108,6 +109,7 @@ src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicit
 src/components/          Componentes compartidos
 src/lib/domain.ts        Tamaños de carga y sus textos
 src/lib/matching.ts      Emparejamiento por ruta
+src/lib/route.ts         La ruta del transportista pueblo por pueblo (por carretera)
 src/lib/cities.ts        Todos los municipios de Colombia y su búsqueda
 supabase/migrations/     Esquema de base de datos
 docs/                    Alcance del MVP, pendientes y base de conocimiento de negocio
