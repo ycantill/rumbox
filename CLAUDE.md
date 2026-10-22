@@ -198,7 +198,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   carretera, uno cada ~40 km de la línea recta, como mucho 12. Debajo está
   el dibujo de su ruta, un punto por pueblo, desde el de ahora ("Vas por
   aquí") hasta el destino: los que ya pasó no salen en el dibujo, pero sí en
-  la lista, por si tiene que corregir (Yohany, 22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
+  la lista, por si tiene que corregir (Yohany, 22 de octubre de 2026). Tocar
+  un pueblo del dibujo también lo marca, porque parecía que se podía (Yohany,
+  22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le

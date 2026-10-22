@@ -69,6 +69,8 @@ se elige igual que el destino.
   octubre de 2026). Los pueblos son los de la carretera de verdad, y el match
   también la sigue: se calcula una vez al ponerse disponible con
   OpenRouteService (gratis) y, si no responde, se usa la línea recta.
+  Debajo sale el dibujo de su camino, un punto por pueblo desde el de ahora;
+  tocar un pueblo del dibujo también lo marca (Yohany, 22 de octubre de 2026).
 - Si el pueblo por donde va no está en la lista, lo agrega con "Otro
   pueblo, no está en la lista": su camino pasa a ir por ahí, y la lista y los
   clientes que lo ven siguen ese camino (Yohany, 22 de octubre de 2026).

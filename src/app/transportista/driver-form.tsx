@@ -592,7 +592,9 @@ function WhereYouAre({
       <p className="text-sm text-muted">
         {adding
           ? "Escríbelo o elígelo. Tu camino pasará por ahí."
-          : "Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino."}
+          : stops.length > 0
+            ? "Cámbialo cuando pases por otro pueblo: elígelo aquí o tócalo en tu camino. Así te llaman los clientes que te quedan de camino."
+            : "Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino."}
       </p>
       <ErrorNote message={error} />
       {detour && <p className="text-sm font-semibold text-brand">Listo, tu camino ahora pasa por {detour}.</p>}
@@ -602,17 +604,29 @@ function WhereYouAre({
           {ahead.map((stop) => {
             const isHere = stop.city.slug === here?.slug;
             return (
-              <li key={stop.city.slug} className="flex items-center gap-3 py-1.5">
-                <span
-                  aria-hidden
-                  className={
-                    isHere
-                      ? "size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft"
-                      : "size-3 shrink-0 rounded-full border-2 border-brand"
-                  }
-                />
-                <span className={isHere ? "font-semibold" : undefined}>{stop.city.name}</span>
-                {isHere && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
+              <li key={stop.city.slug}>
+                {isHere ? (
+                  <span className="flex items-center gap-3 py-1.5">
+                    <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
+                    <span className="font-semibold">{stop.city.name}</span>
+                    <span className="text-sm font-semibold text-brand">Vas por aquí</span>
+                  </span>
+                ) : (
+                  // Tocar un pueblo del dibujo lo marca, como en la lista
+                  // (Yohany, 22 de octubre de 2026): parecía que se podía.
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setAdding(false);
+                      void change(stop.city.slug);
+                    }}
+                    className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-1.5 text-left active:bg-brand-soft disabled:opacity-50"
+                  >
+                    <span aria-hidden className="size-3 shrink-0 rounded-full border-2 border-brand" />
+                    <span>{stop.city.name}</span>
+                  </button>
+                )}
               </li>
             );
           })}
