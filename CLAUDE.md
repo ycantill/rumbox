@@ -195,8 +195,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   variante sin entrar al pueblo; Yohany, 22 de octubre de 2026). Solo si
   son más de 40 se deja uno cada tanto, primero los pueblos de cruce. Sin
   carretera, uno cada ~40 km de la línea recta, como mucho 12. Debajo está
-  el dibujo de su ruta, un punto por pueblo: los que ya pasó tachados y el
-  de ahora con "Vas por aquí" (Yohany, 22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
+  el dibujo de su ruta, un punto por pueblo, desde el de ahora ("Vas por
+  aquí") hasta el destino: los que ya pasó no salen en el dibujo, pero sí en
+  la lista, por si tiene que corregir (Yohany, 22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
@@ -220,7 +221,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   pueblo que agrega no queda sobre su carretera (`offRoad`), `updateLocation`
   le pide a OpenRouteService la carretera pasando por ahí y la guarda en
   `route`, si no es más de 1,5 veces la de antes (`viaFits`); así la lista y
-  el match siguen su camino. Si no se puede, queda marcado igual. Reemplazó a
+  el match siguen su camino, y le sale "Listo, tu camino ahora pasa por …"
+  hasta que escoja otro. Si no se puede, queda marcado igual. Reemplazó a
   "¿Por cuál camino vas?" (escoger entre 2 o 3 caminos armados con pueblos
   de cruce), que se quitó porque los caminos casi no cambiaban. La columna
   `route_options` (migración `0019_varios_caminos.sql`) queda con la más
