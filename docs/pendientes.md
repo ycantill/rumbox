@@ -299,5 +299,5 @@ se probó en un teléfono:
 - **Tocar un pueblo del dibujo (22 de octubre de 2026):** en "¿Por dónde
   vas?" se toca el pueblo en el dibujo de puntos; los que ya pasó quedan
   tachados y se pueden tocar para corregir. La lista desplegable se quitó y
-  abajo queda "¿No está tu pueblo?" para los que no están en la ruta. Sin
+  abajo queda "¿Vas por un pueblo que no está en la ruta?" para los demás. Sin
   migración.

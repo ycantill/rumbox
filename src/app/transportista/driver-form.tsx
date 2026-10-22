@@ -585,7 +585,7 @@ function WhereYouAre({
       </ol>
       <ErrorNote message={error} />
       <div className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
-        <p className="font-semibold">¿No está tu pueblo?</p>
+        <p className="font-semibold">¿Vas por un pueblo que no está en la ruta?</p>
         <CitySelect
           name="other-town"
           value=""

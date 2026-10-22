@@ -72,8 +72,8 @@ se elige igual que el destino.
   El dibujo tiene un punto por pueblo, del origen al destino: los que ya pasó
   quedan tachados, pero se pueden tocar por si se equivocó (Yohany, 22 de
   octubre de 2026).
-- Si el pueblo por donde va no está en la ruta, lo escribe debajo, en "¿No
-  está tu pueblo?": su camino pasa a ir por ahí, y la lista y los
+- Si el pueblo por donde va no está en la ruta, lo escribe debajo, en "¿Vas
+  por un pueblo que no está en la ruta?": su camino pasa a ir por ahí, y la lista y los
   clientes que lo ven siguen ese camino (Yohany, 22 de octubre de 2026).
 - "Comienza tu viaje" (Yohany, 22 de octubre de 2026): en su tarjeta, un
   botón abre el mapa con el camino hasta su destino, desde donde está el

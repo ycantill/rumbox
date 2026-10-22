@@ -219,8 +219,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   mandan las coordenadas de los dos municipios, nada de la persona.
 - "Otro pueblo" (Yohany, 22 de octubre de 2026): la ruta es la más rápida,
   pero puede no ser por donde va. Debajo del dibujo de "¿Por dónde vas?"
-  está "¿No está tu pueblo?", con `CitySelect`, solo para los que no están en
-  la ruta. Si el
+  está "¿Vas por un pueblo que no está en la ruta?", con `CitySelect`, solo
+  para esos. Si el
   pueblo que agrega no queda sobre su carretera (`offRoad`), `updateLocation`
   le pide a OpenRouteService la carretera pasando por ahí y la guarda en
   `route`, si no es más de 1,5 veces la de antes (`viaFits`); así la lista y
