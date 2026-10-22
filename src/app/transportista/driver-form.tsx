@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
+  chooseRoute,
   getMyAvailability,
   publishAvailability,
   updateAvailability,
@@ -30,6 +31,7 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
+import { routeOptions } from "@/lib/alternatives";
 import { routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
@@ -55,6 +57,8 @@ export type MyPost = {
   // La carretera de su viaje (`encodePath`), para "¿Por dónde vas?". Sin ella,
   // la línea recta.
   route?: string | null;
+  // Los caminos que puede escoger, el más rápido primero ("¿Por cuál camino vas?").
+  routeOptions?: string[];
 };
 
 export function DriverForm() {
@@ -143,6 +147,7 @@ export function DriverForm() {
         date,
         space: space as DriverSpace,
         route: res.route,
+        routeOptions: res.routeOptions,
       };
       updateCurrent(post);
       setJustPublished(true);
@@ -274,7 +279,13 @@ function CurrentWork({
             return;
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
-          onPatch({ space: res.space, fullSpace: res.fullSpace, current: res.currentCity, route: res.route });
+          onPatch({
+            space: res.space,
+            fullSpace: res.fullSpace,
+            current: res.currentCity,
+            route: res.route,
+            routeOptions: res.routeOptions,
+          });
         },
         () => {
           // Sin señal se queda lo guardado en el teléfono, con el aviso. Si
@@ -359,6 +370,8 @@ function CurrentWork({
         </p>
       </section>
 
+      <WhichWay post={post} latestRef={latest} onPatch={onPatch} />
+
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
@@ -425,6 +438,86 @@ function SpaceLeft({
       <p className="text-sm text-muted">Cámbialo cuando cargues o descargues. Solo te ven los clientes a los que les cabe.</p>
     </section>
   );
+}
+
+/**
+ * "¿Por cuál camino vas?": el servicio de rutas da el más rápido, pero él
+ * puede ir por otro. Si hay otros caminos, escoge por cuál va (Yohany, 22 de
+ * octubre de 2026), y con ese salen los pueblos de "¿Por dónde vas?" y los
+ * clientes que le quedan de camino.
+ */
+function WhichWay({
+  post,
+  latestRef,
+  onPatch,
+}: {
+  post: MyPost;
+  /** El número de la última consulta de la tarjeta: una vieja no pisa el camino. */
+  latestRef: React.RefObject<number>;
+  onPatch: (patch: Partial<MyPost>) => void;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { id, editToken, origin } = post;
+  const destination = post.destination ?? "";
+  const routes = useMemo(() => post.routeOptions ?? [], [post.routeOptions]);
+  const options = useMemo(() => routeOptions(origin, destination, routes), [origin, destination, routes]);
+  if (routes.length < 2) return null;
+  const chosen = Math.max(0, routes.indexOf(post.route ?? ""));
+
+  async function choose(option: number) {
+    if (option === chosen) return;
+    const before = { route: post.route, current: post.current };
+    // Por dónde iba puede no estar en el camino nuevo: lo vuelve a escoger.
+    onPatch({ route: routes[option], current: null });
+    setBusy(true);
+    setError(null);
+    latestRef.current++;
+    const res = await callServer(() => chooseRoute({ id, editToken, option }));
+    latestRef.current++;
+    setBusy(false);
+    if (!res.ok) {
+      onPatch(before);
+      setError(res.error);
+    }
+  }
+
+  return (
+    <section className="card flex flex-col gap-2">
+      <h3 className="font-semibold">¿Por cuál camino vas?</h3>
+      <div className="flex flex-col gap-2">
+        {options.map((o, i) => {
+          const selected = i === chosen;
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-pressed={selected}
+              disabled={busy}
+              onClick={() => void choose(i)}
+              className={`rounded-xl border px-3 py-3 text-left text-sm transition ${
+                selected
+                  ? "border-brand bg-brand-soft font-semibold text-brand-ink"
+                  : "border-line bg-surface text-ink hover:border-brand/50"
+              }`}
+            >
+              {o.label}
+              {o.towns.length > 0 && (
+                <span className="mt-0.5 block text-xs font-normal text-muted">Pasa por {listText(o.towns)}</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <p className="text-sm text-muted">Si vas por otro lado, escoge por cuál. Los clientes te ven según el camino que escojas.</p>
+      <ErrorNote message={error} />
+    </section>
+  );
+}
+
+/** "Sahagún, Sincelejo y Turbaco". */
+function listText(items: readonly string[]): string {
+  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} y ${items.at(-1)}`;
 }
 
 /**
