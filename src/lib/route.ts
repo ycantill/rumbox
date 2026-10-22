@@ -1,11 +1,10 @@
 // La ruta del transportista, pueblo por pueblo, y por dónde va.
 //
-// Los pueblos de la ruta son los municipios por donde pasa la carretera, uno
-// cada tanto. La carretera se calcula una vez, al ponerse disponible
-// (`directions.ts`), y se guarda. Si no se pudo calcular, salen los municipios
-// más cercanos a la línea recta entre el origen y el destino. Sirven para que
-// él vea su camino y marque por dónde va. Por dónde va se guarda como el
-// municipio más cercano a su ubicación: las coordenadas no salen del teléfono.
+// Los pueblos de la ruta son los municipios por donde pasa la carretera. La
+// carretera se calcula una vez, al ponerse disponible (`directions.ts`), y se
+// guarda. Si no se pudo calcular, salen los municipios más cercanos a la línea
+// recta entre el origen y el destino, uno cada tanto. Sirven para que él
+// escoja por dónde va.
 
 import { CITIES, getCity, haversineKm, type City } from "./cities";
 import { decodePath, encodePath, pathKm, projectOnPath, projectOnSegment, simplifyPath, type Point } from "./path";
@@ -16,8 +15,18 @@ export const ROUTE_STEP_KM = 40;
 export const ROUTE_MAX_STOPS = 12;
 /** Qué tan lejos de la línea recta puede quedar un pueblo de la ruta. */
 export const ROUTE_STOP_MAX_OFF_KM = 20;
-/** Qué tan lejos de la carretera puede quedar el centro de un pueblo por donde pasa. */
-export const ROAD_STOP_MAX_OFF_KM = 4;
+/**
+ * Qué tan lejos de la carretera puede quedar el centro de un pueblo por donde
+ * pasa. Muchas carreteras pasan por una variante, sin entrar al pueblo
+ * (Yohany, 22 de octubre de 2026): con 4 km se quedaban pueblos por fuera.
+ */
+export const ROAD_STOP_MAX_OFF_KM = 6;
+/**
+ * Cuántos pueblos, como mucho, entre el origen y el destino cuando hay
+ * carretera. Salen todos por donde pasa; solo en un viaje muy largo se deja
+ * uno cada tanto.
+ */
+export const ROAD_MAX_STOPS = 40;
 
 /**
  * Pueblos de cruce: capitales y pueblos donde se juntan las carreteras
@@ -68,15 +77,13 @@ function stopCount(km: number): number {
 }
 
 /**
- * Los pueblos por donde pasa la carretera. Primero, todos los que quedan
- * sobre ella; después, uno cerca de cada punto del camino que toca (cada
- * ~40 km), un pueblo de cruce si hay, y si no el que quede más pegado a la
- * carretera.
+ * Los pueblos por donde pasa la carretera, todos (Yohany, 22 de octubre de
+ * 2026). Si son demasiados, uno cerca de cada punto del camino que toca: un
+ * pueblo de cruce si hay, y si no el que quede más pegado a la carretera.
  */
 function roadStops(path: Point[], from: City, to: City): RouteStop[] {
   const km = pathKm(path);
-  const count = stopCount(km);
-  if (count === 0) return [];
+  if (km === 0) return [];
 
   // Solo se miran los municipios dentro del rectángulo de la ruta.
   const pad = 0.1;
@@ -91,11 +98,14 @@ function roadStops(path: Point[], from: City, to: City): RouteStop[] {
     const { along, offKm } = projectOnPath(path, c);
     if (offKm <= ROAD_STOP_MAX_OFF_KM && along > 0 && along < km) onRoad.push({ city: c, along, offKm });
   }
+  if (onRoad.length <= ROAD_MAX_STOPS) {
+    return onRoad.map((c) => ({ city: c.city, t: c.along / km })).sort((a, b) => a.t - b.t);
+  }
 
-  const step = km / (count + 1);
+  const step = km / (ROAD_MAX_STOPS + 1);
   const picked = new Set<string>();
   const stops: RouteStop[] = [];
-  for (let i = 1; i <= count; i++) {
+  for (let i = 1; i <= ROAD_MAX_STOPS; i++) {
     const target = step * i;
     let best: (typeof onRoad)[number] | null = null;
     for (const c of onRoad) {

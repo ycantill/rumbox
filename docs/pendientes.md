@@ -282,3 +282,7 @@ se probó en un teléfono:
 - **"¿Por dónde vas?" sigue al camino escogido (22 de octubre de 2026):** al
   escoger "Por Manizales", Manizales sale en la lista; en cada tramo va
   primero un pueblo de cruce. Sin migración.
+- **Todos los pueblos de la carretera (22 de octubre de 2026):** "¿Por
+  dónde vas?" muestra todos los pueblos por donde pasa la carretera, no uno
+  cada ~40 km, y cuenta los que tienen variante (centro a 6 km o menos).
+  Sin migración.

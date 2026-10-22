@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { getCity } from "../cities";
-import { decodePath, encodePath, pathKm } from "../path";
-import { ROUTE_MAX_STOPS, routeFromGeoJson, routeProgress, routeStops } from "../route";
+import { decodePath, encodePath, pathKm, projectOnPath } from "../path";
+import { ROAD_MAX_STOPS, ROAD_STOP_MAX_OFF_KM, ROUTE_MAX_STOPS, routeFromGeoJson, routeProgress, routeStops } from "../route";
 import { BOGOTA_BARRANQUILLA, BOGOTA_BARRANQUILLA_ROUTE } from "./road-fixture";
 
 describe("routeStops", () => {
@@ -45,12 +45,12 @@ describe("con la carretera guardada", () => {
     expect(slugs[0]).toBe("bogota");
     expect(slugs.at(-1)).toBe("barranquilla");
     expect(stops.length).toBeGreaterThan(8);
-    expect(stops.length).toBeLessThanOrEqual(ROUTE_MAX_STOPS + 2);
+    expect(stops.length).toBeLessThanOrEqual(ROAD_MAX_STOPS + 2);
     const ts = stops.map((s) => s.t);
     expect(ts).toEqual([...ts].sort((a, b) => a - b));
     expect(new Set(slugs).size).toBe(slugs.length);
     // Todos quedan sobre la carretera.
-    for (const s of stops) expect(BOGOTA_BARRANQUILLA.some((p) => Math.abs(p.lat - s.city.lat) < 0.5)).toBe(true);
+    for (const s of stops) expect(projectOnPath(BOGOTA_BARRANQUILLA, s.city).offKm).toBeLessThanOrEqual(ROAD_STOP_MAX_OFF_KM);
     expect(slugs).toContain("aguachica");
     // La línea recta pasa por Pacho y Puerto Berrío.
     expect(routeStops("bogota", "barranquilla").map((s) => s.city.slug)).toContain("pacho");
@@ -67,6 +67,24 @@ describe("con la carretera guardada", () => {
     const slugs = routeStops("bogota", "medellin", road).map((s) => s.city.slug);
     expect(slugs).toContain("manizales");
     expect(slugs).toContain("honda");
+  });
+
+  it("salen todos los pueblos por donde pasa, aunque vaya por una variante sin entrar", () => {
+    // Barranquilla → Montelíbano por la Troncal, pasando a 5 km del centro de
+    // cada pueblo, como por una variante.
+    const towns = [
+      "sabanalarga-atlantico", "san-juan-nepomuceno", "san-jacinto", "el-carmen-de-bolivar", "ovejas",
+      "corozal", "sincelejo", "sampues", "chinu", "sahagun", "planeta-rica", "pueblo-nuevo", "buenavista-cordoba",
+    ];
+    const variant = (slug: string) => {
+      const c = getCity(slug)!;
+      return { lat: c.lat, lng: c.lng + 0.045 };
+    };
+    const road = encodePath([getCity("barranquilla")!, ...towns.map(variant), getCity("montelibano")!]);
+    const slugs = routeStops("barranquilla", "montelibano", road).map((s) => s.city.slug);
+    for (const t of towns) expect(slugs).toContain(t);
+    // Ciénaga de Oro queda a 15 km de la Troncal: por ahí no pasa.
+    expect(slugs).not.toContain("cienaga-de-oro");
   });
 
   it("dice qué tanto lleva sobre la carretera", () => {
