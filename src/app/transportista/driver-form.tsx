@@ -29,6 +29,7 @@ import {
   type DriverSpace,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
+import { isAppleMobile, mapsUrl } from "@/lib/maps";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { routeProgress, routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
@@ -55,6 +56,8 @@ export type MyPost = {
   // La carretera de su viaje (`encodePath`), para "¿Por dónde vas?". Sin ella,
   // la línea recta.
   route?: string | null;
+  // Si ya tocó "Comienza tu viaje": entonces dice "Continúa tu viaje".
+  started?: boolean;
 };
 
 export function DriverForm() {
@@ -364,6 +367,8 @@ function CurrentWork({
         </p>
       </section>
 
+      <StartTrip post={post} onStart={() => onPatch({ started: true })} />
+
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
@@ -389,6 +394,39 @@ function CurrentWork({
         )}
       </div>
 
+    </div>
+  );
+}
+
+/**
+ * "Comienza tu viaje" (Yohany, 22 de octubre de 2026): abre el mapa con el
+ * camino hasta su destino, para que no lo tenga que escribir: Google Maps en
+ * Android y Mapas en iPhone. Si ya lo tocó o ya marcó un pueblo en "¿Por dónde
+ * vas?", va de camino: "Continúa tu viaje". Con "Cualquier destino" no hay a
+ * dónde llevarlo.
+ */
+function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
+  // La tarjeta sale después de leer el teléfono, así que ya hay navegador.
+  const [apple] = useState(
+    () => typeof navigator !== "undefined" && isAppleMobile(navigator.userAgent, navigator.maxTouchPoints),
+  );
+  const destination = post.destination ? getCity(post.destination) : undefined;
+  if (!destination) return null;
+  const started = post.started || Boolean(post.current && post.current !== post.origin);
+  return (
+    <div className="flex flex-col gap-2">
+      <a
+        href={mapsUrl(destination, apple)}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="btn-primary text-center"
+        onClick={onStart}
+      >
+        {started ? "Continúa tu viaje" : "Comienza tu viaje"}
+      </a>
+      <p className="text-center text-sm text-muted">
+        Se abre {apple ? "Mapas" : "Google Maps"} con el camino hasta {destination.name}.
+      </p>
     </div>
   );
 }

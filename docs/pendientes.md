@@ -98,6 +98,9 @@ se probó en un teléfono:
 - Con la llave de OpenRouteService puesta en Vercel, ponerse disponible de
   Bogotá a Cartagena: la lista de "¿Por dónde vas?" muestra pueblos de la carretera
   (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
+- "Comienza tu viaje" en Android (abre Google Maps) y en iPhone (abre
+  Mapas): abre el camino hasta el destino, y al volver a Mudavía dice
+  "Continúa tu viaje".
 - Instalar la app en Android y en iPhone y ver el logo de Mudavía.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
   salir el aviso de señal sin perder lo llenado.
@@ -290,3 +293,6 @@ se probó en un teléfono:
   2026):** se quitó escoger entre caminos (casi no cambiaban). Queda la ruta
   más rápida, y en "¿Por dónde vas?" el transportista agrega el pueblo si no
   está: su ruta pasa a ir por ahí. Sin migración.
+- **"Comienza tu viaje" (22 de octubre de 2026):** botón que abre el mapa
+  hasta su destino (Google Maps en Android, Mapas en iPhone); luego dice
+  "Continúa tu viaje". Sin migración.
