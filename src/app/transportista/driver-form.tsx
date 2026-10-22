@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   getMyAvailability,
   publishAvailability,
@@ -455,6 +455,9 @@ function WhereYouAre({
   const [error, setError] = useState<string | null>(null);
   // Si tocó "Otro pueblo": sale el campo para escribirlo.
   const [adding, setAdding] = useState(false);
+  // El pueblo por donde ahora pasa su camino, si al agregarlo cambió la ruta:
+  // así entiende por qué cambió la lista. Se quita al escoger otro.
+  const [detour, setDetour] = useState<string | null>(null);
   const { id, editToken, origin } = post;
   const destination = post.destination ?? "";
   const route = post.route;
@@ -468,6 +471,7 @@ function WhereYouAre({
       onPatch({ current: slug });
       setBusy(true);
       setError(null);
+      setDetour(null);
       latestRef.current++;
       const res = await callServer(() => updateLocation({ id, editToken, city: slug }));
       latestRef.current++;
@@ -479,20 +483,25 @@ function WhereYouAre({
       }
       // Si el pueblo no quedaba en su ruta, ahora la ruta pasa por ahí.
       onPatch({ route: res.route });
+      if (res.route !== route) setDetour(getCity(slug)?.name ?? null);
       setAdding(false);
     },
-    [id, editToken, value, before, latestRef, onPatch],
+    [id, editToken, value, before, route, latestRef, onPatch],
   );
 
-  // El dibujo de la ruta: un punto por pueblo, los que ya pasó tachados y el
-  // de ahora resaltado. Si el suyo no está en la ruta, sale entre los dos
-  // pueblos por donde pasa.
+  // El dibujo de la ruta: un punto por pueblo, desde el de ahora, resaltado,
+  // hasta el destino. Los que ya pasó no salen (Yohany, 22 de octubre de
+  // 2026). Si el suyo no está en la ruta, sale primero con "Vas por …".
   const here = getCity(value);
   const progress = here ? routeProgress(origin, destination, here.slug, route) : null;
   const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
-  const passed = (t: number) => progress !== null && t < progress;
-  const next = progress === null ? -1 : stops.findIndex((s) => s.t > progress);
-  const between = !here || hereIndex !== -1 || progress === null ? -1 : next === -1 ? stops.length : next;
+  const ahead =
+    hereIndex !== -1
+      ? stops.slice(hereIndex)
+      : progress !== null
+        ? stops.filter((s) => s.t > progress)
+        : stops;
+  const offList = here && hereIndex === -1 && progress !== null ? here : null;
 
   // Uno que agregó y la ruta no pudo pasar por ahí (sin señal del servicio de
   // rutas) también sale, para que vea lo que eligió.
@@ -548,41 +557,34 @@ function WhereYouAre({
           : "Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino."}
       </p>
       <ErrorNote message={error} />
+      {detour && <p className="text-sm font-semibold text-brand">Listo, tu camino ahora pasa por {detour}.</p>}
       {stops.length > 0 && (
         <ol aria-label="Tu ruta" className="mt-2 flex flex-col">
-          {stops.map((stop, i) => (
-            <Fragment key={stop.city.slug}>
-              {i === between && here && <HereRow name={here.name} />}
-              <li className="flex items-center gap-3 py-1.5">
+          {offList && <HereRow name={offList.name} />}
+          {ahead.map((stop) => {
+            const isHere = stop.city.slug === here?.slug;
+            return (
+              <li key={stop.city.slug} className="flex items-center gap-3 py-1.5">
                 <span
                   aria-hidden
                   className={
-                    i === hereIndex
+                    isHere
                       ? "size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft"
-                      : passed(stop.t)
-                        ? "size-3 shrink-0 rounded-full bg-muted/40"
-                        : "size-3 shrink-0 rounded-full border-2 border-brand"
+                      : "size-3 shrink-0 rounded-full border-2 border-brand"
                   }
                 />
-                <span
-                  className={
-                    i === hereIndex ? "font-semibold" : passed(stop.t) ? "text-muted line-through" : undefined
-                  }
-                >
-                  {stop.city.name}
-                </span>
-                {i === hereIndex && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
+                <span className={isHere ? "font-semibold" : undefined}>{stop.city.name}</span>
+                {isHere && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
               </li>
-            </Fragment>
-          ))}
-          {between === stops.length && here && <HereRow name={here.name} />}
+            );
+          })}
         </ol>
       )}
     </section>
   );
 }
 
-/** "Vas por …" entre dos pueblos de la ruta. */
+/** "Vas por …" cuando su pueblo no está en la ruta. */
 function HereRow({ name }: { name: string }) {
   return (
     <li className="flex items-center gap-3 py-1.5">
