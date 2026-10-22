@@ -270,7 +270,7 @@ se probó en un teléfono:
 - **PR #48:** la ruta por carretera (20): OpenRouteService al ponerse
   disponible, guardada en `route` (migración 0017); los pueblos de "¿Por
   dónde vas?" y el match siguen la carretera, con la línea recta de respaldo.
-- **PR #NN, más simple (22 de octubre de 2026):** sin "Ubicarme" en las dos
+- **PR #50, más simple (22 de octubre de 2026):** sin "Ubicarme" en las dos
   pantallas y sin avisos al celular (en iPhone eran muy complicados): el
   cliente entra cada tanto a mirar "Tu solicitud". Migración 0018 borra
   `push_subscriptions`.
