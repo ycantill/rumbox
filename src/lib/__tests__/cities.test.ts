@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { CITIES, CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities } from "../cities";
+import { CITIES, CITIES_BY_DEPARTMENT, getCity, searchCities } from "../cities";
 
 // Slugs que ya se guardaban en la base de datos antes de agregar todo el país.
 const SAVED_SLUGS = [
@@ -62,13 +62,6 @@ describe("CITIES_BY_DEPARTMENT", () => {
     expect(cordoba[0]).toBe("Ayapel");
     // La ñ va después de la n: Montería antes que Moñitos.
     expect(cordoba.indexOf("Montería")).toBeLessThan(cordoba.indexOf("Moñitos"));
-  });
-});
-
-describe("nearestCity", () => {
-  it("con el botón Ubicarme encuentra el pueblo, no uno vecino", () => {
-    expect(nearestCity(9.239, -75.676).slug).toBe("momil");
-    expect(nearestCity(8.313, -75.145).slug).toBe("ayapel");
   });
 });
 

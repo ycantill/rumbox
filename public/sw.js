@@ -32,35 +32,3 @@ self.addEventListener("fetch", (event) => {
       .catch(() => caches.match(req).then((hit) => hit || caches.match("/"))),
   );
 });
-
-// Aviso al celular: "Apareció un transportista" para la solicitud del cliente.
-self.addEventListener("push", (event) => {
-  let msg = {};
-  try {
-    msg = event.data ? event.data.json() : {};
-  } catch {
-    // Un aviso sin datos igual se muestra.
-  }
-  event.waitUntil(
-    self.registration.showNotification(msg.title || "Mudavía", {
-      body: msg.body || "Apareció un transportista para tu viaje.",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
-      tag: msg.tag,
-      renotify: Boolean(msg.tag),
-      data: { url: msg.url || "/solicitar" },
-    }),
-  );
-});
-
-// Al tocar el aviso se abre la app en la solicitud, o se trae al frente si ya estaba ahí.
-self.addEventListener("notificationclick", (event) => {
-  event.notification.close();
-  const url = new URL(event.notification.data?.url || "/solicitar", self.location.origin).href;
-  event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
-      const open = windows.find((w) => w.url === url);
-      return open ? open.focus() : self.clients.openWindow(url);
-    }),
-  );
-});

@@ -1178,20 +1178,6 @@ export function getCity(slug: string | null | undefined): City | undefined {
   return slug ? BY_SLUG.get(slug) : undefined;
 }
 
-/** Ciudad más cercana a unas coordenadas (para autocompletar con GPS). */
-export function nearestCity(lat: number, lng: number): City {
-  let best = CITIES[0];
-  let bestKm = Infinity;
-  for (const c of CITIES) {
-    const km = haversineKm(lat, lng, c.lat, c.lng);
-    if (km < bestKm) {
-      best = c;
-      bestKm = km;
-    }
-  }
-  return best;
-}
-
 /** Texto en minúsculas, sin tildes ni signos, para comparar lo que se escribe con los nombres. */
 export function simplify(text: string): string {
   return text

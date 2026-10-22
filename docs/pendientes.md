@@ -78,11 +78,6 @@ guardarse dos veces (las listas ya no muestran repetidos).
 Lo construido en octubre de 2026 pasó lint, typecheck, pruebas y build, pero no
 se probó en un teléfono:
 
-- Avisos (con las llaves VAPID y la migración `0006_avisos.sql`): el cliente
-  solicita, toca "Sí, avísame", acepta el permiso y cierra la app. Un
-  transportista que le sirve se pone disponible: le llega "Apareció un
-  transportista" y al tocarlo abre "Tu solicitud" con el transportista. Probar
-  en Android y en un iPhone con Mudavía agregada a la pantalla de inicio.
 - Con "Tu solicitud" abierta, un transportista que le sirve se pone disponible
   en otro teléfono: aparece en la lista en un par de segundos, sin esperar el
   minuto.
@@ -101,7 +96,7 @@ se probó en un teléfono:
   datos de antes, sin el día.
 
 - Con la llave de OpenRouteService puesta en Vercel, ponerse disponible de
-  Bogotá a Cartagena: "¿Por dónde vas?" muestra pueblos de la carretera
+  Bogotá a Cartagena: la lista de "¿Por dónde vas?" muestra pueblos de la carretera
   (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
 - Instalar la app en Android y en iPhone y ver el logo de Mudavía.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
@@ -116,15 +111,11 @@ se probó en un teléfono:
 - "Cambiar mi solicitud" devuelve el formulario con lo que había llenado.
 - Abrir un enlace viejo a `/cotizar`: debe llevar a `/solicitar`. También con
   la app instalada.
-- Negar el permiso de ubicación y tocar "Ubicarme": debe salir el aviso. Ahora
-  también en "¿Desde dónde?" del cliente.
 - Los campos de municipio vacíos dicen "Escribe o elige" y el texto se ve
-  entero, también al lado de "Ubicarme".
+  entero.
 - El municipio elegido en un campo no sale en la lista del otro, y si lo
   escribe sale "Ese municipio ya lo elegiste. Elige otro." (se probó en el
   navegador del computador).
-- Con un destino elegido, tocar "Ubicarme" estando en ese mismo municipio:
-  el destino queda vacío para elegir otro, y no sale ningún aviso.
 - Sin elegir hacia dónde va, no deja ponerse disponible.
 - "Cualquier destino" sale de primero al tocar la flecha del destino y al
   escribir "cual"; al elegirlo, el campo lo muestra. La tarjeta dice "… → Cualquier destino", le salen los
@@ -150,7 +141,6 @@ se probó en un teléfono:
 - Bajar "¿Cuánto espacio te queda?" y luego "Ya no estoy disponible": el
   formulario vuelve con lo que podía llevar al empezar, no con lo que le
   quedaba.
-- Tocar "Sí, avísame" y no dar permiso: sale "No te podemos avisar".
 - Abrir una dirección que no existe: sale "No encontramos esta página".
 
 ## Menores
@@ -280,3 +270,8 @@ se probó en un teléfono:
 - **PR #48:** la ruta por carretera (20): OpenRouteService al ponerse
   disponible, guardada en `route` (migración 0017); los pueblos de "¿Por
   dónde vas?" y el match siguen la carretera, con la línea recta de respaldo.
+- **PR #50, más simple (22 de octubre de 2026):** sin "Ubicarme" en las dos
+  pantallas y sin avisos al celular (en iPhone eran muy complicados): el
+  cliente entra cada tanto a mirar "Tu solicitud". "¿Por dónde vas?" se
+  elige a mano en una lista desplegable, sin la ubicación del teléfono. Migración 0018 borra
+  `push_subscriptions`.

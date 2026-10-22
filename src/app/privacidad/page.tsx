@@ -41,7 +41,6 @@ export default function PrivacyPage() {
             <li>De dónde sales, hacia dónde vas y qué día.</li>
             <li>Qué vas a mover o cuánto puedes llevar.</li>
             <li>Una huella de tu conexión a internet, para frenar a quien abusa de la app. No guardamos tu dirección de internet.</li>
-            <li>Si pides que te avisemos, lo que necesita tu celular para recibir el aviso.</li>
           </ul>
           <p className="mt-2 text-muted">
             También contamos cuántas veces se abre cada pantalla y se tocan los botones de llamar y de WhatsApp,
@@ -52,14 +51,13 @@ export default function PrivacyPage() {
             Para saber por qué carretera va el transportista, le preguntamos el camino entre sus dos municipios a
             OpenRouteService, que usa los mapas de OpenStreetMap. No le mandamos tu teléfono ni nada tuyo.
           </p>
-          <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación exacta.</p>
+          <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación.</p>
         </section>
 
         <section>
           <h2 className="text-base font-bold">Para qué los usamos</h2>
           <p className="mt-1 text-muted">
-            Solo para juntar a quien necesita mover algo con transportistas que van para allá, y para avisarte
-            cuando aparece uno, si lo pediste. No vendemos tus datos ni los usamos para publicidad.
+            Solo para juntar a quien necesita mover algo con transportistas que van para allá. No vendemos tus datos ni los usamos para publicidad.
           </p>
         </section>
 

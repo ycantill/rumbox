@@ -2,9 +2,7 @@
 
 import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { headers } from "next/headers";
-import { after } from "next/server";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
-import { alertsFor, isPushEndpoint, type SubscriptionRow } from "@/lib/alerts";
 import { getCity } from "@/lib/cities";
 import { roadRoute } from "@/lib/directions";
 import {
@@ -15,9 +13,8 @@ import {
   type DriverSpace,
   type Volume,
 } from "@/lib/domain";
-import { matchesTrip, newestBy, type AvailabilityLike } from "@/lib/matching";
+import { matchesTrip, newestBy } from "@/lib/matching";
 import { BUSY_AS_CLIENT_ERROR, BUSY_AS_DRIVER_ERROR } from "@/lib/one-at-a-time";
-import { pushEnabled, sendPush } from "@/lib/push";
 import {
   DRIVER_RATE_LIMIT_ERROR,
   RATE_LIMIT_ERROR,
@@ -82,7 +79,7 @@ export async function publishAvailability(input: {
 
   return withDb(DRIVER_DB_ERROR, async () => {
     // Sin límite, cualquiera podría poner transportistas falsos, con el número
-    // de otra persona, que además les mandan avisos a los clientes.
+    // de otra persona, que les salen a los clientes.
     if (await tooMany("availabilities", whatsapp, ipHash)) return fail(DRIVER_RATE_LIMIT_ERROR);
     // Una cosa a la vez: un número con una solicitud abierta no se pone de transportista.
     if (await hasOpenRequest(whatsapp)) return fail(BUSY_AS_CLIENT_ERROR);
@@ -95,9 +92,7 @@ export async function publishAvailability(input: {
       .single();
     if (error) throw error;
     // No se le muestran los clientes: por su privacidad, ellos lo ven a él
-    // (Vía B) y son los que llaman o escriben. A los que pidieron aviso les
-    // llega uno al celular, después de responderle al transportista.
-    after(() => alertClients({ ...row, route } as AvailabilityLike));
+    // (Vía B) y son los que llaman o escriben.
     return { ok: true as const, id: data.id as string, editToken, route };
   });
 }
@@ -355,66 +350,20 @@ export async function closeRequest(input: {
   });
 }
 
-export type AlertsConfig = {
+export type LiveConfig = {
   /** Para escuchar el canal de Realtime; null si falta la configuración. */
   live: { url: string; anonKey: string } | null;
-  /** Llave pública VAPID para suscribirse a los avisos; null si no hay avisos. */
-  vapidPublicKey: string | null;
 };
 
 /**
- * Los datos públicos que necesita el navegador para Realtime y los avisos.
- * Se leen en el servidor al momento, así que no hace falta el prefijo
- * NEXT_PUBLIC_ ni volver a construir la app al cambiarlos. Ninguno es secreto.
+ * Los datos públicos que necesita el navegador para Realtime. Se leen en el
+ * servidor al momento, así que no hace falta el prefijo NEXT_PUBLIC_ ni
+ * volver a construir la app al cambiarlos. Ninguno es secreto.
  */
-export async function getAlertsConfig(): Promise<AlertsConfig> {
+export async function getLiveConfig(): Promise<LiveConfig> {
   const url = process.env.SUPABASE_URL;
   const anonKey = process.env.SUPABASE_ANON_KEY;
-  return {
-    live: url && anonKey ? { url, anonKey } : null,
-    vapidPublicKey: pushEnabled() ? process.env.VAPID_PUBLIC_KEY! : null,
-  };
-}
-
-export type AlertSubscription = { endpoint: string; keys: { p256dh: string; auth: string } };
-
-/**
- * "Avísame": guarda la suscripción del teléfono a los avisos, ligada a su
- * solicitud abierta. Si el teléfono ya la tenía con otra solicitud (por
- * ejemplo, al hacer otra), pasa a la nueva.
- */
-export async function subscribeToAlerts(input: {
-  id: string;
-  editToken: string;
-  subscription: AlertSubscription;
-}): Promise<{ ok: true } | (Fail & { gone?: true })> {
-  const sub = input.subscription;
-  if (
-    typeof sub?.endpoint !== "string" ||
-    !isPushEndpoint(sub.endpoint) ||
-    sub.endpoint.length > 1000 ||
-    typeof sub.keys?.p256dh !== "string" ||
-    typeof sub.keys?.auth !== "string" ||
-    sub.keys.p256dh.length > 200 ||
-    sub.keys.auth.length > 200
-  ) {
-    return fail("No pudimos activar el aviso en este celular.");
-  }
-  return withDb("No pudimos activar el aviso. Intenta de nuevo en un momento.", async () => {
-    const { data, error } = await db().from("requests").select("edit_token_hash").eq("id", input.id).maybeSingle();
-    if (error) throw error;
-    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
-    }
-    const { error: upErr } = await db()
-      .from("push_subscriptions")
-      .upsert(
-        { request_id: input.id, endpoint: sub.endpoint, p256dh: sub.keys.p256dh, auth: sub.keys.auth },
-        { onConflict: "endpoint" },
-      );
-    if (upErr) throw upErr;
-    return { ok: true as const };
-  });
+  return { live: url && anonKey ? { url, anonKey } : null };
 }
 
 // ------------------------------------------------------------------- Analíticas
@@ -435,40 +384,6 @@ export async function trackEvent(input: AnalyticsEvent): Promise<void> {
 }
 
 // ---------------------------------------------------------------------- Helpers
-
-/**
- * Avisa al celular a los clientes con solicitud abierta que le sirven
- * al transportista que se acaba de poner disponible. Corre después de
- * responderle: si falla, él no se entera y su disponibilidad ya quedó.
- */
-async function alertClients(availability: AvailabilityLike): Promise<void> {
-  if (!pushEnabled()) return;
-  try {
-    const { data, error } = await db()
-      .from("push_subscriptions")
-      .select(
-        "id, endpoint, p256dh, auth, request:requests!inner(id, origin_city, destination_city, service_date, volume, status)",
-      )
-      // Las de su día o después, y las de "Cualquier día", que no tienen día.
-      .or(`service_date.gte.${availability.service_date},service_date.is.null`, { referencedTable: "request" })
-      .eq("request.status", "abierta")
-      .limit(1000);
-    if (error) throw error;
-    const rows = (data ?? []) as unknown as SubscriptionRow[];
-    const gone: string[] = [];
-    await Promise.all(
-      alertsFor(availability, rows).map(async ({ row, message }) => {
-        if ((await sendPush(row, message)) === "gone") gone.push(row.id);
-      }),
-    );
-    if (gone.length > 0) {
-      const { error: delErr } = await db().from("push_subscriptions").delete().in("id", gone);
-      if (delErr) throw delErr;
-    }
-  } catch (err) {
-    console.error(err);
-  }
-}
 
 /** Si el teléfono o la conexión ya guardaron demasiadas en la última hora. */
 async function tooMany(table: LimitedTable, whatsapp: string, ipHash: string | null): Promise<boolean> {
