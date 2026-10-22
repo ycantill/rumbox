@@ -286,3 +286,7 @@ se probó en un teléfono:
   dónde vas?" muestra todos los pueblos por donde pasa la carretera, no uno
   cada ~40 km, y cuenta los que tienen variante (centro a 6 km o menos).
   Sin migración.
+- **"Otro pueblo" en vez de "¿Por cuál camino vas?" (22 de octubre de
+  2026):** se quitó escoger entre caminos (casi no cambiaban). Queda la ruta
+  más rápida, y en "¿Por dónde vas?" el transportista agrega el pueblo si no
+  está: su ruta pasa a ir por ahí. Sin migración.

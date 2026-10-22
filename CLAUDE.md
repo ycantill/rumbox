@@ -43,7 +43,7 @@ src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
-                                 getMyAvailability, updateSpace, updateLocation, chooseRoute,
+                                 getMyAvailability, updateSpace, updateLocation,
                                  createRequest,
                                  getMyRequest, closeRequest,
                                  getLiveConfig, trackEvent)
@@ -52,7 +52,6 @@ src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
 src/lib/path.ts, directions.ts   La carretera: guardarla y medir sobre ella; pedirla a OpenRouteService
-src/lib/alternatives.ts          Los otros caminos del viaje, para "¿Por cuál camino vas?"
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -195,7 +194,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   carretera, con el centro a 6 km o menos, porque muchas pasan por una
   variante sin entrar al pueblo; Yohany, 22 de octubre de 2026). Solo si
   son más de 40 se deja uno cada tanto, primero los pueblos de cruce. Sin
-  carretera, uno cada ~40 km de la línea recta, como mucho 12. Lo cambia él a mano (Yohany, 22 de octubre
+  carretera, uno cada ~40 km de la línea recta, como mucho 12. Debajo está
+  el dibujo de su ruta, un punto por pueblo, desde el de ahora ("Vas por
+  aquí") hasta el destino: los que ya pasó no salen en el dibujo, pero sí en
+  la lista, por si tiene que corregir (Yohany, 22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
@@ -206,27 +208,25 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   disponible, el servidor le pide la carretera a OpenRouteService (gratis con
   llave, `OPENROUTESERVICE_API_KEY` en Vercel, `src/lib/directions.ts`) y la
   guarda simplificada en `route` (migración `0017_ruta_por_carretera.sql`).
-  Si otro ya hizo el mismo viaje, reusa la guardada. Con ella salen los
+  Si otro ya hizo el mismo viaje, reusa la guardada (`route_options`). Con ella salen los
   pueblos de "¿Por dónde vas?" y el match mira la carretera: el pueblo del
   cliente a 35 km o menos (`CORRIDOR_ROAD_TOLERANCE_KM`), y los 20 km atrás
   se cuentan sobre la carretera. Si no hay llave, el servicio no responde en
   5 segundos o la disponibilidad es de antes, todo sigue con la línea recta
   y su corredor ancho (una cuarta parte del viaje a cada lado). Solo se le
   mandan las coordenadas de los dos municipios, nada de la persona.
-- "¿Por cuál camino vas?" (Yohany, 22 de octubre de 2026): la ruta más
-  rápida puede no ser por donde va. Al ponerse disponible también se piden
-  otros caminos, pasando por pueblos de cruce (`HUBS` en
-  `src/lib/route.ts`) que no quedan en el más rápido, porque los
-  caminos alternos de OpenRouteService solo sirven hasta 100 km. Quedan los
-  que van por otro lado y no son mucho más largos, como mucho 3 contando el
-  más rápido, en `route_options` (migración `0019_varios_caminos.sql`). Si
-  hay más de uno, en su tarjeta escoge "Por Sincelejo", "Por Manizales"… con
-  algunos pueblos por donde pasa (`chooseRoute`). El pueblo del nombre y los
-  que dice que pasa salen siempre en la lista de "¿Por dónde vas?" de ese
-  camino, para que se vea que cambió. El escogido queda en
-  `route`, que es el que mira el match, y "¿Por dónde vas?" vuelve a su
-  origen. Empieza con el más rápido. Los caminos se reusan para el mismo
-  viaje, como la carretera.
+- "Otro pueblo" (Yohany, 22 de octubre de 2026): la ruta es la más rápida,
+  pero puede no ser por donde va. Al final de la lista de "¿Por dónde vas?"
+  está "Otro pueblo, no está en la lista", que abre `CitySelect`. Si el
+  pueblo que agrega no queda sobre su carretera (`offRoad`), `updateLocation`
+  le pide a OpenRouteService la carretera pasando por ahí y la guarda en
+  `route`, si no es más de 1,5 veces la de antes (`viaFits`); así la lista y
+  el match siguen su camino, y le sale "Listo, tu camino ahora pasa por …"
+  hasta que escoja otro. Si no se puede, queda marcado igual. Reemplazó a
+  "¿Por cuál camino vas?" (escoger entre 2 o 3 caminos armados con pueblos
+  de cruce), que se quitó porque los caminos casi no cambiaban. La columna
+  `route_options` (migración `0019_varios_caminos.sql`) queda con la más
+  rápida del viaje, para reusarla, porque `route` puede cambiar.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro

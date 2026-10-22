@@ -30,9 +30,8 @@ export const ROAD_MAX_STOPS = 40;
 
 /**
  * Pueblos de cruce: capitales y pueblos donde se juntan las carreteras
- * principales. Por ellos se piden los otros caminos (`alternatives.ts`), y en
- * la lista de "¿Por dónde vas?" van antes que los otros pueblos: son los que
- * más gente conoce.
+ * principales. En la lista de "¿Por dónde vas?" de un viaje muy largo van
+ * antes que los otros pueblos: son los que más gente conoce.
  */
 export const HUBS = [
   "bogota", "medellin", "cali", "barranquilla", "cartagena", "bucaramanga", "cucuta",
@@ -168,6 +167,31 @@ export function routeProgress(
   if (path.length < 2) return projectOnSegment(from, to, now).t;
   const km = pathKm(path);
   return km === 0 ? 0 : Math.max(0, Math.min(1, projectOnPath(path, now).along / km));
+}
+
+/**
+ * Qué tanto más larga que la de antes puede quedar la carretera pasando por un
+ * pueblo que él agregó en "¿Por dónde vas?". Más larga, seguro se equivocó de
+ * pueblo: queda marcado, pero la carretera no cambia.
+ */
+export const VIA_MAX_RATIO = 1.5;
+
+/**
+ * Si el pueblo que marcó en "¿Por dónde vas?" no queda sobre la carretera
+ * guardada (o no hay carretera): entonces va por otro lado y hay que pedirla
+ * otra vez pasando por ahí.
+ */
+export function offRoad(route: string | null | undefined, city: City): boolean {
+  const path = decodePath(route);
+  return path.length < 2 || projectOnPath(path, city).offKm > ROAD_STOP_MAX_OFF_KM;
+}
+
+/** Si la carretera nueva, por el pueblo que agregó, no es mucho más larga que la de antes. */
+export function viaFits(before: string | null | undefined, after: string): boolean {
+  const old = decodePath(before);
+  const next = decodePath(after);
+  if (next.length < 2) return false;
+  return old.length < 2 || pathKm(next) <= pathKm(old) * VIA_MAX_RATIO;
 }
 
 /** Cuánto se puede alejar la línea guardada de la carretera de verdad. */

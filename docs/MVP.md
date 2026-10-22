@@ -69,10 +69,9 @@ se elige igual que el destino.
   octubre de 2026). Los pueblos son los de la carretera de verdad, y el match
   también la sigue: se calcula una vez al ponerse disponible con
   OpenRouteService (gratis) y, si no responde, se usa la línea recta.
-- "¿Por cuál camino vas?": si hay otros caminos para su viaje (hasta 3,
-  contando el más rápido), escoge por cuál va, por ejemplo "Por Sincelejo",
-  con algunos pueblos por donde pasa. Los clientes lo ven según el camino que
-  escoja (Yohany, 22 de octubre de 2026).
+- Si el pueblo por donde va no está en la lista, lo agrega con "Otro
+  pueblo, no está en la lista": su camino pasa a ir por ahí, y la lista y los
+  clientes que lo ven siguen ese camino (Yohany, 22 de octubre de 2026).
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy
   disponible". Ese botón (que también sirve
