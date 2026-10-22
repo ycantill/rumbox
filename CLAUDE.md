@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# Muvia · guía para Claude
+# Mudavía · guía para Claude
 
-Muvia es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
+Mudavía es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
 definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
 clientes con transportistas que ya van hacia otro lado y tienen espacio libre.
 Sin registro, sin comisiones y con contacto directo por llamada o WhatsApp. El
@@ -96,6 +96,14 @@ public/sw.js                     Service worker
 ## Decisiones de producto
 
 Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
+
+**Nombre**
+- La app se llama Mudavía, con tilde en pantalla y `mudavia` en el dominio
+  (Yohany, 21 de octubre de 2026): mudanza y flete por la vía, para
+  camioneros independientes. Antes se llamaba Muvia, pero muvia.co ya tenía
+  dueño. El repo sigue siendo `ycantill/muvia`, y las claves de localStorage
+  (`muvia.*`) y la caché del service worker (`muvia-v1`) conservan el nombre
+  de antes para que nadie pierda lo que tiene guardado.
 
 **Audiencia y tono**
 - La app es para personas que no manejan mucho el celular. Textos cortos, que
@@ -308,7 +316,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Una cosa a la vez en cada teléfono**
 - Un teléfono tiene una sola cosa abierta: una solicitud o un viaje como
   transportista, nunca las dos (Yohany, octubre de 2026).
-- Mientras la tenga, Muvia lo lleva siempre a esa pantalla: el inicio y la
+- Mientras la tenga, Mudavía lo lleva siempre a esa pantalla: el inicio y la
   pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
   nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no estoy
@@ -360,7 +368,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   enlace "Cómo cuidamos tus datos" a `/privacidad`, que también sale en el
   inicio.
 - El responsable y su contacto están en `src/lib/legal.ts`. El correo
-  `ayuda@muvia.co` y el teléfono `300 111 2233` son de prueba, solo para el
+  `ayuda@mudavia.co` y el teléfono `300 111 2233` son de prueba, solo para el
   demo (Yohany, octubre de 2026): se cambian antes de abrir al público.
 - Los términos y condiciones entran en el MVP (Yohany, octubre de 2026);
   todavía no están escritos (docs/pendientes.md).
@@ -377,7 +385,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - El cliente lo pide en "Tu solicitud" con "Sí, avísame", dentro de la
   tarjeta "Buscando transportistas…" para que se vea sin bajar. Si antes le
   negó el permiso, ahí mismo sale "No te podemos avisar". En iPhone solo
-  funciona con Muvia agregada a la pantalla de inicio, y se le dice cómo.
+  funciona con Mudavía agregada a la pantalla de inicio, y se le dice cómo.
 - El transportista no recibe avisos. El aviso por WhatsApp al transportista
   necesita la API oficial y está fuera del MVP.
 

@@ -22,6 +22,8 @@ export function save(key: string, value: unknown): void {
 /** Se avisa cada vez que algo se guarda, para las pantallas que dependen de eso. */
 export const STORE_CHANGED = "muvia:guardado";
 
+// Las claves conservan el nombre de antes (muvia): cambiarlas haría que el
+// teléfono olvide la disponibilidad o la solicitud que ya tiene.
 export const KEYS = {
   driverProfile: "muvia.transportista.perfil",
   driverPosts: "muvia.transportista.publicaciones",

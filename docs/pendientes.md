@@ -1,4 +1,4 @@
-# Muvia · Pendientes
+# Mudavía · Pendientes
 
 Lo que falta por decidir o construir en el MVP, por orden de importancia.
 Actualizado el 18 de octubre de 2026. Los números son los de la revisión de
@@ -10,7 +10,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 - **Problema:** el aviso de privacidad y la página `/privacidad` ya existen,
   pero con datos de prueba para el demo (Yohany, 20 de octubre de 2026): el
-  correo `ayuda@muvia.co` y el teléfono `300 111 2233`, que no es real. El
+  correo `ayuda@mudavia.co` y el teléfono `300 111 2233`, que no es real. El
   Decreto 1377 de 2013 pide el nombre (o razón social), domicilio,
   dirección, correo y teléfono del responsable, y alguien tiene que responder
   ahí (10 días hábiles para preguntas, 15 para reclamos).
@@ -22,8 +22,8 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 - **Decisión:** entran en el MVP (Yohany, 20 de octubre de 2026).
 - **Falta:** escribirlos y enlazarlos junto al aviso de privacidad. Deberían
-  decir, por lo menos, que Muvia solo conecta a las personas, que el precio y
-  el servicio los acuerdan el cliente y el transportista, que Muvia no
+  decir, por lo menos, que Mudavía solo conecta a las personas, que el precio y
+  el servicio los acuerdan el cliente y el transportista, que Mudavía no
   responde por la carga ni por el viaje, y qué está prohibido (números
   ajenos, datos falsos). Necesitan los mismos datos del responsable que el
   punto 10.
@@ -51,7 +51,10 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
      con la palabra "trasteo", que es como se busca en Colombia, y un botón a
      "Necesito mover algo". Empezar con las ciudades principales, sin
      favorecer ninguna región.
-- **Falta decidir:** el dominio y cuándo se retoma.
+- **Dominio:** la app se llama Mudavía (Yohany, 21 de octubre de 2026,
+  porque muvia.co ya tenía dueño). mudavia.co y mudavia.com.co estaban
+  libres ese día; falta comprarlos y revisar la marca en la SIC.
+- **Falta decidir:** cuándo se retoma.
 
 ## Propuestas
 
@@ -79,7 +82,7 @@ se probó en un teléfono:
   solicita, toca "Sí, avísame", acepta el permiso y cierra la app. Un
   transportista que le sirve se pone disponible: le llega "Apareció un
   transportista" y al tocarlo abre "Tu solicitud" con el transportista. Probar
-  en Android y en un iPhone con Muvia agregada a la pantalla de inicio.
+  en Android y en un iPhone con Mudavía agregada a la pantalla de inicio.
 - Con "Tu solicitud" abierta, un transportista que le sirve se pone disponible
   en otro teléfono: aparece en la lista en un par de segundos, sin esperar el
   minuto.
@@ -100,7 +103,7 @@ se probó en un teléfono:
 - Con la llave de OpenRouteService puesta en Vercel, ponerse disponible de
   Bogotá a Cartagena: "¿Por dónde vas?" muestra pueblos de la carretera
   (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
-- Instalar la app en Android y en iPhone y ver el logo de Muvia.
+- Instalar la app en Android y en iPhone y ver el logo de Mudavía.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
   salir el aviso de señal sin perder lo llenado.
 - El cliente no ve ningún precio ni le preguntan por escaleras. Al final ve
@@ -140,7 +143,7 @@ se probó en un teléfono:
 - Un transportista que puede llevar "Algunas cosas" le sale a un cliente que
   mueve algunas cosas, pero no a uno que mueve una habitación.
 - Tocar "Ponerme disponible" o "Solicitar transportista" sin llenar nada: sale
-  el mensaje de Muvia de lo primero que falta, no el globito del navegador.
+  el mensaje de Mudavía de lo primero que falta, no el globito del navegador.
 - Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
   el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
   pasó…".
@@ -235,7 +238,7 @@ se probó en un teléfono:
 - **Revisión de seguridad (20 de octubre de 2026, segunda parte):** límite
   para el transportista (3 por hora por teléfono y 10 por conexión), los
   avisos solo se mandan a los servicios de avisos de los navegadores, y
-  cabeceras para que ninguna otra página meta Muvia dentro de la suya.
+  cabeceras para que ninguna otra página meta Mudavía dentro de la suya.
   Requiere la migración `0008_limite_transportista.sql`.
 - **Teléfonos solo mientras valen (20 de octubre de 2026):** el teléfono y la
   huella de la conexión se borran cuando la solicitud o la disponibilidad deja
@@ -249,7 +252,7 @@ se probó en un teléfono:
   También Vercel Web Analytics (gratis), que hay que activar en el panel de
   Vercel.
 - **PR #36:** una cosa a la vez en cada teléfono: o es transportista o pide
-  uno. Con algo abierto, Muvia lo lleva siempre a esa pantalla (sin inicio ni
+  uno. Con algo abierto, Mudavía lo lleva siempre a esa pantalla (sin inicio ni
   la pantalla del otro papel), y el servidor lo revisa con el número. No
   necesita migración.
 - **PR #37:** "Tu solicitud" muestra la ruta, el día, qué va a mover y la
@@ -264,7 +267,7 @@ se probó en un teléfono:
   Supabase (Yohany, 20 de octubre de 2026).
 - **"Te encontraron" (20 de octubre de 2026):** el transportista ve a los
   clientes que tocaron su tarjeta, con los dos últimos números del teléfono,
-  y contesta "Lo llevo" o "No lo llevo". Con "Lo llevo", Muvia le resta el
+  y contesta "Lo llevo" o "No lo llevo". Con "Lo llevo", Mudavía le resta el
   espacio con puntos, y se quita "Solo queda espacio para paquetes". Requiere la
   migración `0012_te_encontraron.sql`.
 - **Sin ayuda para cargar (20 de octubre de 2026):** ni el cliente ni el

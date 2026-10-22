@@ -560,14 +560,14 @@ function WhereYouAre({
       )}
       <p className="text-sm text-muted">
         {here
-          ? "Mientras tengas Muvia abierta, se actualiza sola."
+          ? "Mientras tengas Mudavía abierta, se actualiza sola."
           : "Toca el botón para que tu teléfono diga por dónde vas. Así te llaman los clientes que te quedan de camino."}
       </p>
       <button type="button" className="btn-secondary" disabled={locating} onClick={() => locate(false)}>
         {locating ? "Un momento…" : here ? "Actualizar por dónde voy" : "Marcar por dónde voy"}
       </button>
       <ErrorNote
-        message={failed ? "No pudimos saber dónde estás. Revisa que Muvia tenga permiso para ver tu ubicación." : null}
+        message={failed ? "No pudimos saber dónde estás. Revisa que Mudavía tenga permiso para ver tu ubicación." : null}
       />
     </section>
   );

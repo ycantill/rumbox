@@ -6,8 +6,8 @@
 // verdad, con el nombre y la dirección del responsable (docs/pendientes.md).
 
 export const PRIVACY_CONTACT = {
-  name: "Muvia",
-  email: "ayuda@muvia.co",
+  name: "Mudavía",
+  email: "ayuda@mudavia.co",
   phone: "300 111 2233",
 } as const;
 

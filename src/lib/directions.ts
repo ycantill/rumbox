@@ -6,7 +6,7 @@ import { routeFromGeoJson } from "./route";
 // llave, datos de OpenStreetMap). Se pide una vez, al ponerse disponible, y se
 // guarda. Solo se mandan las coordenadas del centro de los dos municipios,
 // nada de la persona. Sin llave, o si el servicio no responde, no hay
-// carretera y Muvia usa la línea recta.
+// carretera y Mudavía usa la línea recta.
 
 const ORS_URL = "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
 /** Lo que espera al servicio: el transportista está esperando su respuesta. */
