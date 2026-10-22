@@ -188,17 +188,14 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
   corredor), vayan a donde vayan (Yohany, octubre de 2026).
 - "¿Por dónde vas?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
-  transportista ve su ruta pueblo por pueblo (`routeStops`: los municipios
-  por donde pasa la carretera, uno cada ~40 km, como mucho 12) y marca por dónde va con "Marcar por dónde voy". Si ya dio
-  permiso de ubicación, se actualiza sola al abrir la pantalla, al volver a
-  la app y cada minuto mientras está abierta; sin permiso, el teléfono no le
-  pregunta hasta que toca el botón. Es una PWA: con la app cerrada no se
-  actualiza. Solo se guarda el municipio más cercano (`current_city`,
-  migración `0016_por_donde_va.sql`); las coordenadas no salen del teléfono.
-  Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
+  transportista elige en una lista desplegable el pueblo por donde va, de
+  los de su ruta (`routeStops`: los municipios por donde pasa la carretera,
+  uno cada ~40 km, como mucho 12). Lo cambia él a mano (Yohany, 22 de octubre
+  de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
+  (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
-  salen los que quedan más de 20 km detrás de donde sale. Con "Cualquier destino" no hay lista: dice "Vas
-  por…" y el match es por cercanía a donde va, no a donde salió. El cliente
+  salen los que quedan más de 20 km detrás de donde sale. Con "Cualquier
+  destino" no hay ruta: elige entre todos los municipios (`CitySelect`) y el match es por cercanía a donde va, no a donde salió. El cliente
   no ve por dónde va (Yohany): solo sirve para el match.
 - La ruta es por carretera (Yohany, 21 de octubre de 2026): al ponerse
   disponible, el servidor le pide la carretera a OpenRouteService (gratis con
@@ -270,8 +267,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   y ninguna región va primero.
 - El campo vacío dice "Escribe o elige", para invitar a las dos formas.
 - No hay botón "Ubicarme" (Yohany, 22 de octubre de 2026): el origen de las
-  dos pantallas se elige igual que el destino, para simplificar el MVP. La
-  única vez que se pide la ubicación es "Marcar por dónde voy".
+  dos pantallas se elige igual que el destino, para simplificar el MVP.
+  Mudavía no pide la ubicación del teléfono en ninguna pantalla.
 - Los slugs se guardan en la base de datos: no se cambian.
 
 **El cliente llena una sola pantalla**

@@ -96,7 +96,7 @@ se probó en un teléfono:
   datos de antes, sin el día.
 
 - Con la llave de OpenRouteService puesta en Vercel, ponerse disponible de
-  Bogotá a Cartagena: "¿Por dónde vas?" muestra pueblos de la carretera
+  Bogotá a Cartagena: la lista de "¿Por dónde vas?" muestra pueblos de la carretera
   (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
 - Instalar la app en Android y en iPhone y ver el logo de Mudavía.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
@@ -272,5 +272,6 @@ se probó en un teléfono:
   dónde vas?" y el match siguen la carretera, con la línea recta de respaldo.
 - **PR #50, más simple (22 de octubre de 2026):** sin "Ubicarme" en las dos
   pantallas y sin avisos al celular (en iPhone eran muy complicados): el
-  cliente entra cada tanto a mirar "Tu solicitud". Migración 0018 borra
+  cliente entra cada tanto a mirar "Tu solicitud". "¿Por dónde vas?" se
+  elige a mano en una lista desplegable, sin la ubicación del teléfono. Migración 0018 borra
   `push_subscriptions`.

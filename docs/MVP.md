@@ -62,9 +62,9 @@ se elige igual que el destino.
   cuándo viaja y no se vence (Yohany, 21 de octubre de 2026); sigue hasta
   "Ya no estoy disponible". Las rutas que se repiten quedan para
   después, como mejora futura.
-- "¿Por dónde vas?": en su tarjeta ve su ruta pueblo por pueblo y marca por
-  dónde va con la ubicación del teléfono (botón, y sola mientras tiene la app
-  abierta si ya dio permiso). Deja de salirles a los clientes que ya dejó
+- "¿Por dónde vas?": en su tarjeta elige en una lista desplegable el pueblo
+  de su ruta por donde va. Lo cambia él a mano, sin la ubicación del teléfono
+  (Yohany, 22 de octubre de 2026). Deja de salirles a los clientes que ya dejó
   atrás. Se guarda solo el municipio; el cliente no lo ve (Yohany, 21 de
   octubre de 2026). Los pueblos son los de la carretera de verdad, y el match
   también la sigue: se calcula una vez al ponerse disponible con

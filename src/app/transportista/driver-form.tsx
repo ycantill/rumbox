@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   getMyAvailability,
   publishAvailability,
@@ -19,7 +19,7 @@ import {
   useServiceDay,
 } from "@/components/ui";
 import { useActiveScreen } from "@/components/one-at-a-time";
-import { getCity, nearestCity } from "@/lib/cities";
+import { getCity } from "@/lib/cities";
 import { whenText } from "@/lib/dates";
 import {
   DRIVER_SPACES,
@@ -30,7 +30,7 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
-import { routeProgress, routeStops } from "@/lib/route";
+import { routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
@@ -359,7 +359,7 @@ function CurrentWork({
         </p>
       </section>
 
-      <WhereYouAre post={post} latest={latest} onPatch={onPatch} />
+      <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
 
@@ -428,150 +428,82 @@ function SpaceLeft({
 }
 
 /**
- * "¿Por dónde vas?": su ruta pueblo por pueblo y por dónde va. La ubicación
- * se pide con el botón y, si ya dio permiso, se actualiza sola al abrir la
- * pantalla, al volver a la app y cada minuto mientras la tiene abierta. Solo
- * se guarda el municipio más cercano. Los clientes no lo ven (Yohany, 21 de
- * octubre de 2026): les deja de salir si su pueblo ya quedó atrás.
+ * "¿Por dónde vas?": él mismo elige en una lista desplegable el pueblo por
+ * donde va, de los de su ruta (Yohany, 22 de octubre de 2026; antes se marcaba
+ * con la ubicación del teléfono). Mientras no lo cambie, cuenta desde donde
+ * sale. Con "Cualquier destino" no hay ruta: elige de todos los municipios.
+ * Los clientes no lo ven (Yohany, 21 de octubre de 2026): les deja de salir si
+ * su pueblo ya quedó atrás.
  */
 function WhereYouAre({
   post,
-  latest,
+  latestRef,
   onPatch,
 }: {
   post: MyPost;
   /** El número de la última consulta de la tarjeta: una vieja no pisa por dónde va. */
-  latest: React.RefObject<number>;
+  latestRef: React.RefObject<number>;
   onPatch: (patch: Partial<MyPost>) => void;
 }) {
-  const [locating, setLocating] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { id, editToken, origin } = post;
   const destination = post.destination ?? "";
   const route = post.route;
   const stops = useMemo(() => routeStops(origin, destination, route), [origin, destination, route]);
-  const here = getCity(post.current);
-  const progress = post.current ? routeProgress(origin, destination, post.current, route) : null;
+  const value = post.current ?? origin;
 
-  // Lo último que se mandó al servidor, para no mandar dos veces el mismo pueblo.
-  const sent = useRef(post.current ?? null);
-
-  const locate = useCallback(
-    (quiet: boolean) => {
-      if (!navigator.geolocation) {
-        if (!quiet) setFailed(true);
-        return;
+  const before = post.current ?? null;
+  const change = useCallback(
+    async (slug: string) => {
+      if (!getCity(slug) || slug === value) return;
+      onPatch({ current: slug });
+      setBusy(true);
+      setError(null);
+      latestRef.current++;
+      const res = await callServer(() => updateLocation({ id, editToken, city: slug }));
+      latestRef.current++;
+      setBusy(false);
+      if (!res.ok) {
+        onPatch({ current: before });
+        setError(res.error);
       }
-      if (!quiet) {
-        setLocating(true);
-        setFailed(false);
-      }
-      navigator.geolocation.getCurrentPosition(
-        async (pos) => {
-          setLocating(false);
-          setFailed(false);
-          const slug = nearestCity(pos.coords.latitude, pos.coords.longitude).slug;
-          onPatch({ current: slug });
-          if (sent.current === slug) return;
-          latest.current++;
-          const res = await callServer(() => updateLocation({ id, editToken, city: slug }));
-          latest.current++;
-          if (res.ok) sent.current = slug;
-        },
-        () => {
-          // No dio permiso, el teléfono no supo dónde está o se demoró.
-          setLocating(false);
-          if (!quiet) setFailed(true);
-        },
-        { timeout: 15_000, maximumAge: 60_000 },
-      );
     },
-    [id, editToken, latest, onPatch],
+    [id, editToken, value, before, latestRef, onPatch],
   );
 
-  // Si ya dio permiso, se actualiza solo. Si no, espera a que toque el botón:
-  // el teléfono no le pregunta nada sin que él lo pida.
-  useEffect(() => {
-    let cancelled = false;
-    async function ifAllowed() {
-      try {
-        const status = await navigator.permissions?.query({ name: "geolocation" });
-        if (!cancelled && status?.state === "granted") locate(true);
-      } catch {
-        // Un navegador que no deja preguntar por el permiso: solo con el botón.
-      }
-    }
-    void ifAllowed();
-    const stop = refreshWhileOpen(() => void ifAllowed());
-    return () => {
-      cancelled = true;
-      stop();
-    };
-  }, [locate]);
-
-  // Por dónde va, dentro de la lista: en el pueblo de la ruta donde está, o
-  // entre los dos pueblos por donde pasa.
-  const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
-  const passed = (t: number) => progress !== null && t < progress;
-  const next = progress === null ? -1 : stops.findIndex((s) => s.t > progress);
-  const between = !here || hereIndex !== -1 || progress === null ? -1 : next === -1 ? stops.length : next;
+  // Lo marcado antes con la ubicación pudo quedar entre dos pueblos de la lista.
+  const options =
+    stops.length > 0 && !stops.some((s) => s.city.slug === value) && getCity(value)
+      ? [...stops.map((s) => s.city), getCity(value)!]
+      : stops.map((s) => s.city);
 
   return (
-    <section className="card flex flex-col gap-3">
-      <h2 className="font-semibold">¿Por dónde vas?</h2>
-      {stops.length > 0 ? (
-        <ol className="flex flex-col">
-          {stops.map((stop, i) => (
-            <Fragment key={stop.city.slug}>
-              {i === between && here && <HereRow name={here.name} />}
-              <li className="flex items-center gap-3 py-1.5">
-                <span
-                  aria-hidden
-                  className={
-                    i === hereIndex
-                      ? "size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft"
-                      : passed(stop.t)
-                        ? "size-3 shrink-0 rounded-full bg-muted/40"
-                        : "size-3 shrink-0 rounded-full border-2 border-brand"
-                  }
-                />
-                <span
-                  className={
-                    i === hereIndex ? "font-semibold" : passed(stop.t) ? "text-muted line-through" : undefined
-                  }
-                >
-                  {stop.city.name}
-                </span>
-                {i === hereIndex && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
-              </li>
-            </Fragment>
+    <section className="card flex flex-col gap-2">
+      <label htmlFor="where-you-are" className="font-semibold">
+        ¿Por dónde vas?
+      </label>
+      {options.length > 0 ? (
+        <select
+          id="where-you-are"
+          className="input"
+          value={value}
+          disabled={busy}
+          onChange={(e) => void change(e.target.value)}
+        >
+          {options.map((c) => (
+            <option key={c.slug} value={c.slug}>
+              {c.name}
+            </option>
           ))}
-          {between === stops.length && here && <HereRow name={here.name} />}
-        </ol>
+        </select>
       ) : (
-        here && <p className="font-semibold">Vas por {here.name}</p>
+        <CitySelect name="where-you-are" value={value} onChange={(slug) => void change(slug)} />
       )}
       <p className="text-sm text-muted">
-        {here
-          ? "Mientras tengas Mudavía abierta, se actualiza sola."
-          : "Toca el botón para que tu teléfono diga por dónde vas. Así te llaman los clientes que te quedan de camino."}
+        Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino.
       </p>
-      <button type="button" className="btn-secondary" disabled={locating} onClick={() => locate(false)}>
-        {locating ? "Un momento…" : here ? "Actualizar por dónde voy" : "Marcar por dónde voy"}
-      </button>
-      <ErrorNote
-        message={failed ? "No pudimos saber dónde estás. Revisa que Mudavía tenga permiso para ver tu ubicación." : null}
-      />
+      <ErrorNote message={error} />
     </section>
-  );
-}
-
-/** "Vas por …" entre dos pueblos de la ruta. */
-function HereRow({ name }: { name: string }) {
-  return (
-    <li className="flex items-center gap-3 py-1.5">
-      <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
-      <span className="font-semibold">Vas por {name}</span>
-    </li>
   );
 }
