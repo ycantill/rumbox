@@ -19,6 +19,33 @@ export const ROUTE_STOP_MAX_OFF_KM = 20;
 /** Qué tan lejos de la carretera puede quedar el centro de un pueblo por donde pasa. */
 export const ROAD_STOP_MAX_OFF_KM = 4;
 
+/**
+ * Pueblos de cruce: capitales y pueblos donde se juntan las carreteras
+ * principales. Por ellos se piden los otros caminos (`alternatives.ts`), y en
+ * la lista de "¿Por dónde vas?" van antes que los otros pueblos: son los que
+ * más gente conoce.
+ */
+export const HUBS = [
+  "bogota", "medellin", "cali", "barranquilla", "cartagena", "bucaramanga", "cucuta",
+  "pereira", "manizales", "armenia", "ibague", "neiva", "pasto", "popayan",
+  "villavicencio", "tunja", "monteria", "sincelejo", "valledupar", "santa-marta",
+  "riohacha", "florencia-caqueta", "yopal", "quibdo", "mocoa", "arauca",
+  "honda", "la-dorada", "puerto-boyaca", "puerto-berrio", "puerto-triunfo",
+  "aguachica", "bosconia", "caucasia", "planeta-rica", "magangue",
+  "el-carmen-de-bolivar", "lorica", "turbo", "apartado", "girardot", "espinal",
+  "duitama", "sogamoso", "san-gil", "barbosa-santander", "chiquinquira",
+  "zipaquira", "fusagasuga", "cartago", "tulua", "guadalajara-de-buga", "palmira",
+  "buenaventura", "garzon", "pitalito", "santa-cruz-de-mompox", "barrancabermeja",
+  "ocana", "pamplona", "maicao", "fundacion", "plato", "el-banco", "ayapel",
+  "montelibano", "sahagun", "chigorodo", "santa-fe-de-antioquia", "yarumal",
+  "rionegro-antioquia", "la-pintada", "san-sebastian-de-mariquita", "fresno",
+  "granada-meta", "puerto-lopez", "aguazul", "curumani", "san-alberto", "cimitarra",
+  "guaduas", "villeta", "facatativa", "melgar", "chaparral", "sabanalarga-atlantico",
+  "calamar-bolivar",
+];
+
+const HUB_SET = new Set(HUBS);
+
 export type RouteStop = {
   city: City;
   /** Qué tanto del viaje lleva al pasar por aquí: 0 en el origen, 1 en el destino. */
@@ -43,7 +70,8 @@ function stopCount(km: number): number {
 /**
  * Los pueblos por donde pasa la carretera. Primero, todos los que quedan
  * sobre ella; después, uno cerca de cada punto del camino que toca (cada
- * ~40 km), el que quede más pegado a la carretera.
+ * ~40 km), un pueblo de cruce si hay, y si no el que quede más pegado a la
+ * carretera.
  */
 function roadStops(path: Point[], from: City, to: City): RouteStop[] {
   const km = pathKm(path);
@@ -72,13 +100,20 @@ function roadStops(path: Point[], from: City, to: City): RouteStop[] {
     let best: (typeof onRoad)[number] | null = null;
     for (const c of onRoad) {
       if (picked.has(c.city.slug) || Math.abs(c.along - target) > step / 2) continue;
-      if (!best || c.offKm < best.offKm) best = c;
+      if (!best || better(c, best)) best = c;
     }
     if (!best) continue;
     picked.add(best.city.slug);
     stops.push({ city: best.city, t: best.along / km });
   }
   return stops.sort((a, b) => a.t - b.t);
+}
+
+/** Un pueblo de cruce gana; entre iguales, el más pegado a la carretera. */
+function better(a: { city: City; offKm: number }, b: { city: City; offKm: number }): boolean {
+  const hubA = HUB_SET.has(a.city.slug);
+  const hubB = HUB_SET.has(b.city.slug);
+  return hubA !== hubB ? hubA : a.offKm < b.offKm;
 }
 
 /** Sin carretera: los municipios más cercanos a la línea recta, uno cada tanto. */

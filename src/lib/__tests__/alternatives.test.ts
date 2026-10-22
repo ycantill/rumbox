@@ -10,6 +10,7 @@ import {
 } from "../alternatives";
 import { getCity, haversineKm } from "../cities";
 import { decodePath, encodePath, projectOnPath, type Point } from "../path";
+import { routeStops } from "../route";
 
 // Caminos de prueba armados con los pueblos por donde pasan.
 const road = (...slugs: string[]): string =>
@@ -27,6 +28,12 @@ const POR_AUTOPISTA = road(
 );
 const POR_MANIZALES = road(
   "bogota", "villeta", "guaduas", "honda", "san-sebastian-de-mariquita", "fresno", "manizales", "la-pintada", "medellin",
+);
+// Por Manizales, con todos los pueblos de la carretera: varios quedan pegados a ella.
+const POR_MANIZALES_COMPLETO = road(
+  "bogota", "facatativa", "villeta", "guaduas", "honda", "san-sebastian-de-mariquita", "fresno", "manizales",
+  "neira", "aranzazu", "salamina-caldas", "aguadas", "la-pintada", "santa-barbara-antioquia", "caldas-antioquia",
+  "medellin",
 );
 // Casi la misma autopista, con un desvío de pocos km.
 const CASI_IGUAL = road(
@@ -106,5 +113,16 @@ describe("routeOptions", () => {
     // Ni el origen ni el destino salen como pueblos por donde pasa.
     expect(manizales.towns).not.toContain("Bogotá");
     expect(manizales.towns).not.toContain("Medellín");
+  });
+
+  it("el pueblo del nombre y los pueblos por donde pasa salen en la lista de \"¿Por dónde vas?\"", () => {
+    const routes = [POR_AUTOPISTA, POR_MANIZALES_COMPLETO];
+    const options = routeOptions("bogota", "medellin", routes);
+    expect(options[1].label).toBe("Por Manizales");
+    options.forEach((o, i) => {
+      const list = routeStops("bogota", "medellin", routes[i]).map((s) => s.city.name);
+      expect(list).toContain(o.label.replace(/^Por /, ""));
+      for (const town of o.towns) expect(list).toContain(town);
+    });
   });
 });
