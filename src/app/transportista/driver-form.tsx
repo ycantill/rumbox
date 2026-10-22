@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
-  chooseRoute,
   getMyAvailability,
   publishAvailability,
   updateAvailability,
@@ -31,7 +30,6 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
-import { routeOptions } from "@/lib/alternatives";
 import { routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
@@ -57,8 +55,6 @@ export type MyPost = {
   // La carretera de su viaje (`encodePath`), para "¿Por dónde vas?". Sin ella,
   // la línea recta.
   route?: string | null;
-  // Los caminos que puede escoger, el más rápido primero ("¿Por cuál camino vas?").
-  routeOptions?: string[];
 };
 
 export function DriverForm() {
@@ -147,7 +143,6 @@ export function DriverForm() {
         date,
         space: space as DriverSpace,
         route: res.route,
-        routeOptions: res.routeOptions,
       };
       updateCurrent(post);
       setJustPublished(true);
@@ -284,7 +279,6 @@ function CurrentWork({
             fullSpace: res.fullSpace,
             current: res.currentCity,
             route: res.route,
-            routeOptions: res.routeOptions,
           });
         },
         () => {
@@ -370,8 +364,6 @@ function CurrentWork({
         </p>
       </section>
 
-      <WhichWay post={post} latestRef={latest} onPatch={onPatch} />
-
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
@@ -441,92 +433,13 @@ function SpaceLeft({
 }
 
 /**
- * "¿Por cuál camino vas?": el servicio de rutas da el más rápido, pero él
- * puede ir por otro. Si hay otros caminos, escoge por cuál va (Yohany, 22 de
- * octubre de 2026), y con ese salen los pueblos de "¿Por dónde vas?" y los
- * clientes que le quedan de camino.
- */
-function WhichWay({
-  post,
-  latestRef,
-  onPatch,
-}: {
-  post: MyPost;
-  /** El número de la última consulta de la tarjeta: una vieja no pisa el camino. */
-  latestRef: React.RefObject<number>;
-  onPatch: (patch: Partial<MyPost>) => void;
-}) {
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { id, editToken, origin } = post;
-  const destination = post.destination ?? "";
-  const routes = useMemo(() => post.routeOptions ?? [], [post.routeOptions]);
-  const options = useMemo(() => routeOptions(origin, destination, routes), [origin, destination, routes]);
-  if (routes.length < 2) return null;
-  const chosen = Math.max(0, routes.indexOf(post.route ?? ""));
-
-  async function choose(option: number) {
-    if (option === chosen) return;
-    const before = { route: post.route, current: post.current };
-    // Por dónde iba puede no estar en el camino nuevo: lo vuelve a escoger.
-    onPatch({ route: routes[option], current: null });
-    setBusy(true);
-    setError(null);
-    latestRef.current++;
-    const res = await callServer(() => chooseRoute({ id, editToken, option }));
-    latestRef.current++;
-    setBusy(false);
-    if (!res.ok) {
-      onPatch(before);
-      setError(res.error);
-    }
-  }
-
-  return (
-    <section className="card flex flex-col gap-2">
-      <h3 className="font-semibold">¿Por cuál camino vas?</h3>
-      <div className="flex flex-col gap-2">
-        {options.map((o, i) => {
-          const selected = i === chosen;
-          return (
-            <button
-              key={i}
-              type="button"
-              aria-pressed={selected}
-              disabled={busy}
-              onClick={() => void choose(i)}
-              className={`rounded-xl border px-3 py-3 text-left text-sm transition ${
-                selected
-                  ? "border-brand bg-brand-soft font-semibold text-brand-ink"
-                  : "border-line bg-surface text-ink hover:border-brand/50"
-              }`}
-            >
-              {o.label}
-              {o.towns.length > 0 && (
-                <span className="mt-0.5 block text-xs font-normal text-muted">Pasa por {listText(o.towns)}</span>
-              )}
-            </button>
-          );
-        })}
-      </div>
-      <p className="text-sm text-muted">Si vas por otro lado, escoge por cuál. Los clientes te ven según el camino que escojas.</p>
-      <ErrorNote message={error} />
-    </section>
-  );
-}
-
-/** "Sahagún, Sincelejo y Turbaco". */
-function listText(items: readonly string[]): string {
-  return items.length <= 1 ? (items[0] ?? "") : `${items.slice(0, -1).join(", ")} y ${items.at(-1)}`;
-}
-
-/**
  * "¿Por dónde vas?": él mismo elige en una lista desplegable el pueblo por
  * donde va, de los de su ruta (Yohany, 22 de octubre de 2026; antes se marcaba
- * con la ubicación del teléfono). Mientras no lo cambie, cuenta desde donde
- * sale. Con "Cualquier destino" no hay ruta: elige de todos los municipios.
- * Los clientes no lo ven (Yohany, 21 de octubre de 2026): les deja de salir si
- * su pueblo ya quedó atrás.
+ * con la ubicación del teléfono). Si no está, lo agrega (Yohany, 22 de octubre
+ * de 2026): va por otro lado, y su ruta pasa a ir por ahí. Mientras no lo
+ * cambie, cuenta desde donde sale. Con "Cualquier destino" no hay ruta: elige
+ * de todos los municipios. Los clientes no lo ven (Yohany, 21 de octubre de
+ * 2026): les deja de salir si su pueblo ya quedó atrás.
  */
 function WhereYouAre({
   post,
@@ -540,6 +453,8 @@ function WhereYouAre({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Si tocó "Otro pueblo": sale el campo para escribirlo.
+  const [adding, setAdding] = useState(false);
   const { id, editToken, origin } = post;
   const destination = post.destination ?? "";
   const route = post.route;
@@ -560,12 +475,17 @@ function WhereYouAre({
       if (!res.ok) {
         onPatch({ current: before });
         setError(res.error);
+        return;
       }
+      // Si el pueblo no quedaba en su ruta, ahora la ruta pasa por ahí.
+      onPatch({ route: res.route });
+      setAdding(false);
     },
     [id, editToken, value, before, latestRef, onPatch],
   );
 
-  // Lo marcado antes con la ubicación pudo quedar entre dos pueblos de la lista.
+  // Uno que agregó y la ruta no pudo pasar por ahí (sin señal del servicio de
+  // rutas) también sale, para que vea lo que eligió.
   const options =
     stops.length > 0 && !stops.some((s) => s.city.slug === value) && getCity(value)
       ? [...stops.map((s) => s.city), getCity(value)!]
@@ -577,26 +497,50 @@ function WhereYouAre({
         ¿Por dónde vas?
       </label>
       {options.length > 0 ? (
-        <select
-          id="where-you-are"
-          className="input"
-          value={value}
-          disabled={busy}
-          onChange={(e) => void change(e.target.value)}
-        >
-          {options.map((c) => (
-            <option key={c.slug} value={c.slug}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        <>
+          <select
+            id="where-you-are"
+            className="input"
+            value={adding ? OTHER_TOWN : value}
+            disabled={busy}
+            onChange={(e) => {
+              if (e.target.value === OTHER_TOWN) {
+                setAdding(true);
+                return;
+              }
+              setAdding(false);
+              void change(e.target.value);
+            }}
+          >
+            {options.map((c) => (
+              <option key={c.slug} value={c.slug}>
+                {c.name}
+              </option>
+            ))}
+            <option value={OTHER_TOWN}>Otro pueblo, no está en la lista</option>
+          </select>
+          {adding && (
+            <CitySelect
+              name="other-town"
+              value=""
+              exclude={origin}
+              placeholder="Escribe el pueblo por donde vas"
+              onChange={(slug) => void change(slug)}
+            />
+          )}
+        </>
       ) : (
         <CitySelect name="where-you-are" value={value} onChange={(slug) => void change(slug)} />
       )}
       <p className="text-sm text-muted">
-        Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino.
+        {adding
+          ? "Escríbelo o elígelo. Tu camino pasará por ahí."
+          : "Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino."}
       </p>
       <ErrorNote message={error} />
     </section>
   );
 }
+
+/** La opción de "¿Por dónde vas?" para agregar un pueblo que no está en la lista. */
+const OTHER_TOWN = "__otro";

@@ -1,7 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { getCity } from "../cities";
 import { decodePath, encodePath, pathKm, projectOnPath } from "../path";
-import { ROAD_MAX_STOPS, ROAD_STOP_MAX_OFF_KM, ROUTE_MAX_STOPS, routeFromGeoJson, routeProgress, routeStops } from "../route";
+import {
+  ROAD_MAX_STOPS,
+  ROAD_STOP_MAX_OFF_KM,
+  ROUTE_MAX_STOPS,
+  offRoad,
+  routeFromGeoJson,
+  routeProgress,
+  routeStops,
+  viaFits,
+} from "../route";
 import { BOGOTA_BARRANQUILLA, BOGOTA_BARRANQUILLA_ROUTE } from "./road-fixture";
 
 describe("routeStops", () => {
@@ -122,5 +131,32 @@ describe("routeFromGeoJson", () => {
     // Mucho más larga que la línea recta: da la vuelta por otro lado.
     const detour = [[bogota.lng, bogota.lat], [-68, 2], [-80, 12], [barranquilla.lng, barranquilla.lat]];
     expect(routeFromGeoJson(geojson(detour), bogota, barranquilla)).toBeNull();
+  });
+});
+
+describe("agregar un pueblo en \"¿Por dónde vas?\"", () => {
+  const road = (...slugs: string[]) => encodePath(slugs.map((slug) => getCity(slug)!));
+  const troncal = road("barranquilla", "sabanalarga-atlantico", "el-carmen-de-bolivar", "sincelejo", "sahagun", "planeta-rica", "montelibano");
+  const porLaCosta = road("barranquilla", "cartagena", "tolu", "lorica", "monteria", "planeta-rica", "montelibano");
+  const porBucaramanga = road("barranquilla", "valledupar", "aguachica", "bucaramanga", "puerto-berrio", "caucasia", "montelibano");
+
+  it("un pueblo sobre la carretera no la cambia; uno fuera de ella, sí", () => {
+    expect(offRoad(troncal, getCity("sincelejo")!)).toBe(false);
+    expect(offRoad(troncal, getCity("tolu")!)).toBe(true);
+    // Sin carretera guardada, se pide.
+    expect(offRoad(null, getCity("sincelejo")!)).toBe(true);
+  });
+
+  it("la carretera nueva sirve si no es mucho más larga que la de antes", () => {
+    expect(viaFits(troncal, porLaCosta)).toBe(true);
+    // Por Bucaramanga: seguro se equivocó de pueblo.
+    expect(viaFits(troncal, porBucaramanga)).toBe(false);
+    expect(viaFits(null, porLaCosta)).toBe(true);
+    expect(viaFits(troncal, "")).toBe(false);
+  });
+
+  it("con la carretera nueva, el pueblo que agregó sale en la lista", () => {
+    expect(routeStops("barranquilla", "montelibano", troncal).map((s) => s.city.slug)).not.toContain("tolu");
+    expect(routeStops("barranquilla", "montelibano", porLaCosta).map((s) => s.city.slug)).toContain("tolu");
   });
 });
