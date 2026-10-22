@@ -6,30 +6,11 @@
 
 import { getCity, haversineKm, type City } from "./cities";
 import { decodePath, pathKm, projectOnPath, projectOnSegment, type Point } from "./path";
-import { ROAD_STOP_MAX_OFF_KM, routeStops } from "./route";
+import { HUBS, routeStops } from "./route";
 
-/**
- * Pueblos de cruce: capitales y pueblos donde se juntan las carreteras
- * principales. Por ellos se piden los otros caminos.
- */
-export const HUBS = [
-  "bogota", "medellin", "cali", "barranquilla", "cartagena", "bucaramanga", "cucuta",
-  "pereira", "manizales", "armenia", "ibague", "neiva", "pasto", "popayan",
-  "villavicencio", "tunja", "monteria", "sincelejo", "valledupar", "santa-marta",
-  "riohacha", "florencia-caqueta", "yopal", "quibdo", "mocoa", "arauca",
-  "honda", "la-dorada", "puerto-boyaca", "puerto-berrio", "puerto-triunfo",
-  "aguachica", "bosconia", "caucasia", "planeta-rica", "magangue",
-  "el-carmen-de-bolivar", "lorica", "turbo", "apartado", "girardot", "espinal",
-  "duitama", "sogamoso", "san-gil", "barbosa-santander", "chiquinquira",
-  "zipaquira", "fusagasuga", "cartago", "tulua", "guadalajara-de-buga", "palmira",
-  "buenaventura", "garzon", "pitalito", "santa-cruz-de-mompox", "barrancabermeja",
-  "ocana", "pamplona", "maicao", "fundacion", "plato", "el-banco", "ayapel",
-  "montelibano", "sahagun", "chigorodo", "santa-fe-de-antioquia", "yarumal",
-  "rionegro-antioquia", "la-pintada", "san-sebastian-de-mariquita", "fresno",
-  "granada-meta", "puerto-lopez", "aguazul", "curumani", "san-alberto", "cimitarra",
-  "guaduas", "villeta", "facatativa", "melgar", "chaparral", "sabanalarga-atlantico",
-  "calamar-bolivar",
-];
+export { HUBS };
+
+const HUB_SET = new Set(HUBS);
 
 /** Cuántos caminos, como mucho, se le muestran (el más rápido y dos más). */
 export const MAX_ROUTES = 3;
@@ -134,21 +115,15 @@ export function routeOptions(origin: string, destination: string, routes: readon
       .slice(1, -1)
       .map((s) => s.city);
     const others = paths.filter((_, k) => k !== i && paths[k].length >= 2);
-    // Los pueblos de cruce por donde pasa también sirven para nombrarlo.
-    const hubs = hubCities().filter(
-      (c) =>
-        c.slug !== origin &&
-        c.slug !== destination &&
-        paths[i].length >= 2 &&
-        projectOnPath(paths[i], c).offKm <= ROAD_STOP_MAX_OFF_KM,
-    );
+    // El pueblo del nombre sale de la lista de "¿Por dónde vas?": así, al
+    // escoger "Por Manizales", Manizales aparece en ella.
     let best: City | null = null;
     let bestKm = 0;
-    for (const c of [...hubs, ...stops]) {
+    for (const c of stops) {
       if (used.has(c.slug)) continue;
       const km = Math.min(...others.map((p) => projectOnPath(p, c).offKm));
       // Los de cruce son más conocidos: ganan si se alejan casi lo mismo.
-      const score = hubs.includes(c) ? km * 1.5 : km;
+      const score = HUB_SET.has(c.slug) ? km * 1.5 : km;
       if (score > bestKm) {
         best = c;
         bestKm = score;

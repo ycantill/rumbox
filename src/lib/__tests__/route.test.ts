@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getCity } from "../cities";
-import { decodePath, pathKm } from "../path";
+import { decodePath, encodePath, pathKm } from "../path";
 import { ROUTE_MAX_STOPS, routeFromGeoJson, routeProgress, routeStops } from "../route";
 import { BOGOTA_BARRANQUILLA, BOGOTA_BARRANQUILLA_ROUTE } from "./road-fixture";
 
@@ -56,6 +56,17 @@ describe("con la carretera guardada", () => {
     expect(routeStops("bogota", "barranquilla").map((s) => s.city.slug)).toContain("pacho");
     expect(slugs).not.toContain("pacho");
     expect(slugs).not.toContain("puerto-berrio");
+  });
+
+  it("en cada tramo prefiere un pueblo de cruce, que todos conocen", () => {
+    const road = encodePath(
+      ["bogota", "honda", "fresno", "manizales", "neira", "aranzazu", "salamina-caldas", "aguadas", "la-pintada", "medellin"].map(
+        (slug) => getCity(slug)!,
+      ),
+    );
+    const slugs = routeStops("bogota", "medellin", road).map((s) => s.city.slug);
+    expect(slugs).toContain("manizales");
+    expect(slugs).toContain("honda");
   });
 
   it("dice qué tanto lleva sobre la carretera", () => {

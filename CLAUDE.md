@@ -192,7 +192,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - "¿Por dónde vas?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
   transportista elige en una lista desplegable el pueblo por donde va, de
   los de su ruta (`routeStops`: los municipios por donde pasa la carretera,
-  uno cada ~40 km, como mucho 12). Lo cambia él a mano (Yohany, 22 de octubre
+  uno cada ~40 km, como mucho 12, y en cada tramo primero un pueblo de
+  cruce, que todos conocen). Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
@@ -213,12 +214,14 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - "¿Por cuál camino vas?" (Yohany, 22 de octubre de 2026): la ruta más
   rápida puede no ser por donde va. Al ponerse disponible también se piden
   otros caminos, pasando por pueblos de cruce (`HUBS` en
-  `src/lib/alternatives.ts`) que no quedan en el más rápido, porque los
+  `src/lib/route.ts`) que no quedan en el más rápido, porque los
   caminos alternos de OpenRouteService solo sirven hasta 100 km. Quedan los
   que van por otro lado y no son mucho más largos, como mucho 3 contando el
   más rápido, en `route_options` (migración `0019_varios_caminos.sql`). Si
   hay más de uno, en su tarjeta escoge "Por Sincelejo", "Por Manizales"… con
-  algunos pueblos por donde pasa (`chooseRoute`); el escogido queda en
+  algunos pueblos por donde pasa (`chooseRoute`). El pueblo del nombre y los
+  que dice que pasa salen siempre en la lista de "¿Por dónde vas?" de ese
+  camino, para que se vea que cambió. El escogido queda en
   `route`, que es el que mira el match, y "¿Por dónde vas?" vuelve a su
   origen. Empieza con el más rápido. Los caminos se reusan para el mismo
   viaje, como la carretera.

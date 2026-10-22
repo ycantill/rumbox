@@ -279,3 +279,6 @@ se probó en un teléfono:
   más rápido se piden otros, pasando por pueblos de cruce, y el
   transportista escoge por cuál va. Requiere la migración
   `0019_varios_caminos.sql`.
+- **"¿Por dónde vas?" sigue al camino escogido (22 de octubre de 2026):** al
+  escoger "Por Manizales", Manizales sale en la lista; en cada tramo va
+  primero un pueblo de cruce. Sin migración.
