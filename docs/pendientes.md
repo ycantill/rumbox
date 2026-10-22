@@ -296,3 +296,8 @@ se probó en un teléfono:
 - **"Comienza tu viaje" (22 de octubre de 2026):** botón que abre el mapa
   hasta su destino (Google Maps en Android, Mapas en iPhone); luego dice
   "Continúa tu viaje". Sin migración.
+- **Tocar un pueblo del dibujo (22 de octubre de 2026):** en "¿Por dónde
+  vas?" se toca el pueblo en el dibujo de puntos; los que ya pasó quedan
+  tachados y se pueden tocar para corregir. La lista desplegable se quitó y
+  abajo queda "¿Vas por un pueblo que no está en la ruta?" para los demás. Sin
+  migración.

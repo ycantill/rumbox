@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   getMyAvailability,
   publishAvailability,
@@ -471,13 +471,14 @@ function SpaceLeft({
 }
 
 /**
- * "¿Por dónde vas?": él mismo elige en una lista desplegable el pueblo por
- * donde va, de los de su ruta (Yohany, 22 de octubre de 2026; antes se marcaba
- * con la ubicación del teléfono). Si no está, lo agrega (Yohany, 22 de octubre
- * de 2026): va por otro lado, y su ruta pasa a ir por ahí. Mientras no lo
- * cambie, cuenta desde donde sale. Con "Cualquier destino" no hay ruta: elige
- * de todos los municipios. Los clientes no lo ven (Yohany, 21 de octubre de
- * 2026): les deja de salir si su pueblo ya quedó atrás.
+ * "¿Por dónde vas?": él mismo toca en el dibujo de su ruta el pueblo por donde
+ * va (Yohany, 22 de octubre de 2026; antes se marcaba con la ubicación del
+ * teléfono y luego en una lista desplegable). Los que ya pasó quedan tachados,
+ * pero se pueden tocar por si se equivocó. Si su pueblo no está, lo escribe
+ * abajo: va por otro lado, y su ruta pasa a ir por ahí. Mientras no lo cambie,
+ * cuenta desde donde sale. Con "Cualquier destino" no hay ruta: elige de todos
+ * los municipios. Los clientes no lo ven (Yohany, 21 de octubre de 2026): les
+ * deja de salir si su pueblo ya quedó atrás.
  */
 function WhereYouAre({
   post,
@@ -491,10 +492,8 @@ function WhereYouAre({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Si tocó "Otro pueblo": sale el campo para escribirlo.
-  const [adding, setAdding] = useState(false);
   // El pueblo por donde ahora pasa su camino, si al agregarlo cambió la ruta:
-  // así entiende por qué cambió la lista. Se quita al escoger otro.
+  // así entiende por qué cambió el dibujo. Se quita al escoger otro.
   const [detour, setDetour] = useState<string | null>(null);
   const { id, editToken, origin } = post;
   const destination = post.destination ?? "";
@@ -522,103 +521,118 @@ function WhereYouAre({
       // Si el pueblo no quedaba en su ruta, ahora la ruta pasa por ahí.
       onPatch({ route: res.route });
       if (res.route !== route) setDetour(getCity(slug)?.name ?? null);
-      setAdding(false);
     },
     [id, editToken, value, before, route, latestRef, onPatch],
   );
 
-  // El dibujo de la ruta: un punto por pueblo, desde el de ahora, resaltado,
-  // hasta el destino. Los que ya pasó no salen (Yohany, 22 de octubre de
-  // 2026). Si el suyo no está en la ruta, sale primero con "Vas por …".
-  const here = getCity(value);
-  const progress = here ? routeProgress(origin, destination, here.slug, route) : null;
-  const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
-  const ahead =
-    hereIndex !== -1
-      ? stops.slice(hereIndex)
-      : progress !== null
-        ? stops.filter((s) => s.t > progress)
-        : stops;
-  const offList = here && hereIndex === -1 && progress !== null ? here : null;
+  if (stops.length === 0) {
+    return (
+      <section className="card flex flex-col gap-2">
+        <p className="font-semibold">¿Por dónde vas?</p>
+        <CitySelect name="where-you-are" value={value} onChange={(slug) => void change(slug)} />
+        <p className="text-sm text-muted">
+          Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino.
+        </p>
+        <ErrorNote message={error} />
+      </section>
+    );
+  }
 
-  // Uno que agregó y la ruta no pudo pasar por ahí (sin señal del servicio de
-  // rutas) también sale, para que vea lo que eligió.
-  const options =
-    stops.length > 0 && !stops.some((s) => s.city.slug === value) && getCity(value)
-      ? [...stops.map((s) => s.city), getCity(value)!]
-      : stops.map((s) => s.city);
+  // El dibujo de la ruta: un punto por pueblo, del origen al destino, con el de
+  // ahora resaltado y los de antes tachados. Si el suyo no está en la ruta (la
+  // ruta no pudo pasar por ahí), sale con "Vas por …" en su lugar del camino.
+  const here = getCity(value);
+  const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
+  const offList = here && hereIndex === -1 ? here : null;
+  let offAt = -1;
+  if (offList) {
+    const progress = routeProgress(origin, destination, offList.slug, route) ?? 0;
+    const next = stops.findIndex((s) => s.t > progress);
+    offAt = next === -1 ? stops.length : next;
+  }
+  const passedBefore = hereIndex !== -1 ? hereIndex : offAt;
 
   return (
     <section className="card flex flex-col gap-2">
-      <label htmlFor="where-you-are" className="font-semibold">
-        ¿Por dónde vas?
-      </label>
-      {options.length > 0 ? (
-        <>
-          <select
-            id="where-you-are"
-            className="input"
-            value={adding ? OTHER_TOWN : value}
-            disabled={busy}
-            onChange={(e) => {
-              if (e.target.value === OTHER_TOWN) {
-                setAdding(true);
-                return;
-              }
-              setAdding(false);
-              void change(e.target.value);
-            }}
-          >
-            {options.map((c) => (
-              <option key={c.slug} value={c.slug}>
-                {c.name}
-              </option>
-            ))}
-            <option value={OTHER_TOWN}>Otro pueblo, no está en la lista</option>
-          </select>
-          {adding && (
-            <CitySelect
-              name="other-town"
-              value=""
-              exclude={origin}
-              placeholder="Escribe el pueblo por donde vas"
-              onChange={(slug) => void change(slug)}
-            />
-          )}
-        </>
-      ) : (
-        <CitySelect name="where-you-are" value={value} onChange={(slug) => void change(slug)} />
-      )}
+      <p className="font-semibold">¿Por dónde vas?</p>
       <p className="text-sm text-muted">
-        {adding
-          ? "Escríbelo o elígelo. Tu camino pasará por ahí."
-          : "Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino."}
+        Cuando pases por otro pueblo, tócalo. Así te llaman los clientes que te quedan de camino.
       </p>
-      <ErrorNote message={error} />
       {detour && <p className="text-sm font-semibold text-brand">Listo, tu camino ahora pasa por {detour}.</p>}
-      {stops.length > 0 && (
-        <ol aria-label="Tu ruta" className="mt-2 flex flex-col">
-          {offList && <HereRow name={offList.name} />}
-          {ahead.map((stop) => {
-            const isHere = stop.city.slug === here?.slug;
-            return (
-              <li key={stop.city.slug} className="flex items-center gap-3 py-1.5">
-                <span
-                  aria-hidden
-                  className={
-                    isHere
-                      ? "size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft"
-                      : "size-3 shrink-0 rounded-full border-2 border-brand"
-                  }
+      <ol aria-label="Tu ruta" className="mt-1 flex flex-col">
+        {stops.map((stop, i) => (
+          <Fragment key={stop.city.slug}>
+            {i === offAt && offList && <HereRow name={offList.name} />}
+            <li>
+              {i === hereIndex ? (
+                <span className="flex items-center gap-3 py-1.5">
+                  <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
+                  <span className="font-semibold">{stop.city.name}</span>
+                  <span className="text-sm font-semibold text-brand">Vas por aquí</span>
+                </span>
+              ) : (
+                <StopButton
+                  name={stop.city.name}
+                  passed={i < passedBefore}
+                  busy={busy}
+                  onTap={() => void change(stop.city.slug)}
                 />
-                <span className={isHere ? "font-semibold" : undefined}>{stop.city.name}</span>
-                {isHere && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
-              </li>
-            );
-          })}
-        </ol>
-      )}
+              )}
+            </li>
+          </Fragment>
+        ))}
+        {offAt === stops.length && offList && <HereRow name={offList.name} />}
+      </ol>
+      <ErrorNote message={error} />
+      <div className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
+        <p className="font-semibold">¿Vas por un pueblo que no está en la ruta?</p>
+        <CitySelect
+          name="other-town"
+          value=""
+          exclude={origin}
+          placeholder="Escribe el pueblo por donde vas"
+          onChange={(slug) => void change(slug)}
+        />
+        <p className="text-sm text-muted">Escríbelo o elígelo. Tu camino pasará por ahí.</p>
+      </div>
     </section>
+  );
+}
+
+/**
+ * Un pueblo del dibujo que se puede tocar para marcarlo (Yohany, 22 de octubre
+ * de 2026). Los que ya pasó van tachados, pero se pueden tocar por si se
+ * equivocó.
+ */
+function StopButton({
+  name,
+  passed,
+  busy,
+  onTap,
+}: {
+  name: string;
+  passed: boolean;
+  busy: boolean;
+  onTap: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={busy}
+      onClick={onTap}
+      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-1.5 text-left active:bg-brand-soft disabled:opacity-50"
+    >
+      <span
+        aria-hidden
+        className={
+          passed
+            ? "size-3 shrink-0 rounded-full border-2 border-line"
+            : "size-3 shrink-0 rounded-full border-2 border-brand"
+        }
+      />
+      <span className={passed ? "text-muted line-through" : undefined}>{name}</span>
+      {passed && <span className="sr-only">(ya pasaste)</span>}
+    </button>
   );
 }
 
@@ -631,6 +645,3 @@ function HereRow({ name }: { name: string }) {
     </li>
   );
 }
-
-/** La opción de "¿Por dónde vas?" para agregar un pueblo que no está en la lista. */
-const OTHER_TOWN = "__otro";
