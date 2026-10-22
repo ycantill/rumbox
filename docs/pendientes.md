@@ -275,3 +275,7 @@ se probó en un teléfono:
   cliente entra cada tanto a mirar "Tu solicitud". "¿Por dónde vas?" se
   elige a mano en una lista desplegable, sin la ubicación del teléfono. Migración 0018 borra
   `push_subscriptions`.
+- **"¿Por cuál camino vas?" (22 de octubre de 2026):** además del camino
+  más rápido se piden otros, pasando por pueblos de cruce, y el
+  transportista escoge por cuál va. Requiere la migración
+  `0019_varios_caminos.sql`.

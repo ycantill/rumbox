@@ -4,7 +4,7 @@ import { createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypt
 import { headers } from "next/headers";
 import { eventRow, type AnalyticsEvent } from "@/lib/analytics";
 import { getCity } from "@/lib/cities";
-import { roadRoute } from "@/lib/directions";
+import { roadRoutes } from "@/lib/directions";
 import {
   ANY_DAY,
   ANY_DESTINATION,
@@ -48,6 +48,8 @@ export type PublishResult =
       editToken: string;
       /** La carretera de su viaje (`encodePath`), o null si va por la línea recta. */
       route: string | null;
+      /** Los caminos que puede escoger, el más rápido primero; vacío si no hay carretera. */
+      routeOptions: string[];
     }
   | Fail;
 
@@ -84,16 +86,18 @@ export async function publishAvailability(input: {
     // Una cosa a la vez: un número con una solicitud abierta no se pone de transportista.
     if (await hasOpenRequest(whatsapp)) return fail(BUSY_AS_CLIENT_ERROR);
 
-    const route = await tripRoute(input.origin, input.destination);
+    // Empieza por el más rápido; él escoge otro en su tarjeta si va por otro lado.
+    const routeOptions = await tripRoutes(input.origin, input.destination);
+    const route = routeOptions[0] ?? null;
     const { data, error } = await db()
       .from("availabilities")
-      .insert({ ...row, route, ip_hash: ipHash })
+      .insert({ ...row, route, route_options: routeOptions.length > 0 ? routeOptions : null, ip_hash: ipHash })
       .select("id")
       .single();
     if (error) throw error;
     // No se le muestran los clientes: por su privacidad, ellos lo ven a él
     // (Vía B) y son los que llaman o escriben.
-    return { ok: true as const, id: data.id as string, editToken, route };
+    return { ok: true as const, id: data.id as string, editToken, route, routeOptions };
   });
 }
 
@@ -135,6 +139,8 @@ export type MyAvailabilityResult =
       currentCity: string | null;
       /** La carretera de su viaje, o null si va por la línea recta. */
       route: string | null;
+      /** Los caminos que puede escoger; vacío si no hay carretera. */
+      routeOptions: string[];
     }
   | (Fail & { gone?: true });
 
@@ -146,7 +152,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, full_space, current_city, route, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, full_space, current_city, route, route_options, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -166,6 +172,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       fullSpace: fullSpace(data),
       currentCity: getCity(data.current_city) ? (data.current_city as string) : null,
       route: (data.route as string | null) ?? null,
+      routeOptions: (data.route_options as string[] | null) ?? [],
     };
   });
 }
@@ -233,6 +240,40 @@ export async function updateSpace(input: {
     const { error: upErr } = await db().from("availabilities").update(patch).eq("id", input.id);
     if (upErr) throw upErr;
     return { ok: true as const };
+  });
+}
+
+/**
+ * "¿Por cuál camino vas?": de los caminos que se guardaron al ponerse
+ * disponible, el transportista escoge por cuál va (Yohany, 22 de octubre de
+ * 2026). El match mira ese. Por dónde iba se olvida: puede no estar en el
+ * camino nuevo, y él lo vuelve a escoger.
+ */
+export async function chooseRoute(input: {
+  id: string;
+  editToken: string;
+  option: number;
+}): Promise<{ ok: true; route: string } | Fail> {
+  return withDb(DRIVER_DB_ERROR, async () => {
+    const { data, error } = await db()
+      .from("availabilities")
+      .select("route, route_options, edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return fail("No encontramos tus datos en este teléfono.");
+    }
+    const options = (data.route_options as string[] | null) ?? [];
+    const route = Number.isInteger(input.option) ? options[input.option] : undefined;
+    if (!route) return fail("Escoge por cuál camino vas.");
+    if (route === data.route) return { ok: true as const, route };
+    const { error: upErr } = await db()
+      .from("availabilities")
+      .update({ route, current_city: null })
+      .eq("id", input.id);
+    if (upErr) throw upErr;
+    return { ok: true as const, route };
   });
 }
 
@@ -485,25 +526,27 @@ async function findDrivers(r: {
 }
 
 /**
- * La carretera del viaje, para "¿Por dónde vas?" y el match. Si otro
- * transportista ya hizo el mismo viaje se usa la que quedó guardada; si no, se
- * le pide al servicio de rutas. Si no responde, null: va por la línea recta.
+ * Los caminos del viaje, el más rápido primero, para "¿Por cuál camino vas?",
+ * "¿Por dónde vas?" y el match. Si otro transportista ya hizo el mismo viaje
+ * se usan los que quedaron guardados; si no, se le piden al servicio de rutas.
+ * Si no responde, ninguno: va por la línea recta.
  */
-async function tripRoute(origin: string, destination: string): Promise<string | null> {
+async function tripRoutes(origin: string, destination: string): Promise<string[]> {
   const from = getCity(origin);
   const to = getCity(destination);
-  if (!from || !to || destination === ANY_DESTINATION) return null;
+  if (!from || !to || destination === ANY_DESTINATION) return [];
   const { data, error } = await db()
     .from("availabilities")
-    .select("route")
+    .select("route_options")
     .eq("origin_city", origin)
     .eq("destination_city", destination)
-    .not("route", "is", null)
+    .not("route_options", "is", null)
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
   if (error) throw error;
-  return (data?.route as string | undefined) ?? (await roadRoute(from, to));
+  const saved = (data?.route_options as string[] | undefined) ?? [];
+  return saved.length > 0 ? saved : await roadRoutes(from, to);
 }
 
 /** Lo que podía llevar al ponerse disponible. Las de antes no lo guardaban. */
