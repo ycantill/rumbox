@@ -62,17 +62,18 @@ se elige igual que el destino.
   cuándo viaja y no se vence (Yohany, 21 de octubre de 2026); sigue hasta
   "Ya no estoy disponible". Las rutas que se repiten quedan para
   después, como mejora futura.
-- "¿Por dónde vas?": en su tarjeta elige en una lista desplegable el pueblo
-  de su ruta por donde va. Lo cambia él a mano, sin la ubicación del teléfono
+- "¿Por dónde vas?": en su tarjeta toca en el dibujo de su ruta el pueblo
+  por donde va. Lo cambia él a mano, sin la ubicación del teléfono
   (Yohany, 22 de octubre de 2026). Deja de salirles a los clientes que ya dejó
   atrás. Se guarda solo el municipio; el cliente no lo ve (Yohany, 21 de
   octubre de 2026). Los pueblos son los de la carretera de verdad, y el match
   también la sigue: se calcula una vez al ponerse disponible con
   OpenRouteService (gratis) y, si no responde, se usa la línea recta.
-  Debajo sale el dibujo de su camino, un punto por pueblo desde el de ahora;
-  tocar un pueblo del dibujo también lo marca (Yohany, 22 de octubre de 2026).
-- Si el pueblo por donde va no está en la lista, lo agrega con "Otro
-  pueblo, no está en la lista": su camino pasa a ir por ahí, y la lista y los
+  El dibujo tiene un punto por pueblo, del origen al destino: los que ya pasó
+  quedan tachados, pero se pueden tocar por si se equivocó (Yohany, 22 de
+  octubre de 2026).
+- Si el pueblo por donde va no está en la ruta, lo escribe debajo, en "¿No
+  está tu pueblo?": su camino pasa a ir por ahí, y la lista y los
   clientes que lo ven siguen ese camino (Yohany, 22 de octubre de 2026).
 - "Comienza tu viaje" (Yohany, 22 de octubre de 2026): en su tarjeta, un
   botón abre el mapa con el camino hasta su destino, desde donde está el

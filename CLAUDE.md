@@ -190,17 +190,16 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
   corredor), vayan a donde vayan (Yohany, octubre de 2026).
 - "¿Por dónde vas?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
-  transportista elige en una lista desplegable el pueblo por donde va, de
+  transportista toca en el dibujo de su ruta el pueblo por donde va, de
   los de su ruta (`routeStops`: todos los municipios por donde pasa la
   carretera, con el centro a 6 km o menos, porque muchas pasan por una
   variante sin entrar al pueblo; Yohany, 22 de octubre de 2026). Solo si
   son más de 40 se deja uno cada tanto, primero los pueblos de cruce. Sin
-  carretera, uno cada ~40 km de la línea recta, como mucho 12. Debajo está
-  el dibujo de su ruta, un punto por pueblo, desde el de ahora ("Vas por
-  aquí") hasta el destino: los que ya pasó no salen en el dibujo, pero sí en
-  la lista, por si tiene que corregir (Yohany, 22 de octubre de 2026). Tocar
-  un pueblo del dibujo también lo marca, porque parecía que se podía (Yohany,
-  22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
+  carretera, uno cada ~40 km de la línea recta, como mucho 12. El dibujo
+  tiene un punto por pueblo, del origen al destino, y cada uno se toca para
+  marcarlo (Yohany, 22 de octubre de 2026): el de ahora dice "Vas por
+  aquí" y los que ya pasó quedan tachados, pero se pueden tocar por si se
+  equivocó. Ya no hay lista desplegable con los pueblos de la ruta. Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
@@ -219,8 +218,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   y su corredor ancho (una cuarta parte del viaje a cada lado). Solo se le
   mandan las coordenadas de los dos municipios, nada de la persona.
 - "Otro pueblo" (Yohany, 22 de octubre de 2026): la ruta es la más rápida,
-  pero puede no ser por donde va. Al final de la lista de "¿Por dónde vas?"
-  está "Otro pueblo, no está en la lista", que abre `CitySelect`. Si el
+  pero puede no ser por donde va. Debajo del dibujo de "¿Por dónde vas?"
+  está "¿No está tu pueblo?", con `CitySelect`, solo para los que no están en
+  la ruta. Si el
   pueblo que agrega no queda sobre su carretera (`offRoad`), `updateLocation`
   le pide a OpenRouteService la carretera pasando por ahí y la guarda en
   `route`, si no es más de 1,5 veces la de antes (`viaFits`); así la lista y
