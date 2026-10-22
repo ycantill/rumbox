@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   getMyAvailability,
   publishAvailability,
@@ -30,7 +30,7 @@ import {
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
-import { routeStops } from "@/lib/route";
+import { routeProgress, routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
@@ -484,6 +484,16 @@ function WhereYouAre({
     [id, editToken, value, before, latestRef, onPatch],
   );
 
+  // El dibujo de la ruta: un punto por pueblo, los que ya pasó tachados y el
+  // de ahora resaltado. Si el suyo no está en la ruta, sale entre los dos
+  // pueblos por donde pasa.
+  const here = getCity(value);
+  const progress = here ? routeProgress(origin, destination, here.slug, route) : null;
+  const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
+  const passed = (t: number) => progress !== null && t < progress;
+  const next = progress === null ? -1 : stops.findIndex((s) => s.t > progress);
+  const between = !here || hereIndex !== -1 || progress === null ? -1 : next === -1 ? stops.length : next;
+
   // Uno que agregó y la ruta no pudo pasar por ahí (sin señal del servicio de
   // rutas) también sale, para que vea lo que eligió.
   const options =
@@ -538,7 +548,47 @@ function WhereYouAre({
           : "Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino."}
       </p>
       <ErrorNote message={error} />
+      {stops.length > 0 && (
+        <ol aria-label="Tu ruta" className="mt-2 flex flex-col">
+          {stops.map((stop, i) => (
+            <Fragment key={stop.city.slug}>
+              {i === between && here && <HereRow name={here.name} />}
+              <li className="flex items-center gap-3 py-1.5">
+                <span
+                  aria-hidden
+                  className={
+                    i === hereIndex
+                      ? "size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft"
+                      : passed(stop.t)
+                        ? "size-3 shrink-0 rounded-full bg-muted/40"
+                        : "size-3 shrink-0 rounded-full border-2 border-brand"
+                  }
+                />
+                <span
+                  className={
+                    i === hereIndex ? "font-semibold" : passed(stop.t) ? "text-muted line-through" : undefined
+                  }
+                >
+                  {stop.city.name}
+                </span>
+                {i === hereIndex && <span className="text-sm font-semibold text-brand">Vas por aquí</span>}
+              </li>
+            </Fragment>
+          ))}
+          {between === stops.length && here && <HereRow name={here.name} />}
+        </ol>
+      )}
     </section>
+  );
+}
+
+/** "Vas por …" entre dos pueblos de la ruta. */
+function HereRow({ name }: { name: string }) {
+  return (
+    <li className="flex items-center gap-3 py-1.5">
+      <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
+      <span className="font-semibold">Vas por {name}</span>
+    </li>
   );
 }
 

@@ -194,7 +194,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   carretera, con el centro a 6 km o menos, porque muchas pasan por una
   variante sin entrar al pueblo; Yohany, 22 de octubre de 2026). Solo si
   son más de 40 se deja uno cada tanto, primero los pueblos de cruce. Sin
-  carretera, uno cada ~40 km de la línea recta, como mucho 12. Lo cambia él a mano (Yohany, 22 de octubre
+  carretera, uno cada ~40 km de la línea recta, como mucho 12. Debajo está
+  el dibujo de su ruta, un punto por pueblo: los que ya pasó tachados y el
+  de ahora con "Vas por aquí" (Yohany, 22 de octubre de 2026). Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
