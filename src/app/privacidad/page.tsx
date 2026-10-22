@@ -51,6 +51,10 @@ export default function PrivacyPage() {
             Para saber por qué carretera va el transportista, le preguntamos el camino entre sus dos municipios a
             OpenRouteService, que usa los mapas de OpenStreetMap. No le mandamos tu teléfono ni nada tuyo.
           </p>
+          <p className="mt-2 text-muted">
+            Si el transportista toca &ldquo;Comienza tu viaje&rdquo;, se abre Google Maps con su destino. Lo que haga ahí
+            lo maneja Google y no vuelve a Mudavía.
+          </p>
           <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación.</p>
         </section>
 

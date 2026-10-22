@@ -52,6 +52,7 @@ src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
 src/lib/path.ts, directions.ts   La carretera: guardarla y medir sobre ella; pedirla a OpenRouteService
+src/lib/maps.ts                  El enlace de "Comienza tu viaje" a Google Maps
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -227,6 +228,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   de cruce), que se quitó porque los caminos casi no cambiaban. La columna
   `route_options` (migración `0019_varios_caminos.sql`) queda con la más
   rápida del viaje, para reusarla, porque `route` puede cambiar.
+- "Comienza tu viaje" (Yohany, 22 de octubre de 2026): debajo de sus datos,
+  un botón abre Google Maps navegando hasta su destino (`mapsUrl` en
+  `src/lib/maps.ts`, un enlace sin llave). No se manda el origen: Maps arranca
+  desde donde está el teléfono, así que sirve igual después de un desvío.
+  Cuando ya lo tocó (`started`, solo en el teléfono) o marcó un pueblo en
+  "¿Por dónde vas?", dice "Continúa tu viaje". Maps no le devuelve nada a
+  Mudavía: "¿Por dónde vas?" sigue a mano. Con "Cualquier destino" no sale.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
