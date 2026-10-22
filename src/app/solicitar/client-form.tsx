@@ -4,9 +4,8 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import {
   closeRequest,
   createRequest,
-  getAlertsConfig,
+  getLiveConfig,
   getMyRequest,
-  subscribeToAlerts,
   type DriverMatch,
 } from "@/app/actions";
 import {
@@ -17,7 +16,6 @@ import {
   ErrorNote,
   Field,
   InfoNote,
-  OriginCitySelect,
   PrivacyNote,
   useBogotaDates,
   useServiceDay,
@@ -38,7 +36,6 @@ import {
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
 import { KEYS, load, save } from "@/lib/local-store";
-import { alertState, getAlertSubscription, type AlertState } from "@/lib/push-client";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { requestInputError } from "@/lib/validate";
@@ -176,17 +173,11 @@ export function ClientForm() {
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-6">
         <Field label="¿Desde dónde?">
-          <OriginCitySelect
-            name="origin"
-            value={origin}
-            onChange={setOrigin}
-            exclude={destination}
-            onClearExclude={() => setDestination("")}
-          />
+          <CitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
         </Field>
 
         <Field label="¿Hacia dónde?">
-          {/* El origen no sale en la lista y "Ubicarme" borra el destino si es el mismo. El aviso queda para lo guardado de antes. */}
+          {/* El origen no sale en la lista. El aviso queda para lo guardado de antes. */}
           <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
@@ -245,8 +236,6 @@ function MyRequestView({
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // La llave pública de los avisos: undefined mientras se pregunta, null si no hay avisos.
-  const [vapidPublicKey, setVapidPublicKey] = useState<string | null | undefined>(undefined);
 
   // Transportistas que le sirven ahora, desde el servidor: al abrir la
   // pantalla, al volver a la app, cada minuto mientras la tiene abierta y
@@ -281,16 +270,11 @@ function MyRequestView({
         },
       );
     }
-    // Primero los datos de Realtime y avisos: las acciones del servidor van
-    // una detrás de otra, y esta es rápida porque no toca la base de datos.
+    // Primero los datos de Realtime: las acciones del servidor van una detrás
+    // de otra, y esta es rápida porque no toca la base de datos.
     let unlisten = () => {};
-    callServer(() => getAlertsConfig()).then((config) => {
-      if (cancelled) return;
-      if (!("vapidPublicKey" in config)) {
-        setVapidPublicKey(null);
-        return;
-      }
-      setVapidPublicKey(config.vapidPublicKey);
+    callServer(() => getLiveConfig()).then((config) => {
+      if (cancelled || !("live" in config)) return;
       // Un transportista le sirve desde su día en adelante: se escucha el canal
       // de todos los días, no solo el de la solicitud.
       if (config.live) unlisten = listenForDrivers(config.live, () => refresh(true));
@@ -356,12 +340,7 @@ function MyRequestView({
       {/* Es una pantalla de espera: mientras no haya transportistas, o hasta
           que llegue la lista, se ve que seguimos buscando. */}
       {!matches || matches.length === 0 ? (
-        <Searching anyDay={anyDay}>
-          {/* La invitación a los avisos va dentro de la espera, donde se ve sin bajar. */}
-          {vapidPublicKey !== undefined && (
-            <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} embedded />
-          )}
-        </Searching>
+        <Searching anyDay={anyDay} />
       ) : (
         <section className="flex flex-col gap-3">
           <div>
@@ -388,13 +367,9 @@ function MyRequestView({
           ))}
           <p role="status" className="flex items-center gap-2 text-sm text-muted">
             <Radar size="small" />
-            Seguimos buscando más transportistas.
+            Seguimos buscando más transportistas. Vuelve a mirar cada tanto.
           </p>
         </section>
-      )}
-
-      {matches && matches.length > 0 && vapidPublicKey !== undefined && (
-        <AlertsOptIn id={id} editToken={editToken} vapidPublicKey={vapidPublicKey} />
       )}
 
       <ErrorNote message={error} />
@@ -425,18 +400,18 @@ function MyRequestView({
 }
 
 /** Mientras no hay transportistas: la solicitud quedó guardada y seguimos buscando. */
-function Searching({ anyDay, children }: { anyDay: boolean; children?: React.ReactNode }) {
+function Searching({ anyDay }: { anyDay: boolean }) {
   return (
     <section className="card flex flex-col items-center gap-3 py-5 text-center">
       <div role="status" className="flex flex-col items-center gap-2">
         <Radar size="large" />
         <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
         <p className="text-sm text-muted">
-          Tu solicitud quedó guardada. Apenas un transportista vaya para allá{anyDay ? "" : " ese día"}, te
+          Tu solicitud quedó guardada. Cuando un transportista vaya para allá{anyDay ? "" : " ese día"}, te
           sale aquí para que lo llames o le escribas por WhatsApp.
         </p>
+        <p className="text-sm font-semibold">Entra a Mudavía cada tanto para mirar.</p>
       </div>
-      {children}
     </section>
   );
 }
@@ -458,127 +433,5 @@ function Radar({ size }: { size: "large" | "small" }) {
       ))}
       <span className={`relative rounded-full bg-brand ${dot}`} />
     </span>
-  );
-}
-
-/**
- * "Avísame": un aviso al celular cuando aparece un transportista, aunque tenga
- * la app cerrada. Si ya los aceptó, el teléfono queda ligado a esta solicitud
- * sin preguntar otra vez (por ejemplo, después de "Cambiar mi solicitud").
- */
-function AlertsOptIn({
-  id,
-  editToken,
-  vapidPublicKey,
-  embedded = false,
-}: {
-  id: string;
-  editToken: string;
-  vapidPublicKey: string | null;
-  /** Dentro de la tarjeta de espera, separada por una línea, en vez de en su propia tarjeta. */
-  embedded?: boolean;
-}) {
-  const [state, setState] = useState<AlertState>("no");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const now = alertState(vapidPublicKey);
-    if (now !== "on") {
-      // Notification y PushManager solo existen en el navegador: se leen después de hidratar.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setState(now);
-      return;
-    }
-    // Ya los aceptó: se liga en silencio a esta solicitud. Si no se puede, se
-    // le vuelve a ofrecer el botón.
-    let cancelled = false;
-    getAlertSubscription(vapidPublicKey!, false)
-      .then((sub) => (sub ? subscribeToAlerts({ id, editToken, subscription: sub }) : null))
-      .then(
-        (res) => !cancelled && setState(res?.ok ? "on" : "ask"),
-        (err) => {
-          console.error(err);
-          if (!cancelled) setState("ask");
-        },
-      );
-    return () => {
-      cancelled = true;
-    };
-  }, [id, editToken, vapidPublicKey]);
-
-  async function turnOn() {
-    setBusy(true);
-    setError(null);
-    try {
-      const sub = await getAlertSubscription(vapidPublicKey!, true);
-      if (!sub) {
-        // Si dijo que no, se le explica en vez de quitar la tarjeta sin decir nada.
-        setState(Notification.permission === "denied" ? "blocked" : alertState(vapidPublicKey));
-        return;
-      }
-      const res = await callServer(() => subscribeToAlerts({ id, editToken, subscription: sub }));
-      if (!res.ok) {
-        setError(res.error);
-        return;
-      }
-      setState("on");
-    } catch (err) {
-      console.error(err);
-      setError("No pudimos activar el aviso en este celular.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  if (state === "no") return null;
-
-  const box = embedded ? "w-full border-t border-line pt-4" : "card";
-
-  if (state === "on") {
-    return (
-      <p className={embedded ? `${box} text-sm text-muted` : "text-sm text-muted"}>
-        Te avisamos al celular cuando aparezca un transportista.
-      </p>
-    );
-  }
-
-  if (state === "blocked") {
-    return (
-      <section className={box}>
-        <h2 className="font-semibold">No te podemos avisar</h2>
-        <p className="mt-1 text-sm text-muted">
-          Tu celular no nos dio permiso. Vuelve a esta pantalla cuando quieras: aquí te salen los
-          transportistas que aparezcan. Si quieres los avisos, dale permiso a Mudavía en los ajustes de tu
-          celular.
-        </p>
-      </section>
-    );
-  }
-
-  if (state === "iphone") {
-    return (
-      <section className={box}>
-        <h2 className="font-semibold">¿Quieres que te avisemos?</h2>
-        <p className="mt-1 text-sm text-muted">
-          En iPhone, primero agrega Mudavía a tu pantalla de inicio: toca el botón de compartir y luego
-          &ldquo;Agregar a inicio&rdquo;. Ábrela desde ahí y te podremos avisar cuando aparezca un
-          transportista.
-        </p>
-      </section>
-    );
-  }
-
-  return (
-    <section className={`${box} flex flex-col gap-3`}>
-      <div>
-        <h2 className="font-semibold">¿Te avisamos cuando aparezca un transportista?</h2>
-        <p className="mt-1 text-sm text-muted">Te llega un aviso al celular, aunque tengas la app cerrada.</p>
-      </div>
-      <ErrorNote message={error} />
-      <button type="button" className="btn-primary" disabled={busy} onClick={turnOn}>
-        {busy ? "Un momento…" : "Sí, avísame"}
-      </button>
-    </section>
   );
 }

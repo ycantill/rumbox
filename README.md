@@ -58,11 +58,9 @@ en [Supabase](https://supabase.com).
    La service role key es secreta: solo se usa en el servidor, nunca lleva el
    prefijo `NEXT_PUBLIC_` y `.env.local` no se sube al repositorio.
 
-   Para que la lista del cliente se actualice sola y le lleguen avisos al
-   celular, llena también las variables de Realtime y de Web Push que explica
-   `.env.example`. Sin ellas la app funciona igual, sin avisos, y la lista se
-   pone al día cada minuto. Los avisos solo funcionan con `npm run build` y
-   `npm start`, porque el service worker no se registra en desarrollo.
+   Para que la lista del cliente se actualice sola, llena también la variable
+   de Realtime que explica `.env.example`. Sin ella la app funciona igual y la
+   lista se pone al día cada minuto.
 
 4. Arranca el servidor de desarrollo:
 
@@ -90,10 +88,9 @@ El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request.
 1. En [Vercel](https://vercel.com), importa el repositorio
    `ycantill/muvia` (detecta Next.js solo).
 2. En **Settings → Environment Variables**, agrega `SUPABASE_URL` y
-   `SUPABASE_SERVICE_ROLE_KEY` para Production y Preview, y las de avisos de
-   `.env.example` (`SUPABASE_ANON_KEY`, `VAPID_PUBLIC_KEY`,
-   `VAPID_PRIVATE_KEY` y `VAPID_SUBJECT`) y la de la ruta por carretera
-   (`OPENROUTESERVICE_API_KEY`).
+   `SUPABASE_SERVICE_ROLE_KEY` para Production y Preview, y las de
+   `.env.example`: la de Realtime (`SUPABASE_ANON_KEY`) y la de la ruta por
+   carretera (`OPENROUTESERVICE_API_KEY`).
 3. Despliega. Cada push a `main` publica en producción y cada pull request
    tiene su vista previa.
 
@@ -105,7 +102,7 @@ que producción salvo que configures otra.
 
 ```
 src/app/                 Páginas: inicio, /solicitar (cliente), /transportista
-src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicitar, avisos
+src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicitar
 src/components/          Componentes compartidos
 src/lib/domain.ts        Tamaños de carga y sus textos
 src/lib/matching.ts      Emparejamiento por ruta

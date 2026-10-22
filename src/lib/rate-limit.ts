@@ -1,7 +1,7 @@
 // Límites para lo que se guarda sin cuenta. Sin ellos, cualquiera podría hacer
 // muchas solicitudes seguidas para juntar los teléfonos de los transportistas,
 // o llenar la app de transportistas falsos (con el número de otra persona) que
-// además les mandan avisos a los clientes.
+// les salen a los clientes.
 
 /** La ventana en la que se cuenta lo guardado. */
 export const RATE_WINDOW_MS = 60 * 60 * 1000;

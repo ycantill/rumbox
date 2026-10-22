@@ -3,7 +3,24 @@
 // datos manda un mensaje sin datos y la pantalla vuelve a pedir su lista al
 // servidor. Usa la llave pública (anon), que no puede leer ninguna tabla.
 
-import { ALL_DAYS_TOPIC, LIVE_EVENT } from "./alerts";
+/**
+ * Canal privado de Realtime de un día de viaje: la anon key solo puede
+ * escucharlo. Lo arman igual las migraciones `0006_avisos.sql` y
+ * `0007_proteger_datos.sql`: no se cambia sin cambiar las dos partes.
+ */
+export function liveTopic(date: string): string {
+  return `transportistas-${date}`;
+}
+
+/**
+ * El canal que recibe los cambios de transportistas de todos los días
+ * (`0015_cualquier_dia_sin_vencer.sql`). Es el que escucha la pantalla del
+ * cliente: un transportista le sirve desde su día en adelante.
+ */
+export const ALL_DAYS_TOPIC = "transportistas-cualquier_dia";
+
+/** El evento que manda la base de datos al canal. */
+export const LIVE_EVENT = "cambio";
 
 /** Espera un poco antes de pedir la lista, por si llegan varios mensajes juntos. */
 const SETTLE_MS = 1_000;
@@ -11,7 +28,7 @@ const SETTLE_MS = 1_000;
 /**
  * Escucha los cambios de transportistas de todos los días y llama `onChange`.
  * Devuelve cómo dejar de escuchar. Sin la configuración de Supabase
- * (`getAlertsConfig`) no se llama: la pantalla se pone al día cada minuto.
+ * (`getLiveConfig`) no se llama: la pantalla se pone al día cada minuto.
  */
 export function listenForDrivers(
   live: { url: string; anonKey: string },

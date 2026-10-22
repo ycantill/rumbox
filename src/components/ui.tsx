@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
-import { CITIES_BY_DEPARTMENT, getCity, nearestCity, searchCities, simplify, type City } from "@/lib/cities";
+import { CITIES_BY_DEPARTMENT, getCity, searchCities, simplify, type City } from "@/lib/cities";
 import {
   ANY_DAY,
   ANY_DAY_LABEL,
@@ -42,7 +42,7 @@ export function Field({
  * pantalla.
  *
  * El texto de ayuda invita a las dos formas y es corto para que quepa entero
- * en un celular angosto, también con el botón "Ubicarme" al lado.
+ * en un celular angosto.
  */
 export function CitySelect({
   value,
@@ -303,70 +303,6 @@ function matchesAny(text: string): boolean {
   const q = simplify(text);
   const label = simplify(ANY_DESTINATION_LABEL);
   return label.startsWith(q) || label.split(" ").some((w) => w.startsWith(q)) || q.startsWith("cualquier");
-}
-
-/**
- * Municipio de origen con el botón "Ubicarme", que elige el municipio más
- * cercano según la ubicación del teléfono. Si cae en el destino ya elegido,
- * borra el destino para que elija otro.
- */
-export function OriginCitySelect({
-  value,
-  onChange,
-  name,
-  exclude,
-  onClearExclude,
-}: {
-  value: string;
-  onChange: (slug: string) => void;
-  name: string;
-  /** El destino ya elegido, que no sale en la lista. "Ubicarme" sí lo puede elegir. */
-  exclude?: string;
-  /** Borra el destino cuando "Ubicarme" elige ese mismo municipio. */
-  onClearExclude?: () => void;
-}) {
-  const [locating, setLocating] = useState(false);
-  const [failed, setFailed] = useState(false);
-
-  function pick(slug: string) {
-    onChange(slug);
-    setFailed(false);
-  }
-
-  function locate() {
-    setFailed(false);
-    if (!navigator.geolocation) {
-      setFailed(true);
-      return;
-    }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const slug = nearestCity(pos.coords.latitude, pos.coords.longitude).slug;
-        onChange(slug);
-        if (slug === exclude) onClearExclude?.();
-        setLocating(false);
-      },
-      () => {
-        // No dio permiso, el teléfono no supo dónde está o se demoró: que elija de la lista.
-        setLocating(false);
-        setFailed(true);
-      },
-      { timeout: 10_000, maximumAge: 300_000 },
-    );
-  }
-
-  return (
-    <>
-      <div className="flex gap-2">
-        <CitySelect name={name} value={value} onChange={pick} exclude={exclude} />
-        <button type="button" onClick={locate} className="btn-secondary shrink-0" disabled={locating}>
-          {locating ? "…" : "Ubicarme"}
-        </button>
-      </div>
-      <ErrorNote message={failed ? "No pudimos saber dónde estás. Elige tu pueblo en la lista." : null} />
-    </>
-  );
 }
 
 /** La lista completa sin un municipio; si su departamento queda vacío, tampoco sale. */

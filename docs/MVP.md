@@ -44,10 +44,11 @@ encontraron", a los que tocaron su tarjeta, sin su teléfono.
 escribiendo parte del nombre, con o sin tildes, o en la lista completa que se
 despliega con la flecha, agrupada por departamento; el campo vacío dice
 "Escribe o elige". Al tocar el campo no se sugiere nada, y ninguna región va
-primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
+primero. No hay botón "Ubicarme" (Yohany, 22 de octubre de 2026): el origen
+se elige igual que el destino.
 
 **Pantalla del transportista** (`/transportista`)
-- Siempre va de viaje: origen con botón "Ubicarme" y destino obligatorio
+- Siempre va de viaje: origen y destino obligatorio
   ("¿Hacia dónde vas?"). No hay modo local: Yohany lo quitó en octubre de 2026
   para enfocar el MVP en aprovechar viajes que ya se van a hacer. Por debajo es
   el Modo Ruta; la pantalla no le explica esa lógica al transportista.
@@ -88,8 +89,7 @@ primero. El origen, en las dos pantallas, tiene el botón "Ubicarme".
   mismas preguntas en el mismo orden. Yohany lo pidió en octubre de 2026.
 - La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
-- Desde dónde (con botón "Ubicarme") y hacia dónde, que no puede ser el mismo
-  municipio (si "Ubicarme" cae en el destino, el destino se borra); qué día
+- Desde dónde y hacia dónde, que no puede ser el mismo municipio; qué día
   ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
   teléfono. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
   2026): la hablan por teléfono.
@@ -113,12 +113,10 @@ otro papel no se ven hasta que la cierre o se venza. El servidor lo revisa con
 el número: no deja solicitar con un número que está como transportista, ni
 ponerse disponible con uno que tiene una solicitud abierta.
 
-Debajo le preguntamos "¿Te avisamos cuando aparezca un transportista?". Si
-toca "Sí, avísame" y acepta el permiso del celular, le llega un aviso
-("Apareció un transportista") cuando un transportista que le sirve se pone
-disponible, aunque tenga la app cerrada. Al tocarlo se abre "Tu solicitud". Es
-Web Push, sin Firebase. En iPhone solo funciona con Mudavía agregada a la
-pantalla de inicio: ahí se le explica cómo. El transportista no recibe avisos.
+No hay avisos al celular (Yohany, 22 de octubre de 2026): en iPhone había que
+agregar Mudavía a la pantalla de inicio para recibirlos y era muy complicado.
+El cliente entra cada tanto a mirar, y la pantalla de espera se lo dice ("Entra
+a Mudavía cada tanto para mirar."). El transportista tampoco recibe avisos.
 
 Arriba ve los datos de su solicitud: la ruta, el día y qué va a mover.
 Es una pantalla de espera: mientras no hay transportistas ve "Buscando
@@ -200,8 +198,11 @@ abran con mala señal.
   precios reales; los precios que acuerden en el piloto servirían para eso.
 - Fotos del vehículo y de la carga (Supabase Storage).
 - Notificación proactiva por WhatsApp al transportista cuando entra una
-  solicitud en su ruta (requiere la API oficial de WhatsApp). Al cliente ya
-  le llega un aviso al celular (Web Push) cuando aparece un transportista.
+  solicitud en su ruta (requiere la API oficial de WhatsApp).
+- Aviso al celular al cliente cuando aparece un transportista (Web Push). Se
+  hizo y se quitó el 22 de octubre de 2026 (Yohany): en iPhone solo funciona
+  con la app agregada a la pantalla de inicio. El código está en el historial
+  de git (PR #28).
 - Reseñas automáticas 24 h después del viaje y felicitación al transportista
   (la tabla `reviews` ya existe).
 - Formularios offline que se sincronizan al recuperar señal.

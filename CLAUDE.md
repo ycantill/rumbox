@@ -45,7 +45,7 @@ src/app/transportista/           Transportista: ponerse disponible y ver su serv
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, updateSpace, updateLocation, createRequest,
                                  getMyRequest, closeRequest,
-                                 getAlertsConfig, subscribeToAlerts, trackEvent)
+                                 getLiveConfig, trackEvent)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
@@ -54,12 +54,9 @@ src/lib/path.ts, directions.ts   La carretera: guardarla y medir sobre ella; ped
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
-src/lib/alerts.ts                A quién avisar y qué dice el aviso; canal de Realtime del día
 src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda desde el navegador
-src/lib/live.ts                  Realtime en el navegador (lista del cliente al día)
-src/lib/push.ts, push-client.ts  Web Push: enviar (servidor) y suscribirse (navegador)
-supabase/migrations/             Esquema: availabilities, requests, reviews, push_subscriptions,
-                                 events
+src/lib/live.ts                  Realtime en el navegador (lista del cliente al día) y sus canales
+supabase/migrations/             Esquema: availabilities, requests, reviews, events
 public/sw.js                     Service worker
 ```
 
@@ -69,9 +66,8 @@ public/sw.js                     Service worker
   `src/lib/supabase.ts`, que usa la service role key solo en el servidor. Las
   tablas tienen RLS sin políticas públicas. Nunca expongas la clave al
   navegador ni le pongas el prefijo `NEXT_PUBLIC_`. El navegador solo usa la
-  anon key para escuchar el canal de Realtime, que no lleva datos, y la llave
-  pública VAPID; las dos se las da el servidor con `getAlertsConfig`, sin
-  prefijo `NEXT_PUBLIC_`. Nunca expongas `VAPID_PRIVATE_KEY`.
+  anon key para escuchar el canal de Realtime, que no lleva datos; se la da
+  el servidor con `getLiveConfig`, sin prefijo `NEXT_PUBLIC_`.
 - Desde el navegador, llama las Server Actions con `callServer()` de
   `src/lib/server-call.ts`. Con mala señal la llamada falla y, sin eso, el
   error rompe la pantalla y la persona pierde lo que llenó.
@@ -219,8 +215,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
   (`exclude` de `CitySelect`); si lo escribe, sale "Ese municipio ya lo
-  elegiste. Elige otro.". Si "Ubicarme" cae en el municipio del destino, borra
-  el destino para que elija otro (Yohany, octubre de 2026). Si aun así quedan
+  elegiste. Elige otro.". Si aun así quedan
   iguales (datos guardados de antes), sale el aviso "Elige otro municipio: no
   puede ser el mismo de salida." (`SAME_CITY_ERROR`) debajo del destino: no
   puede continuar y el servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
@@ -273,12 +268,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   departamento, y buscar al ojo. Al tocar el campo no se sugiere nada, la
   lista solo se abre con la flecha y no resalta ninguno si no hay uno elegido,
   y ninguna región va primero.
-- El campo vacío dice "Escribe o elige", para invitar a las dos formas. Es
-  corto a propósito: con "Ubicarme" al lado, un texto más largo no cabe en un
-  celular de 360 px.
-- El origen de las dos pantallas ("¿Dónde estás?" del transportista y
-  "¿Desde dónde?" del cliente) tiene el botón "Ubicarme", que elige el
-  municipio más cercano según la ubicación del teléfono (`OriginCitySelect`).
+- El campo vacío dice "Escribe o elige", para invitar a las dos formas.
+- No hay botón "Ubicarme" (Yohany, 22 de octubre de 2026): el origen de las
+  dos pantallas se elige igual que el destino, para simplificar el MVP. La
+  única vez que se pide la ubicación es "Marcar por dónde voy".
 - Los slugs se guardan en la base de datos: no se cambian.
 
 **El cliente llena una sola pantalla**
@@ -344,7 +337,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   solicitudes, el cliente puede hacer hasta 5 por hora desde un mismo
   teléfono y 20 desde una misma conexión (Yohany, octubre de 2026).
 - Para que nadie llene la app de transportistas falsos (con el número de otra
-  persona) que además les mandan avisos a los clientes, el transportista
+  persona) que les salen a los clientes, el transportista
   puede ponerse disponible hasta 3 veces por hora desde un mismo teléfono y
   10 desde una misma conexión (Yohany, octubre de 2026).
 - Los límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda
@@ -358,8 +351,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   (pg_cron, migraciones `0009_borrar_telefonos.sql` y
   `0011_vence_al_terminar_el_dia.sql` y `0014_sin_te_encontraron.sql`) borra el
   teléfono y el `ip_hash` de las vencidas, y de las cerradas o apagadas una
-  hora después de creadas (para que el límite las siga contando), las
-  suscripciones a avisos de esas solicitudes. Por eso `whatsapp` puede quedar vacía, y una disponibilidad
+  hora después de creadas (para que el límite las siga contando). Por eso `whatsapp` puede quedar vacía, y una disponibilidad
   apagada no se vuelve a encender.
 
 **Privacidad y términos**
@@ -373,21 +365,16 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Los términos y condiciones entran en el MVP (Yohany, octubre de 2026);
   todavía no están escritos (docs/pendientes.md).
 
-**Avisos al celular**
-- Yohany eligió Web Push estándar con llaves VAPID, sin Firebase (octubre de
-  2026). El aviso es para el cliente: "Apareció un transportista" cuando uno
-  que le sirve a su solicitud abierta se pone disponible. Lo envía el
-  servidor de Next.js con `after()` al terminar `publishAvailability`, con la
-  misma lógica de `matchesTrip`.
-- Solo se guardan suscripciones de los servicios de avisos de los navegadores
-  (`isPushEndpoint` en `src/lib/alerts.ts`): el servidor no le manda nada a
-  otra dirección.
-- El cliente lo pide en "Tu solicitud" con "Sí, avísame", dentro de la
-  tarjeta "Buscando transportistas…" para que se vea sin bajar. Si antes le
-  negó el permiso, ahí mismo sale "No te podemos avisar". En iPhone solo
-  funciona con Mudavía agregada a la pantalla de inicio, y se le dice cómo.
-- El transportista no recibe avisos. El aviso por WhatsApp al transportista
-  necesita la API oficial y está fuera del MVP.
+**Sin avisos al celular**
+- No hay avisos al celular (Yohany, 22 de octubre de 2026): en iPhone había
+  que agregar Mudavía a la pantalla de inicio para recibirlos y era muy
+  complicado. El cliente entra a "Tu solicitud" cada tanto, y la pantalla se
+  lo dice ("Entra a Mudavía cada tanto para mirar."). Con la pantalla
+  abierta, la lista se pone al día sola. Antes había "Sí, avísame" con Web
+  Push (VAPID); la tabla `push_subscriptions` se borró en
+  `0018_sin_avisos_al_celular.sql`. El service worker se queda, para que la
+  app abra con mala señal.
+- El transportista tampoco recibe avisos.
 
 **Analíticas propias**
 - Yohany pidió analíticas en octubre de 2026. Son propias, en la tabla
@@ -417,7 +404,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   vacía en las solicitudes nuevas.
 
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
-fotos, API oficial de WhatsApp y avisos al transportista, reseñas automáticas,
+fotos, API oficial de WhatsApp, avisos al celular, reseñas automáticas,
 formularios offline, monetización (incluidas las disponibilidades
 programadas), autocompletado de direcciones, captcha y verificar el número
 con un código por SMS.

@@ -66,7 +66,7 @@ describe("CITIES_BY_DEPARTMENT", () => {
 });
 
 describe("nearestCity", () => {
-  it("con el botón Ubicarme encuentra el pueblo, no uno vecino", () => {
+  it('con "Marcar por dónde voy" encuentra el pueblo, no uno vecino', () => {
     expect(nearestCity(9.239, -75.676).slug).toBe("momil");
     expect(nearestCity(8.313, -75.145).slug).toBe("ayapel");
   });
