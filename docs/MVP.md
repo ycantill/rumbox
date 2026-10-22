@@ -73,9 +73,10 @@ se elige igual que el destino.
   pueblo, no está en la lista": su camino pasa a ir por ahí, y la lista y los
   clientes que lo ven siguen ese camino (Yohany, 22 de octubre de 2026).
 - "Comienza tu viaje" (Yohany, 22 de octubre de 2026): en su tarjeta, un
-  botón abre Google Maps con el camino hasta su destino, desde donde está el
-  teléfono. Después de tocarlo, o si ya marcó un pueblo en "¿Por dónde
-  vas?", dice "Continúa tu viaje". Lo que hace en Maps no vuelve a Mudavía:
+  botón abre el mapa con el camino hasta su destino, desde donde está el
+  teléfono: Google Maps en Android y Mapas de Apple en iPhone. Después de
+  tocarlo, o si ya marcó un pueblo en "¿Por dónde
+  vas?", dice "Continúa tu viaje". Lo que hace en el mapa no vuelve a Mudavía:
   "¿Por dónde vas?" lo sigue cambiando él. Con "Cualquier destino" no sale.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy

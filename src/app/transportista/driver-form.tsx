@@ -29,7 +29,7 @@ import {
   type DriverSpace,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
-import { mapsUrl } from "@/lib/maps";
+import { isAppleMobile, mapsUrl } from "@/lib/maps";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { routeProgress, routeStops } from "@/lib/route";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
@@ -399,19 +399,24 @@ function CurrentWork({
 }
 
 /**
- * "Comienza tu viaje" (Yohany, 22 de octubre de 2026): abre Google Maps con el
- * camino hasta su destino, para que no lo tenga que escribir. Si ya lo tocó o
- * ya marcó un pueblo en "¿Por dónde vas?", va de camino: "Continúa tu viaje".
- * Con "Cualquier destino" no hay a dónde llevarlo.
+ * "Comienza tu viaje" (Yohany, 22 de octubre de 2026): abre el mapa con el
+ * camino hasta su destino, para que no lo tenga que escribir: Google Maps en
+ * Android y Mapas en iPhone. Si ya lo tocó o ya marcó un pueblo en "¿Por dónde
+ * vas?", va de camino: "Continúa tu viaje". Con "Cualquier destino" no hay a
+ * dónde llevarlo.
  */
 function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
+  // La tarjeta sale después de leer el teléfono, así que ya hay navegador.
+  const [apple] = useState(
+    () => typeof navigator !== "undefined" && isAppleMobile(navigator.userAgent, navigator.maxTouchPoints),
+  );
   const destination = post.destination ? getCity(post.destination) : undefined;
   if (!destination) return null;
   const started = post.started || Boolean(post.current && post.current !== post.origin);
   return (
     <div className="flex flex-col gap-2">
       <a
-        href={mapsUrl(destination)}
+        href={mapsUrl(destination, apple)}
         target="_blank"
         rel="noopener noreferrer"
         className="btn-primary text-center"
@@ -419,7 +424,9 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
       >
         {started ? "Continúa tu viaje" : "Comienza tu viaje"}
       </a>
-      <p className="text-center text-sm text-muted">Se abre Google Maps con el camino hasta {destination.name}.</p>
+      <p className="text-center text-sm text-muted">
+        Se abre {apple ? "Mapas" : "Google Maps"} con el camino hasta {destination.name}.
+      </p>
     </div>
   );
 }
