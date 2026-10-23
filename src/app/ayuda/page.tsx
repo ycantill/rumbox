@@ -7,10 +7,9 @@ export const metadata: Metadata = {
   title: "Ayuda",
 };
 
-// Ayuda (Yohany, 23 de octubre de 2026): cómo funciona, qué acordar antes del
-// trasteo, qué hacer si algo sale mal y las preguntas de siempre. Mudavía no
-// atiende los casos, así que van los pasos que la persona puede dar sola y que
-// sí pueden resolverlo: el banco, el 123 y la denuncia.
+// Ayuda (Yohany, 23 de octubre de 2026): solo fraudes y seguridad, no cómo usar
+// la app. Mudavía no atiende los casos, así que van los pasos que la persona
+// puede dar sola y que sí pueden resolverlo: el banco, el 123 y la denuncia.
 export default function HelpPage() {
   return (
     <main className="page">
@@ -27,22 +26,6 @@ export default function HelpPage() {
             </a>
             . Es gratis desde cualquier celular.
           </p>
-        </section>
-
-        <section>
-          <h2 className="text-base font-bold">Cómo funciona</h2>
-          <p className="mt-1 font-semibold">Si necesitas mover algo</p>
-          <ol className="list-decimal pl-5 text-muted">
-            <li>Dices de dónde a dónde, qué día y qué vas a mover.</li>
-            <li>Te salen los transportistas que ya van para allá y tienen espacio.</li>
-            <li>Los llamas o les escribes por WhatsApp y acuerdan el precio.</li>
-          </ol>
-          <p className="mt-2 font-semibold">Si eres transportista</p>
-          <ol className="list-decimal pl-5 text-muted">
-            <li>Dices dónde estás, hacia dónde vas, qué día y cuánto puedes llevar.</li>
-            <li>Les sales a los clientes que necesitan mover algo por tu camino.</li>
-            <li>Ellos te llaman o te escriben por WhatsApp.</li>
-          </ol>
         </section>
 
         <section>
@@ -99,18 +82,6 @@ export default function HelpPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Preguntas</h2>
-          <div className="mt-1 flex flex-col gap-2">
-            {QUESTIONS.map(({ question, answer }) => (
-              <details key={question} className="card">
-                <summary className="cursor-pointer font-semibold">{question}</summary>
-                <p className="mt-2 text-muted">{answer}</p>
-              </details>
-            ))}
-          </div>
-        </section>
-
-        <section>
           <h2 className="text-base font-bold">{NO_CHARGE_TIP}</h2>
           <p className="mt-1 text-muted">
             Si alguien dice que es de Mudavía y te pide plata, una inscripción o un código, es una estafa. No le
@@ -130,30 +101,3 @@ export default function HelpPage() {
   );
 }
 
-/** Las preguntas de siempre, con la respuesta corta. */
-const QUESTIONS = [
-  {
-    question: "¿Cuánto cuesta Mudavía?",
-    answer: "Nada. Mudavía no cobra ni pone el precio: lo acuerdan el cliente y el transportista cuando hablan.",
-  },
-  {
-    question: "¿Por qué no me sale ningún transportista?",
-    answer:
-      "Solo te salen los transportistas que van por tu camino y tienen espacio para lo que vas a mover. Tu solicitud queda guardada: entra a Mudavía cada tanto para mirar.",
-  },
-  {
-    question: "¿Cómo cierro mi solicitud o dejo de salirles a los clientes?",
-    answer:
-      "Si pediste un transportista, toca “Ya no necesito este servicio”. Si eres transportista, toca “Ya no estoy disponible”.",
-  },
-  {
-    question: "Soy transportista: ¿por qué no veo el teléfono de los clientes?",
-    answer:
-      "Para cuidar a los clientes, ellos son los que te llaman o te escriben. Su número lo ves cuando te contactan.",
-  },
-  {
-    question: "¿Qué pasa con mi número?",
-    answer:
-      "Si pides un transportista, no te lo pedimos. Si eres transportista, lo ven los clientes de tu camino, y lo borramos poco después de que tocas “Ya no estoy disponible”.",
-  },
-] as const;
