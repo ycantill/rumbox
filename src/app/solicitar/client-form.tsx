@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   closeRequest,
@@ -17,7 +18,6 @@ import {
   Field,
   InfoNote,
   PrivacyNote,
-  SafetyTips,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -38,7 +38,6 @@ import {
 import { listenForDrivers } from "@/lib/live";
 import { KEYS, forget, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
-import { CLIENT_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { requestInputError } from "@/lib/validate";
 
@@ -360,7 +359,9 @@ function MyRequestView({
         </section>
       )}
 
-      <SafetyTips tips={CLIENT_TIPS} />
+      <Link href="/ayuda" className="text-center text-sm font-semibold underline">
+        Qué hacer si te estafan
+      </Link>
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">

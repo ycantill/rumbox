@@ -5,7 +5,7 @@
 /** Lo que más se repite en las estafas: pedir plata a nombre de Mudavía. */
 export const NO_CHARGE_TIP = "Mudavía no te cobra y nunca te escribe.";
 
-/** Para el cliente, en "Tu solicitud". */
+/** Para el cliente, en la ventana antes de escribir o llamar. */
 export const CLIENT_TIPS = [
   "No pagues nada antes de ver el carro y a la persona.",
   "Pídele la cédula y la placa, y tómales foto.",
