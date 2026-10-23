@@ -502,7 +502,8 @@ export function ContactButtons({
       <dialog
         ref={dialogRef}
         onClose={() => setKind(null)}
-        // Tocar fuera de la tarjeta la cierra, como "Cancelar".
+        // Son solo consejos: no hay "Cancelar", pero tocar fuera de la
+        // tarjeta (o el botón de atrás) la cierra sin seguir.
         onClick={(e) => {
           if (e.target === e.currentTarget) close();
         }}
@@ -528,9 +529,6 @@ export function ContactButtons({
               Entendido
             </a>
           )}
-          <button type="button" className="btn-secondary" onClick={close}>
-            Cancelar
-          </button>
         </div>
       </dialog>
     </>

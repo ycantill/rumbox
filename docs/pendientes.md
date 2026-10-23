@@ -315,3 +315,5 @@ se probó en un teléfono:
   desde "Para cuidarte" y desde el inicio.
 - **PR #61:** los consejos para el cliente salen en una ventana antes de cada
   "Escribir por WhatsApp" o "Llamar", y el contacto sigue con "Entendido".
+  Sin "Cancelar", y sin "Para cuidarte" en "Tu solicitud" (queda el enlace
+  "Qué hacer si te estafan").

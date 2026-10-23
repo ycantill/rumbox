@@ -149,7 +149,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
   Cada vez que toca uno, primero sale una ventana "Antes de escribir" (o
   "Antes de llamar") con los consejos para cuidarse, y el contacto sigue solo
-  al tocar "Entendido"; "Cancelar" la cierra (Yohany, 23 de octubre de 2026).
+  al tocar "Entendido" (Yohany, 23 de octubre de 2026). No hay "Cancelar"
+  porque son solo consejos (Yohany); tocar fuera de la ventana la cierra.
 - La columna `whatsapp` de la base y los campos que guarda el navegador
   conservan ese nombre aunque guardan el teléfono: no se renombran.
 
@@ -381,17 +382,19 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Consejos de seguridad**
 - Yohany, 23 de octubre de 2026, tras revisar los fraudes posibles: "Para
-  cuidarte" con consejos cortos en "Tu solicitud" del cliente y debajo de los
-  datos del transportista, y "Mudavía no te cobra y nunca te escribe" también
-  en el inicio. Los del cliente salen además antes de cada contacto (ver
-  "Llamada o WhatsApp"). Los textos están en `src/lib/safety.ts`.
+  cuidarte" con consejos cortos debajo de los datos del transportista, y
+  "Mudavía no te cobra y nunca te escribe" también en el inicio. Los del
+  cliente salen solo antes de cada contacto (ver "Llamada o WhatsApp"): Yohany
+  quitó "Para cuidarte" de "Tu solicitud", que solo tiene el enlace "Qué hacer
+  si te estafan". Los textos están en `src/lib/safety.ts`.
 - `/ayuda` (Yohany, 23 de octubre de 2026) es solo de fraudes y seguridad,
   no de cómo usar la app (Yohany quitó "Cómo funciona" y las preguntas). Tiene
   qué acordar por WhatsApp antes del trasteo y lo que se puede hacer si hubo
   fraude: el 123 si está en peligro; si pagó, avisar ya al banco,
   Nequi o Daviplata, guardar pantallazos y denunciar en ADenunciar o el CAI
   Virtual de la Policía; consejos para el transportista; y que Mudavía no
-  cobra. Se llega desde "Qué hacer si te estafan" en "Para cuidarte" y desde
+  cobra. Se llega desde "Qué hacer si te estafan" (en "Tu solicitud" y en
+  "Para cuidarte" del transportista) y desde
   "Ayuda" en el pie del inicio. Su "← Volver" lleva a lo que el teléfono tiene
   abierto (`BackLink`), porque desde ahí no se puede volver al inicio.
 - No hay botón para reportar (Yohany, 23 de octubre de 2026): sin alguien
