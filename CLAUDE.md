@@ -42,6 +42,7 @@ PR. Corre los cuatro antes de dar un cambio por terminado.
 src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
+src/app/ayuda/                   Ayuda: fraudes y seguridad
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, updateSpace, updateLocation,
                                  createRequest,
@@ -380,6 +381,15 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   cuidarte" con consejos cortos en "Tu solicitud" del cliente y debajo de los
   datos del transportista, y "Mudavía no te cobra y nunca te escribe" también
   en el inicio. Los textos están en `src/lib/safety.ts`.
+- `/ayuda` (Yohany, 23 de octubre de 2026) es solo de fraudes y seguridad,
+  no de cómo usar la app (Yohany quitó "Cómo funciona" y las preguntas). Tiene
+  qué acordar por WhatsApp antes del trasteo y lo que se puede hacer si hubo
+  fraude: el 123 si está en peligro; si pagó, avisar ya al banco,
+  Nequi o Daviplata, guardar pantallazos y denunciar en ADenunciar o el CAI
+  Virtual de la Policía; consejos para el transportista; y que Mudavía no
+  cobra. Se llega desde "Qué hacer si te estafan" en "Para cuidarte" y desde
+  "Ayuda" en el pie del inicio. Su "← Volver" lleva a lo que el teléfono tiene
+  abierto (`BackLink`), porque desde ahí no se puede volver al inicio.
 - No hay botón para reportar (Yohany, 23 de octubre de 2026): sin alguien
   que atienda los casos, un reporte solo serviría para estadística y deja a
   la persona con un sinsabor. Vuelve cuando haya quién responda.

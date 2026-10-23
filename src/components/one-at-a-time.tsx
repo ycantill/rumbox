@@ -64,3 +64,17 @@ export function BackHome() {
     </Link>
   );
 }
+
+/**
+ * Para las páginas que se abren desde cualquier lado, como /ayuda: vuelve a lo
+ * que tiene abierto o, si no tiene nada, al inicio.
+ */
+export function BackLink() {
+  const screen = useActiveScreen();
+  if (screen === undefined) return <span className="block h-5" aria-hidden />;
+  return (
+    <Link href={screen ?? "/"} className="text-sm text-muted">
+      {screen ? "← Volver" : "← Inicio"}
+    </Link>
+  );
+}

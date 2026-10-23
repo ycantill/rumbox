@@ -523,6 +523,9 @@ export function SafetyTips({ tips }: { tips: readonly string[] }) {
           <li key={tip}>{tip}</li>
         ))}
       </ul>
+      <Link href="/ayuda" className="text-sm font-semibold underline">
+        Qué hacer si te estafan
+      </Link>
     </section>
   );
 }

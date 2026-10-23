@@ -53,7 +53,10 @@ export default function Home() {
         </li>
       </ul>
 
-      <footer className="mt-auto pt-10 text-center text-xs text-muted">
+      <footer className="mt-auto flex justify-center gap-4 pt-10 text-center text-xs text-muted">
+        <Link href="/ayuda" className="underline">
+          Ayuda
+        </Link>
         <Link href="/privacidad" className="underline">
           Cómo cuidamos tus datos
         </Link>
