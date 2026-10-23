@@ -307,3 +307,7 @@ se probó en un teléfono:
   límite queda en 20 solicitudes por hora por conexión, y "una cosa a la vez"
   la cuida el navegador. La columna `whatsapp` de `requests` queda vacía en
   las nuevas. Sin migración.
+- **PR #59:** consejos de seguridad ("Para cuidarte") para el cliente y el
+  transportista, "Reportar" en las tarjetas, "Reportar un número" para el
+  transportista y números bloqueados (requiere la migración
+  `0020_reportes.sql`).
