@@ -512,3 +512,18 @@ export function useBogotaDates(): { today: string; tomorrow: string } {
   t.setUTCDate(t.getUTCDate() + 1);
   return { today, tomorrow: t.toISOString().slice(0, 10) };
 }
+
+/** Consejos de seguridad: Mudavía no maneja plata, así que lo que más ayuda es avisar antes. */
+export function SafetyTips({ tips }: { tips: readonly string[] }) {
+  return (
+    <section className="card flex flex-col gap-2">
+      <h2 className="font-semibold">Para cuidarte</h2>
+      <ul className="grid list-disc gap-1 pl-5 text-sm text-muted">
+        {tips.map((tip) => (
+          <li key={tip}>{tip}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+

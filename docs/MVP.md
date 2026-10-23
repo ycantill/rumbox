@@ -175,6 +175,14 @@ botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
 Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
 y condiciones también entran en el MVP; falta escribirlos.
 
+**Consejos de seguridad** (`src/lib/safety.ts`, Yohany, 23 de octubre de
+2026): Mudavía no maneja plata, así que los fraudes pasan en la llamada o el
+WhatsApp. El cliente ve "Para cuidarte" en "Tu solicitud" (no pagar antes de
+ver el carro, pedir cédula y placa, pagar al entregar) y el transportista
+debajo de sus datos (revisar que la plata llegó, no llevar paquetes cerrados,
+desconfiar de citas en lugares solos). Los dos y el inicio dicen "Mudavía no
+te cobra y nunca te escribe". No hay botón para reportar: queda para después.
+
 **Aparecer en Google (SEO)**: entra en el MVP, pero está en espera. El plan
 está en el punto 10c de [pendientes.md](pendientes.md).
 
@@ -223,5 +231,10 @@ abran con mala señal.
 - Autocompletado de direcciones y barrios (hoy se busca el municipio entre todos
   los de Colombia).
 - El resto del anti-spam: captcha y verificar el número con un código por SMS.
+- Reportar a un transportista o un número, con bloqueo (Yohany, 23 de octubre
+  de 2026): se construyó en el PR #59 y se quitó, porque sin alguien que
+  atienda los casos no le resuelve nada a quien reporta. Vuelve cuando haya
+  quién responda, con pasos concretos según lo que pasó (banco o Nequi, 123,
+  denuncia en ADenunciar o el CAI Virtual de la Policía).
   El transportista ya tiene límite por teléfono y por conexión, y el cliente
   por conexión.

@@ -57,6 +57,7 @@ src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y s
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
 src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda desde el navegador
+src/lib/safety.ts                Consejos de seguridad
 src/lib/live.ts                  Realtime en el navegador (lista del cliente al día) y sus canales
 supabase/migrations/             Esquema: availabilities, requests, reviews, events
 public/sw.js                     Service worker
@@ -373,6 +374,15 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   10 desde una misma conexión (Yohany, octubre de 2026).
 - Los límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda
   una huella (`ip_hash`), nunca la IP.
+
+**Consejos de seguridad**
+- Yohany, 23 de octubre de 2026, tras revisar los fraudes posibles: "Para
+  cuidarte" con consejos cortos en "Tu solicitud" del cliente y debajo de los
+  datos del transportista, y "Mudavía no te cobra y nunca te escribe" también
+  en el inicio. Los textos están en `src/lib/safety.ts`.
+- No hay botón para reportar (Yohany, 23 de octubre de 2026): sin alguien
+  que atienda los casos, un reporte solo serviría para estadística y deja a
+  la persona con un sinsabor. Vuelve cuando haya quién responda.
 
 **Los teléfonos se borran**
 - El teléfono (del transportista, y de las solicitudes de antes) se guarda solo mientras la solicitud o la disponibilidad vale

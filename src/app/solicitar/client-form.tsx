@@ -17,6 +17,7 @@ import {
   Field,
   InfoNote,
   PrivacyNote,
+  SafetyTips,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -37,6 +38,7 @@ import {
 import { listenForDrivers } from "@/lib/live";
 import { KEYS, forget, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
+import { CLIENT_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { requestInputError } from "@/lib/validate";
 
@@ -357,6 +359,8 @@ function MyRequestView({
           </p>
         </section>
       )}
+
+      <SafetyTips tips={CLIENT_TIPS} />
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">

@@ -15,6 +15,7 @@ import {
   ErrorNote,
   Field,
   PrivacyNote,
+  SafetyTips,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -32,6 +33,7 @@ import { KEYS, load, save } from "@/lib/local-store";
 import { isAppleMobile, mapsUrl } from "@/lib/maps";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { routeProgress, routeStops } from "@/lib/route";
+import { DRIVER_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
@@ -372,6 +374,8 @@ function CurrentWork({
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
+
+      <SafetyTips tips={DRIVER_TIPS} />
 
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
