@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { GoToActive } from "@/components/one-at-a-time";
 import { TrackVisit } from "@/components/ui";
+import { NO_CHARGE_TIP } from "@/lib/safety";
 
 export default function Home() {
   return (
@@ -45,6 +46,10 @@ export default function Home() {
         <li className="card">
           <strong>Directo por llamada o WhatsApp.</strong>
           <span className="block text-muted">Hablas directo con el transportista, sin intermediarios.</span>
+        </li>
+        <li className="card">
+          <strong>{NO_CHARGE_TIP}</strong>
+          <span className="block text-muted">Si alguien te pide plata a nombre de Mudavía, es una estafa.</span>
         </li>
       </ul>
 

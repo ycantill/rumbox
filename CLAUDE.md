@@ -45,7 +45,8 @@ src/app/transportista/           Transportista: ponerse disponible y ver su serv
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, updateSpace, updateLocation,
                                  createRequest,
-                                 getMyRequest, closeRequest,
+                                 getMyRequest, closeRequest, reportDriver,
+                                 reportNumber,
                                  getLiveConfig, trackEvent)
 src/components/ui.tsx            Componentes compartidos y useBogotaDates
 src/lib/domain.ts                Vocabulario: tamaños de carga
@@ -57,8 +58,10 @@ src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y s
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
 src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda desde el navegador
+src/lib/safety.ts                Consejos de seguridad y motivos de los reportes
 src/lib/live.ts                  Realtime en el navegador (lista del cliente al día) y sus canales
-supabase/migrations/             Esquema: availabilities, requests, reviews, events
+supabase/migrations/             Esquema: availabilities, requests, reviews, events,
+                                 reports, blocked_phones
 public/sw.js                     Service worker
 ```
 
@@ -373,6 +376,21 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   10 desde una misma conexión (Yohany, octubre de 2026).
 - Los límites están en `src/lib/rate-limit.ts`. De la conexión solo se guarda
   una huella (`ip_hash`), nunca la IP.
+
+**Consejos de seguridad y reportes**
+- Yohany, 23 de octubre de 2026, tras revisar los fraudes posibles: "Para
+  cuidarte" con consejos cortos en "Tu solicitud" del cliente y debajo de los
+  datos del transportista, y "Mudavía no te cobra y nunca te escribe" también
+  en el inicio. Los textos y los motivos de reporte están en
+  `src/lib/safety.ts`; las claves de los motivos se guardan en la base.
+- "Reportar" en cada tarjeta de transportista (con la solicitud del cliente,
+  una vez por transportista) y "Reportar un número" para el transportista (el
+  número que lo llamó, una vez por número). Se toca uno de los motivos; no
+  hay texto libre. Del que reporta no se guarda nada suyo; el número
+  reportado sí, para poder bloquearlo (migración `0020_reportes.sql`).
+- No se bloquea solo: Yohany mira `reportes_por_numero` en Supabase y agrega
+  el número a `blocked_phones`. Ese número ya no se pone disponible y deja de
+  salirles a los clientes.
 
 **Los teléfonos se borran**
 - El teléfono (del transportista, y de las solicitudes de antes) se guarda solo mientras la solicitud o la disponibilidad vale

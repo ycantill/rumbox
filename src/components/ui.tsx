@@ -12,6 +12,8 @@ import {
 } from "@/lib/domain";
 import type { Page } from "@/lib/analytics";
 import { KEYS, load, save } from "@/lib/local-store";
+import { REPORT_REASON_ERROR, REPORT_THANKS } from "@/lib/safety";
+import { callServer } from "@/lib/server-call";
 import { track } from "@/lib/track";
 import { telLink, waLink } from "@/lib/whatsapp";
 
@@ -511,4 +513,83 @@ export function useBogotaDates(): { today: string; tomorrow: string } {
   const t = new Date(`${today}T12:00:00Z`);
   t.setUTCDate(t.getUTCDate() + 1);
   return { today, tomorrow: t.toISOString().slice(0, 10) };
+}
+
+/** Consejos de seguridad: Mudavía no maneja plata, así que lo que más ayuda es avisar antes. */
+export function SafetyTips({ tips }: { tips: readonly string[] }) {
+  return (
+    <section className="card flex flex-col gap-2">
+      <h2 className="font-semibold">Para cuidarte</h2>
+      <ul className="grid list-disc gap-1 pl-5 text-sm text-muted">
+        {tips.map((tip) => (
+          <li key={tip}>{tip}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/**
+ * "¿Qué pasó?": los motivos de un reporte, para tocar uno, y el botón para
+ * enviarlo. `children` va arriba, para lo que haga falta además (el número que
+ * llamó al transportista).
+ */
+export function ReportForm<K extends string>({
+  reasons,
+  onSend,
+  onCancel,
+  children,
+}: {
+  reasons: Record<K, string>;
+  onSend: (reason: K) => Promise<{ ok: true } | { ok: false; error: string }>;
+  /** "Cancelar", o "Cerrar" después de enviarlo. */
+  onCancel: () => void;
+  children?: React.ReactNode;
+}) {
+  const [reason, setReason] = useState<K | "">("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  if (sent) {
+    return (
+      <div className="flex flex-col gap-2">
+        <InfoNote message={REPORT_THANKS} />
+        <button type="button" className="btn-secondary" onClick={onCancel}>
+          Cerrar
+        </button>
+      </div>
+    );
+  }
+
+  async function send() {
+    if (!reason) {
+      setError(REPORT_REASON_ERROR);
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    const res = await callServer(() => onSend(reason));
+    setBusy(false);
+    if (res.ok) setSent(true);
+    else setError(res.error);
+  }
+
+  return (
+    <div className="flex flex-col gap-3">
+      {children}
+      <Field label="¿Qué pasó?">
+        <Choices options={reasons} value={reason} onChange={setReason} columns={1} />
+      </Field>
+      <ErrorNote message={error} />
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" className="btn-secondary" onClick={onCancel}>
+          Cancelar
+        </button>
+        <button type="button" className="btn-secondary" disabled={busy} onClick={send}>
+          Enviar reporte
+        </button>
+      </div>
+    </div>
+  );
 }

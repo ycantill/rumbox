@@ -175,6 +175,18 @@ botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
 Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
 y condiciones también entran en el MVP; falta escribirlos.
 
+**Consejos de seguridad y reportes** (`src/lib/safety.ts`, Yohany, 23 de
+octubre de 2026): Mudavía no maneja plata, así que los fraudes pasan en la
+llamada o el WhatsApp. El cliente ve "Para cuidarte" en "Tu solicitud" (no
+pagar antes de ver el carro, pedir cédula y placa, pagar al entregar) y el
+transportista debajo de sus datos (revisar que la plata llegó, no llevar
+paquetes cerrados, desconfiar de citas en lugares solos). Los dos y el
+inicio dicen "Mudavía no te cobra y nunca te escribe". Cada tarjeta de
+transportista tiene "Reportar" y el transportista tiene "Reportar un número"
+para el que lo llamó. Yohany revisa los reportes en Supabase
+(`reportes_por_numero`) y bloquea a mano un número en `blocked_phones`: ya no
+se pone disponible y deja de salirles a los clientes.
+
 **Aparecer en Google (SEO)**: entra en el MVP, pero está en espera. El plan
 está en el punto 10c de [pendientes.md](pendientes.md).
 

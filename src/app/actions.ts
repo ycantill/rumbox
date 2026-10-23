@@ -23,6 +23,7 @@ import {
   type LimitedTable,
 } from "@/lib/rate-limit";
 import { offRoad, viaFits } from "@/lib/route";
+import { BLOCKED_ERROR, REPORT_REASON_ERROR, isReportReason } from "@/lib/safety";
 import { db } from "@/lib/supabase";
 import { driverInputError, requestInputError } from "@/lib/validate";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
@@ -81,6 +82,8 @@ export async function publishAvailability(input: {
     // Sin límite, cualquiera podría poner transportistas falsos, con el número
     // de otra persona, que les salen a los clientes.
     if (await tooMany("availabilities", whatsapp, ipHash)) return fail(DRIVER_RATE_LIMIT_ERROR);
+    // Un número que Yohany bloqueó por reportes ya no puede ponerse disponible.
+    if ((await blockedAmong([whatsapp])).size > 0) return fail(BLOCKED_ERROR);
 
     // La más rápida. Si va por otro lado, agrega el pueblo en "¿Por dónde vas?".
     const route = await tripRoute(input.origin, input.destination);
@@ -372,6 +375,81 @@ export async function getLiveConfig(): Promise<LiveConfig> {
   return { live: url && anonKey ? { url, anonKey } : null };
 }
 
+// --------------------------------------------------------------------- Reportes
+
+/**
+ * "Reportar" en la tarjeta de un transportista: el cliente cuenta qué pasó
+ * (Yohany, 23 de octubre de 2026). Solo con su solicitud, y una vez por
+ * transportista. Yohany lo revisa en Supabase y decide si bloquea el número.
+ */
+export async function reportDriver(input: {
+  requestId: string;
+  editToken: string;
+  availabilityId: string;
+  reason: string;
+}): Promise<{ ok: true } | Fail> {
+  if (!isReportReason("cliente", input.reason)) return fail(REPORT_REASON_ERROR);
+  return withDb(REPORT_DB_ERROR, async () => {
+    const { data: request, error } = await db()
+      .from("requests")
+      .select("edit_token_hash")
+      .eq("id", input.requestId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!request || !tokenMatches(input.editToken, request.edit_token_hash)) {
+      return fail("No encontramos tu solicitud en este teléfono.");
+    }
+    const { data: driver, error: driverErr } = await db()
+      .from("availabilities")
+      .select("whatsapp")
+      .eq("id", input.availabilityId)
+      .maybeSingle();
+    if (driverErr) throw driverErr;
+    // Ya se borró su teléfono: dejó de salir y no hay a quién bloquear.
+    if (!driver?.whatsapp) return { ok: true as const };
+    return saveReport({
+      reporter: "cliente",
+      reason: input.reason,
+      reported_whatsapp: driver.whatsapp,
+      request_id: input.requestId,
+      availability_id: input.availabilityId,
+    });
+  });
+}
+
+/**
+ * "Reportar un número": el transportista no ve a los clientes, pero sí el
+ * número que lo llamó o le escribió. Solo con su disponibilidad, y una vez por
+ * número.
+ */
+export async function reportNumber(input: {
+  id: string;
+  editToken: string;
+  phone: string;
+  reason: string;
+}): Promise<{ ok: true } | Fail> {
+  const phone = normalizeWhatsApp(input.phone ?? "");
+  if (!phone) return fail("Revisa el número que te llamó.");
+  if (!isReportReason("transportista", input.reason)) return fail(REPORT_REASON_ERROR);
+  return withDb(REPORT_DB_ERROR, async () => {
+    const { data, error } = await db()
+      .from("availabilities")
+      .select("edit_token_hash")
+      .eq("id", input.id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
+      return fail("No encontramos tus datos en este teléfono.");
+    }
+    return saveReport({
+      reporter: "transportista",
+      reason: input.reason,
+      reported_whatsapp: phone,
+      reporter_availability_id: input.id,
+    });
+  });
+}
+
 // ------------------------------------------------------------------- Analíticas
 
 /**
@@ -452,10 +530,13 @@ async function findDrivers(r: {
     .limit(500);
   if (error) throw error;
 
+  // Los números bloqueados por reportes dejan de salir de una vez.
+  const blocked = await blockedAmong((data ?? []).map((a) => a.whatsapp as string));
   const matches: DriverMatch[] = [];
   // Un mismo transportista puede estar dos veces (por ejemplo, si se puso
   // disponible desde dos navegadores): vale lo último que guardó.
   for (const a of newestBy(data ?? [], (a) => a.whatsapp)) {
+    if (blocked.has(a.whatsapp)) continue;
     // Por dónde va no se le muestra al cliente (Yohany, 21 de octubre de 2026),
     // y la carretera solo sirve para el match.
     const { current_city, route, ...driver } = a;
@@ -488,6 +569,23 @@ async function tripRoute(origin: string, destination: string): Promise<string | 
   return saved ?? (await roadRoute(from, to));
 }
 
+/** Los números de la lista que Yohany bloqueó. */
+async function blockedAmong(phones: string[]): Promise<Set<string>> {
+  const unique = [...new Set(phones)];
+  if (unique.length === 0) return new Set();
+  const { data, error } = await db().from("blocked_phones").select("whatsapp").in("whatsapp", unique);
+  if (error) throw error;
+  return new Set((data ?? []).map((b) => b.whatsapp as string));
+}
+
+/** Guarda el reporte. Si ya lo había reportado, queda el de antes y no se avisa. */
+async function saveReport(row: Record<string, string>): Promise<{ ok: true }> {
+  const { error } = await db().from("reports").insert(row);
+  // 23505: ya existe (una vez por cada uno).
+  if (error && error.code !== "23505") throw error;
+  return { ok: true as const };
+}
+
 /** Lo que podía llevar al ponerse disponible. Las de antes no lo guardaban. */
 function fullSpace(a: { space: string; full_space: string | null }): DriverSpace {
   return (isKey(DRIVER_SPACES, a.full_space) ? a.full_space : a.space) as DriverSpace;
@@ -501,6 +599,8 @@ function fail(error: string): Fail {
 const CLIENT_DB_ERROR = "No pudimos guardar tu solicitud. Intenta de nuevo en un momento.";
 /** Lo que ve el transportista: él no hace solicitudes, y la palabra "disponible" no se repite. */
 const DRIVER_DB_ERROR = "No pudimos guardar tus datos. Intenta de nuevo en un momento.";
+/** Lo que ven los dos si falla un reporte. */
+const REPORT_DB_ERROR = "No pudimos enviar tu reporte. Intenta de nuevo en un momento.";
 
 async function withDb<T>(message: string, fn: () => Promise<T>): Promise<T | Fail> {
   try {

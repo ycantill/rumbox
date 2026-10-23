@@ -4,6 +4,7 @@ import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useTransit
 import {
   getMyAvailability,
   publishAvailability,
+  reportNumber,
   updateAvailability,
   updateLocation,
   updateSpace,
@@ -15,6 +16,8 @@ import {
   ErrorNote,
   Field,
   PrivacyNote,
+  ReportForm,
+  SafetyTips,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -32,6 +35,7 @@ import { KEYS, load, save } from "@/lib/local-store";
 import { isAppleMobile, mapsUrl } from "@/lib/maps";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { routeProgress, routeStops } from "@/lib/route";
+import { DRIVER_REPORT_REASONS, DRIVER_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
@@ -373,6 +377,10 @@ function CurrentWork({
 
       <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
 
+      <SafetyTips tips={DRIVER_TIPS} />
+
+      <ReportCaller id={id} editToken={editToken} />
+
       <ErrorNote message={error} />
       <div className="flex flex-col gap-2">
         {confirmEnd ? (
@@ -428,6 +436,53 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
         Se abre {apple ? "Mapas" : "Google Maps"} con el camino hasta {destination.name}.
       </p>
     </div>
+  );
+}
+
+/**
+ * "Reportar un número" (Yohany, 23 de octubre de 2026): él no ve a los
+ * clientes, pero sí el número que lo llamó o le escribió. Si le mostró un pago
+ * que no llegó o lo citó en un lugar solo, lo reporta, y Yohany puede
+ * bloquearlo.
+ */
+function ReportCaller({ id, editToken }: { id: string; editToken: string }) {
+  const [open, setOpen] = useState(false);
+  const [phone, setPhone] = useState("");
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className="text-center text-sm text-muted underline"
+        onClick={() => {
+          // Cada vez que lo abre empieza de cero.
+          setPhone("");
+          setOpen(true);
+        }}
+      >
+        ¿Alguien te llamó para algo raro? Reportar un número
+      </button>
+    );
+  }
+  return (
+    <section className="card flex flex-col gap-3">
+      <h2 className="font-semibold">Reportar un número</h2>
+      <ReportForm
+        reasons={DRIVER_REPORT_REASONS}
+        onCancel={() => setOpen(false)}
+        onSend={(reason) => reportNumber({ id, editToken, phone, reason })}
+      >
+        <Field label="¿Qué número te llamó?" hint="Lo ves en tus llamadas o en el chat de WhatsApp.">
+          <input
+            type="tel"
+            inputMode="tel"
+            className="input"
+            placeholder="300 123 4567"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+          />
+        </Field>
+      </ReportForm>
+    </section>
   );
 }
 
