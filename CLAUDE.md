@@ -113,7 +113,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Sin cuentas**
 - No hay login ni contraseñas ("Cero registros"). El número de teléfono
-  identifica cada disponibilidad.
+  identifica cada disponibilidad; el cliente no da número.
 - El transportista controla su disponibilidad con un token que vive en su
   teléfono (localStorage); en la base solo se guarda el hash. Por eso "uno a la
   vez" vale por teléfono. El cliente controla su solicitud igual, con su
@@ -121,14 +121,17 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   nadie.
 
 **Llamada o WhatsApp**
-- Se pide "Tu teléfono", no "Tu WhatsApp": el número sirve para llamar y para
-  escribir por WhatsApp. Al transportista se le dice que los clientes lo
+- Al transportista se le pide "Tu teléfono", no "Tu WhatsApp": el número sirve
+  para llamar y para escribir por WhatsApp. Se le dice que los clientes lo
   pueden llamar o escribir por WhatsApp.
+- Al cliente no se le pide el teléfono (Yohany, 23 de octubre de 2026): ya no
+  hay avisos y es él quien llama o escribe, así que nadie lo veía. Su
+  solicitud la controla el token de su teléfono. La columna `whatsapp` de
+  `requests` queda vacía en las nuevas.
 - El transportista no contacta al cliente (Yohany, octubre de 2026): por la
   privacidad del cliente, siempre es el cliente quien llama o escribe. El
   transportista no ve la lista de clientes que esperan, porque una lista con
-  la que no puede hacer nada solo frustra (Yohany): espera que lo llamen. Al
-  cliente se le dice que los transportistas no ven su teléfono.
+  la que no puede hacer nada solo frustra (Yohany): espera que lo llamen.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
   datos, el transportista tiene una lista desplegable con las opciones de
   "¿Cuánto puedes llevar?", las cuatro siempre (`updateSpace`): cuando carga,
@@ -342,10 +345,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
   nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no estoy
   disponible") o se vence, vuelven el formulario y "← Inicio".
-- El servidor lo revisa con el número (`hasActiveTrip` y `hasOpenRequest` en
-  `actions.ts`, textos en `src/lib/one-at-a-time.ts`): con un número que está
-  como transportista no se solicita, y con uno que tiene una solicitud abierta
-  no se pone disponible.
+- Lo revisa solo el navegador, con lo que guarda. Antes el servidor lo
+  cruzaba por número, pero el cliente ya no da el suyo (Yohany, 23 de octubre
+  de 2026).
 
 **Las listas se actualizan solas**
 - Los transportistas que le sirven al cliente, y si la disponibilidad del
@@ -362,8 +364,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Límites sin cuenta**
 - Para que nadie junte los teléfonos de los transportistas haciendo muchas
-  solicitudes, el cliente puede hacer hasta 5 por hora desde un mismo
-  teléfono y 20 desde una misma conexión (Yohany, octubre de 2026).
+  solicitudes, el cliente puede hacer hasta 20 por hora desde una misma
+  conexión (Yohany, octubre de 2026). Ya no hay límite por teléfono porque no
+  se le pide (Yohany, 23 de octubre de 2026).
 - Para que nadie llene la app de transportistas falsos (con el número de otra
   persona) que les salen a los clientes, el transportista
   puede ponerse disponible hasta 3 veces por hora desde un mismo teléfono y
@@ -372,7 +375,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   una huella (`ip_hash`), nunca la IP.
 
 **Los teléfonos se borran**
-- El teléfono se guarda solo mientras la solicitud o la disponibilidad vale
+- El teléfono (del transportista, y de las solicitudes de antes) se guarda solo mientras la solicitud o la disponibilidad vale
   (Yohany, octubre de 2026); como la disponibilidad y la solicitud de
   "Cualquier día" no se vencen, eso es hasta que se apagan o se cierran
   (`0015_cualquier_dia_sin_vencer.sql`). Cada hora, `borrar_telefonos_vencidos()`

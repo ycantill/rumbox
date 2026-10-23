@@ -15,7 +15,6 @@ const request = {
   destination: "sincelejo",
   date: today,
   volume: "medio_camion",
-  whatsapp: "300 111 2233",
 };
 
 describe("driverInputError", () => {
@@ -47,7 +46,6 @@ describe("requestInputError", () => {
     expect(requestInputError({ ...request, destination: "" }, today)).toBe("Elige hacia dónde.");
     expect(requestInputError({ ...request, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
     expect(requestInputError({ ...request, volume: "" }, today)).toBe("Elige qué vas a mover.");
-    expect(requestInputError({ ...request, whatsapp: "" }, today)).toBe("Revisa el número de teléfono.");
   });
 
   it("el cliente puede dejar cualquier día; el transportista no", () => {

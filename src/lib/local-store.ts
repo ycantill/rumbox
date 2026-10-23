@@ -19,6 +19,15 @@ export function save(key: string, value: unknown): void {
   }
 }
 
+/** Borra lo guardado con esa clave. */
+export function forget(key: string): void {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Igual que arriba: si falla, no pasa nada.
+  }
+}
+
 /** Se avisa cada vez que algo se guarda, para las pantallas que dependen de eso. */
 export const STORE_CHANGED = "muvia:guardado";
 
@@ -27,6 +36,7 @@ export const STORE_CHANGED = "muvia:guardado";
 export const KEYS = {
   driverProfile: "muvia.transportista.perfil",
   driverPosts: "muvia.transportista.publicaciones",
+  // Ya no se pide: solo sirve para borrar el que quedó de antes.
   clientPhone: "muvia.cliente.whatsapp",
   clientRequest: "muvia.cliente.solicitud",
   visited: "muvia.ya-vino",

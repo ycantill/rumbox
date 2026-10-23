@@ -1,6 +1,6 @@
 // Una cosa a la vez en cada teléfono: o es transportista o pide uno, nunca las
-// dos (Yohany, octubre de 2026). La pantalla lo revisa con lo guardado en el
-// navegador y el servidor con el número.
+// dos (Yohany, octubre de 2026). Lo revisa la pantalla con lo guardado en el
+// navegador: el cliente ya no da su número (Yohany, 23 de octubre de 2026).
 
 import { isStillValid } from "./dates";
 import { DRIVER_SPACES, isKey } from "./domain";
@@ -33,11 +33,3 @@ export function activeScreen(
   if (saved.trip && tripIsOn(saved.trip)) return "/transportista";
   return null;
 }
-
-/** Lo que ve el cliente si su número ya está como transportista. */
-export const BUSY_AS_DRIVER_ERROR =
-  "Este número está como transportista. Para pedir uno, primero toca “Ya no estoy disponible”.";
-
-/** Lo que ve el transportista si su número tiene una solicitud abierta. */
-export const BUSY_AS_CLIENT_ERROR =
-  "Este número tiene una solicitud abierta. Ciérrala para poder trabajar como transportista.";

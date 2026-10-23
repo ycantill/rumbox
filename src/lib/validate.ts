@@ -10,11 +10,10 @@ type Trip = {
   origin: string;
   destination: string;
   date: string;
-  whatsapp: string;
 };
 
 /** El primer dato que le falta al transportista, o null si está todo. */
-export function driverInputError(input: Trip & { space: string }, today: string): string | null {
+export function driverInputError(input: Trip & { space: string; whatsapp: string }, today: string): string | null {
   if (!getCity(input.origin)) return "Elige la ciudad donde estás.";
   if (input.destination !== ANY_DESTINATION && !getCity(input.destination)) return "Elige hacia dónde vas.";
   if (input.destination === input.origin) return SAME_CITY_ERROR;
@@ -24,7 +23,10 @@ export function driverInputError(input: Trip & { space: string }, today: string)
   return null;
 }
 
-/** El primer dato que le falta a la solicitud del cliente, o null si está todo. */
+/**
+ * El primer dato que le falta a la solicitud del cliente, o null si está todo.
+ * No se le pide teléfono (Yohany, 23 de octubre de 2026): es él quien llama.
+ */
 export function requestInputError(input: Trip & { volume: string }, today: string): string | null {
   if (!getCity(input.origin)) return "Elige desde dónde.";
   if (!getCity(input.destination)) return "Elige hacia dónde.";
@@ -32,7 +34,6 @@ export function requestInputError(input: Trip & { volume: string }, today: strin
   // El cliente puede dejar "Cualquier día"; el transportista siempre dice qué día viaja.
   if (input.date !== ANY_DAY && !isValidServiceDate(input.date, today)) return "Elige un día de hoy en adelante.";
   if (!isKey(VOLUMES, input.volume)) return "Elige qué vas a mover.";
-  if (!normalizeWhatsApp(input.whatsapp ?? "")) return "Revisa el número de teléfono.";
   return null;
 }
 
