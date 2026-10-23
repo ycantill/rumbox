@@ -181,8 +181,9 @@ WhatsApp. El cliente ve "Para cuidarte" en "Tu solicitud" (no pagar antes de
 ver el carro, pedir cédula y placa, pagar al entregar) y el transportista
 debajo de sus datos (revisar que la plata llegó, no llevar paquetes cerrados,
 desconfiar de citas en lugares solos). Los dos y el inicio dicen "Mudavía no
-te cobra y nunca te escribe". "Qué hacer si te estafan" lleva a `/ayuda`, con
-los pasos que la persona puede dar sola: el 123, avisar al banco o a Nequi,
+te cobra y nunca te escribe". "Qué hacer si te estafan" lleva a `/ayuda`, que
+tiene además cómo funciona, qué acordar por WhatsApp antes del trasteo y
+preguntas de siempre, con los pasos que la persona puede dar sola: el 123, avisar al banco o a Nequi,
 guardar pantallazos y denunciar en ADenunciar o el CAI Virtual. No hay botón
 para reportar: queda para después.
 
