@@ -12,6 +12,7 @@ import {
 } from "@/lib/domain";
 import type { Page } from "@/lib/analytics";
 import { KEYS, load, save } from "@/lib/local-store";
+import { CLIENT_TIPS } from "@/lib/safety";
 import { track } from "@/lib/track";
 import { telLink, waLink } from "@/lib/whatsapp";
 
@@ -454,7 +455,11 @@ export function ErrorNote({ message }: { message: string | null }) {
   );
 }
 
-/** Las dos formas de contactar a alguien: escribirle por WhatsApp, con el mensaje listo, o llamarlo. */
+/**
+ * Las dos formas de contactar a alguien: escribirle por WhatsApp, con el
+ * mensaje listo, o llamarlo. Antes de cada contacto salen los consejos para
+ * cuidarse (Yohany, 23 de octubre de 2026), y solo con "Entendido" sigue.
+ */
 export function ContactButtons({
   phone,
   message,
@@ -464,25 +469,71 @@ export function ContactButtons({
   message: string;
   availabilityId: string;
 }) {
+  const [kind, setKind] = useState<"whatsapp" | "llamada" | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  function ask(next: "whatsapp" | "llamada") {
+    setKind(next);
+    dialogRef.current?.showModal();
+  }
+
+  function close() {
+    dialogRef.current?.close();
+  }
+
   return (
-    <div className="flex flex-wrap gap-2">
-      <a
-        href={waLink(phone, message)}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => track({ kind: "whatsapp", availabilityId })}
-        className="inline-flex items-center justify-center rounded-xl border border-transparent bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
+    <>
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={() => ask("whatsapp")}
+          className="inline-flex items-center justify-center rounded-xl border border-transparent bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
+        >
+          Escribir por WhatsApp
+        </button>
+        <button
+          type="button"
+          onClick={() => ask("llamada")}
+          className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink"
+        >
+          Llamar
+        </button>
+      </div>
+      <dialog
+        ref={dialogRef}
+        onClose={() => setKind(null)}
+        // Tocar fuera de la tarjeta la cierra, como "Cancelar".
+        onClick={(e) => {
+          if (e.target === e.currentTarget) close();
+        }}
+        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-surface p-0 text-ink backdrop:bg-black/50"
       >
-        Escribir por WhatsApp
-      </a>
-      <a
-        href={telLink(phone)}
-        onClick={() => track({ kind: "llamada", availabilityId })}
-        className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink"
-      >
-        Llamar
-      </a>
-    </div>
+        <div className="flex flex-col gap-4 p-5">
+          <h2 className="text-lg font-bold">Antes de {kind === "llamada" ? "llamar" : "escribir"}</h2>
+          <ul className="grid list-disc gap-1.5 pl-5 text-sm text-muted">
+            {CLIENT_TIPS.map((tip) => (
+              <li key={tip}>{tip}</li>
+            ))}
+          </ul>
+          {kind && (
+            <a
+              href={kind === "whatsapp" ? waLink(phone, message) : telLink(phone)}
+              {...(kind === "whatsapp" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+              onClick={() => {
+                track({ kind, availabilityId });
+                close();
+              }}
+              className="btn-primary text-center"
+            >
+              Entendido
+            </a>
+          )}
+          <button type="button" className="btn-secondary" onClick={close}>
+            Cancelar
+          </button>
+        </div>
+      </dialog>
+    </>
   );
 }
 

@@ -313,3 +313,5 @@ se probó en un teléfono:
 - **PR #60:** página de ayuda (`/ayuda`), solo de seguridad: qué acordar antes
   del trasteo y qué hacer si hubo fraude, enlazada
   desde "Para cuidarte" y desde el inicio.
+- **PR #61:** los consejos para el cliente salen en una ventana antes de cada
+  "Escribir por WhatsApp" o "Llamar", y el contacto sigue con "Entendido".

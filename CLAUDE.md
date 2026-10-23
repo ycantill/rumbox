@@ -147,6 +147,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
+  Cada vez que toca uno, primero sale una ventana "Antes de escribir" (o
+  "Antes de llamar") con los consejos para cuidarse, y el contacto sigue solo
+  al tocar "Entendido"; "Cancelar" la cierra (Yohany, 23 de octubre de 2026).
 - La columna `whatsapp` de la base y los campos que guarda el navegador
   conservan ese nombre aunque guardan el teléfono: no se renombran.
 
@@ -380,7 +383,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Yohany, 23 de octubre de 2026, tras revisar los fraudes posibles: "Para
   cuidarte" con consejos cortos en "Tu solicitud" del cliente y debajo de los
   datos del transportista, y "Mudavía no te cobra y nunca te escribe" también
-  en el inicio. Los textos están en `src/lib/safety.ts`.
+  en el inicio. Los del cliente salen además antes de cada contacto (ver
+  "Llamada o WhatsApp"). Los textos están en `src/lib/safety.ts`.
 - `/ayuda` (Yohany, 23 de octubre de 2026) es solo de fraudes y seguridad,
   no de cómo usar la app (Yohany quitó "Cómo funciona" y las preguntas). Tiene
   qué acordar por WhatsApp antes del trasteo y lo que se puede hacer si hubo

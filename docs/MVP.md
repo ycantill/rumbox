@@ -177,7 +177,9 @@ y condiciones también entran en el MVP; falta escribirlos.
 
 **Consejos de seguridad** (`src/lib/safety.ts`, Yohany, 23 de octubre de
 2026): Mudavía no maneja plata, así que los fraudes pasan en la llamada o el
-WhatsApp. El cliente ve "Para cuidarte" en "Tu solicitud" (no pagar antes de
+WhatsApp. El cliente ve los consejos cada vez que toca
+"Escribir por WhatsApp" o "Llamar", en una ventana que pide "Entendido" antes
+de seguir, y también en "Para cuidarte" en "Tu solicitud" (no pagar antes de
 ver el carro, pedir cédula y placa, pagar al entregar) y el transportista
 debajo de sus datos (revisar que la plata llegó, no llevar paquetes cerrados,
 desconfiar de citas en lugares solos). Los dos y el inicio dicen "Mudavía no
