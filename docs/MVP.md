@@ -181,7 +181,10 @@ WhatsApp. El cliente ve "Para cuidarte" en "Tu solicitud" (no pagar antes de
 ver el carro, pedir cédula y placa, pagar al entregar) y el transportista
 debajo de sus datos (revisar que la plata llegó, no llevar paquetes cerrados,
 desconfiar de citas en lugares solos). Los dos y el inicio dicen "Mudavía no
-te cobra y nunca te escribe". No hay botón para reportar: queda para después.
+te cobra y nunca te escribe". "Qué hacer si te estafan" lleva a `/ayuda`, con
+los pasos que la persona puede dar sola: el 123, avisar al banco o a Nequi,
+guardar pantallazos y denunciar en ADenunciar o el CAI Virtual. No hay botón
+para reportar: queda para después.
 
 **Aparecer en Google (SEO)**: entra en el MVP, pero está en espera. El plan
 está en el punto 10c de [pendientes.md](pendientes.md).

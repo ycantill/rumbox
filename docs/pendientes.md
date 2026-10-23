@@ -310,3 +310,5 @@ se probó en un teléfono:
 - **PR #59:** consejos de seguridad ("Para cuidarte") para el cliente y el
   transportista, y "Mudavía no te cobra y nunca te escribe" en el inicio.
   "Reportar" se probó y se quitó: queda para después en docs/MVP.md.
+- **PR #60:** página de ayuda (`/ayuda`) con qué hacer si hubo fraude, enlazada
+  desde "Para cuidarte" y desde el inicio.
