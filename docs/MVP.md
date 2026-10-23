@@ -29,7 +29,9 @@ lista: "Paquetes o sobres", "Algunas cosas", "Una habitación o apartaestudio" y
 "Una casa de 2 habitaciones o más". No se pregunta el vehículo: Yohany lo quitó
 en octubre de 2026 porque lo que importa es cuánto puede llevar.
 
-**Llamada o WhatsApp.** Se pide "Tu teléfono", no "Tu WhatsApp". Cada
+**Llamada o WhatsApp.** Al transportista se le pide "Tu teléfono", no "Tu
+WhatsApp". Al cliente no se le pide (Yohany, 23 de octubre de 2026): es él
+quien llama o escribe, y el transportista ve su número solo entonces. Cada
 transportista que le sale al cliente tiene dos botones: "Escribir por
 WhatsApp" (con el mensaje listo) y "Llamar". Al transportista se le dice que
 los clientes lo pueden llamar o escribir por WhatsApp.
@@ -102,8 +104,8 @@ se elige igual que el destino.
 - La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde y hacia dónde, que no puede ser el mismo municipio; qué día
-  ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños; y
-  teléfono. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
+  ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños. No se pide el teléfono (Yohany, 23
+  de octubre de 2026): ya no hay avisos, y es el cliente quien llama. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
   2026): la hablan por teléfono.
 
 Al tocar "Solicitar transportista" ve la lista de transportistas compatibles con
@@ -121,9 +123,8 @@ apenas un transportista de ese día se pone disponible o cambia la suya
 Una cosa a la vez en cada teléfono, también entre los dos papeles (Yohany,
 octubre de 2026): o tiene una solicitud o un viaje como transportista. Mientras
 la tenga, Mudavía lo lleva siempre a esa pantalla; el inicio y la pantalla del
-otro papel no se ven hasta que la cierre o se venza. El servidor lo revisa con
-el número: no deja solicitar con un número que está como transportista, ni
-ponerse disponible con uno que tiene una solicitud abierta.
+otro papel no se ven hasta que la cierre o se venza. Lo revisa lo que guarda
+el navegador; como el cliente ya no da su número, el servidor no lo cruza.
 
 No hay avisos al celular (Yohany, 22 de octubre de 2026): en iPhone había que
 agregar Mudavía a la pantalla de inicio para recibirlos y era muy complicado.
@@ -222,4 +223,5 @@ abran con mala señal.
 - Autocompletado de direcciones y barrios (hoy se busca el municipio entre todos
   los de Colombia).
 - El resto del anti-spam: captcha y verificar el número con un código por SMS.
-  El cliente y el transportista ya tienen límite por teléfono y por conexión.
+  El transportista ya tiene límite por teléfono y por conexión, y el cliente
+  por conexión.

@@ -301,3 +301,9 @@ se probó en un teléfono:
   tachados y se pueden tocar para corregir. La lista desplegable se quitó y
   abajo queda "¿Vas por un pueblo que no está en la ruta?" para los demás. Sin
   migración.
+- **Sin teléfono del cliente (23 de octubre de 2026):** el formulario de
+  `/solicitar` ya no pide "Tu teléfono" (Yohany): no lo veía nadie y los
+  controles que lo usaban eran flojos porque el número no se verifica. El
+  límite queda en 20 solicitudes por hora por conexión, y "una cosa a la vez"
+  la cuida el navegador. La columna `whatsapp` de `requests` queda vacía en
+  las nuevas. Sin migración.

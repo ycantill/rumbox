@@ -37,7 +37,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-bold">Qué guardamos</h2>
           <ul className="mt-1 list-disc pl-5 text-muted">
-            <li>Tu teléfono.</li>
+            <li>Si eres transportista, tu teléfono. Si necesitas mover algo, no te lo pedimos.</li>
             <li>De dónde sales, hacia dónde vas y qué día.</li>
             <li>Qué vas a mover o cuánto puedes llevar.</li>
             <li>Una huella de tu conexión a internet, para frenar a quien abusa de la app. No guardamos tu dirección de internet.</li>
@@ -68,8 +68,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-bold">Quién ve tu teléfono</h2>
           <p className="mt-1 text-muted">
-            Si necesitas mover algo, nadie: los transportistas no ven tu teléfono. Tú decides a quién llamar o
-            escribir.
+            Si necesitas mover algo, no te lo pedimos. Tú decides a quién llamar o escribir, y solo ese
+            transportista ve tu número.
           </p>
           <p className="mt-1 text-muted">
             Si eres transportista, lo ven las personas que buscan un viaje como el tuyo, para llamarte o escribirte
@@ -80,8 +80,8 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-base font-bold">Cuánto tiempo los guardamos</h2>
           <p className="mt-1 text-muted">
-            Tu teléfono se borra cuando tu solicitud o tu viaje deja de valer: el día después del viaje, o poco
-            después de que lo cierras.
+            El teléfono del transportista se borra cuando su viaje deja de valer, poco después de que lo apaga.
+            Las solicitudes de antes que guardaron un teléfono también lo borran al dejar de valer.
           </p>
         </section>
 

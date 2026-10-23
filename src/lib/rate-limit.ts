@@ -11,12 +11,15 @@ export const RATE_WINDOW_MS = 60 * 60 * 1000;
  * es más alto porque en los datos del celular muchas personas salen a internet
  * por la misma IP.
  */
-export const LIMITS = {
-  /** Solicitudes del cliente: alcanza para corregir varias veces. */
-  requests: { phone: 5, ip: 20 },
+export const LIMITS: Record<"requests" | "availabilities", { phone?: number; ip: number }> = {
+  /**
+   * Solicitudes del cliente: alcanza para corregir varias veces. Solo por
+   * conexión, porque al cliente ya no se le pide el teléfono.
+   */
+  requests: { ip: 20 },
   /** Disponibilidades del transportista: tiene una a la vez. */
   availabilities: { phone: 3, ip: 10 },
-} as const;
+};
 
 export type LimitedTable = keyof typeof LIMITS;
 
@@ -26,7 +29,7 @@ export const DRIVER_RATE_LIMIT_ERROR = "Ya enviaste tus datos muchas veces segui
 
 export function overLimit(table: LimitedTable, counts: { phone: number; ip: number }): boolean {
   const max = LIMITS[table];
-  return counts.phone >= max.phone || counts.ip >= max.ip;
+  return (max.phone !== undefined && counts.phone >= max.phone) || counts.ip >= max.ip;
 }
 
 /** La IP de quien llama. En Vercel la pone Vercel, no el navegador. */

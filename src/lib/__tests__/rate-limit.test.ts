@@ -6,24 +6,29 @@ function headers(values: Record<string, string>) {
 }
 
 describe("límite de lo que se guarda", () => {
-  for (const table of ["requests", "availabilities"] as const) {
-    const max = LIMITS[table];
+  const driver = LIMITS.availabilities;
+  const client = LIMITS.requests;
 
-    it(`${table}: deja pasar por debajo de los dos límites`, () => {
-      expect(overLimit(table, { phone: max.phone - 1, ip: max.ip - 1 })).toBe(false);
-    });
+  it("transportista: deja pasar por debajo de los dos límites", () => {
+    expect(overLimit("availabilities", { phone: driver.phone! - 1, ip: driver.ip - 1 })).toBe(false);
+  });
 
-    it(`${table}: frena al llegar al límite del teléfono`, () => {
-      expect(overLimit(table, { phone: max.phone, ip: 0 })).toBe(true);
-    });
+  it("transportista: frena al llegar al límite del teléfono", () => {
+    expect(overLimit("availabilities", { phone: driver.phone!, ip: 0 })).toBe(true);
+  });
 
-    it(`${table}: frena al llegar al límite de la conexión`, () => {
-      expect(overLimit(table, { phone: 0, ip: max.ip })).toBe(true);
-    });
-  }
+  it("transportista: frena al llegar al límite de la conexión", () => {
+    expect(overLimit("availabilities", { phone: 0, ip: driver.ip })).toBe(true);
+  });
+
+  it("cliente: sin teléfono, solo cuenta la conexión", () => {
+    expect(client.phone).toBeUndefined();
+    expect(overLimit("requests", { phone: 0, ip: client.ip - 1 })).toBe(false);
+    expect(overLimit("requests", { phone: 0, ip: client.ip })).toBe(true);
+  });
 
   it("el transportista tiene menos margen que el cliente", () => {
-    expect(LIMITS.availabilities.phone).toBeLessThan(LIMITS.requests.phone);
+    expect(driver.ip).toBeLessThan(client.ip);
   });
 });
 

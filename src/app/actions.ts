@@ -14,7 +14,6 @@ import {
   type Volume,
 } from "@/lib/domain";
 import { matchesTrip, newestBy } from "@/lib/matching";
-import { BUSY_AS_CLIENT_ERROR, BUSY_AS_DRIVER_ERROR } from "@/lib/one-at-a-time";
 import {
   DRIVER_RATE_LIMIT_ERROR,
   RATE_LIMIT_ERROR,
@@ -82,8 +81,6 @@ export async function publishAvailability(input: {
     // Sin límite, cualquiera podría poner transportistas falsos, con el número
     // de otra persona, que les salen a los clientes.
     if (await tooMany("availabilities", whatsapp, ipHash)) return fail(DRIVER_RATE_LIMIT_ERROR);
-    // Una cosa a la vez: un número con una solicitud abierta no se pone de transportista.
-    if (await hasOpenRequest(whatsapp)) return fail(BUSY_AS_CLIENT_ERROR);
 
     // La más rápida. Si va por otro lado, agrega el pueblo en "¿Por dónde vas?".
     const route = await tripRoute(input.origin, input.destination);
@@ -274,12 +271,10 @@ export async function createRequest(input: {
   destination: string;
   date: string;
   volume: string;
-  whatsapp: string;
   replaces?: { id: string; editToken: string };
 }): Promise<RequestResult> {
-  const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   const invalid = requestInputError(input, todayInBogota());
-  if (invalid || !whatsapp) return fail(invalid ?? "Revisa el número de teléfono.");
+  if (invalid) return fail(invalid);
 
   const request = {
     origin_city: input.origin,
@@ -294,14 +289,13 @@ export async function createRequest(input: {
   const ipHash = hashIp(clientIp(await headers()));
   return withDb(CLIENT_DB_ERROR, async () => {
     // Muchas solicitudes seguidas sirven para juntar los teléfonos de los
-    // transportistas: se frenan por teléfono y por conexión.
-    if (await tooMany("requests", whatsapp, ipHash)) return fail(RATE_LIMIT_ERROR);
-    // Una cosa a la vez: un número que está como transportista no pide uno.
-    if (await hasActiveTrip(whatsapp)) return fail(BUSY_AS_DRIVER_ERROR);
+    // transportistas: se frenan por conexión. Sin teléfono del cliente (Yohany,
+    // 23 de octubre de 2026), "una cosa a la vez" la cuida solo el navegador.
+    if (await tooMany("requests", null, ipHash)) return fail(RATE_LIMIT_ERROR);
 
     const { data, error } = await db()
       .from("requests")
-      .insert({ ...request, whatsapp, ip_hash: ipHash, edit_token_hash: hashToken(editToken) })
+      .insert({ ...request, ip_hash: ipHash, edit_token_hash: hashToken(editToken) })
       .select("id")
       .single();
     if (error) throw error;
@@ -398,7 +392,7 @@ export async function trackEvent(input: AnalyticsEvent): Promise<void> {
 // ---------------------------------------------------------------------- Helpers
 
 /** Si el teléfono o la conexión ya guardaron demasiadas en la última hora. */
-async function tooMany(table: LimitedTable, whatsapp: string, ipHash: string | null): Promise<boolean> {
+async function tooMany(table: LimitedTable, whatsapp: string | null, ipHash: string | null): Promise<boolean> {
   const since = new Date(Date.now() - RATE_WINDOW_MS).toISOString();
   const count = async (column: "whatsapp" | "ip_hash", value: string | null) => {
     if (!value) return 0;
@@ -422,32 +416,6 @@ function hashIp(ip: string | null): string | null {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!ip || !secret) return null;
   return createHmac("sha256", secret).update(ip).digest("hex");
-}
-
-/** Si el número tiene una solicitud abierta que todavía vale. */
-async function hasOpenRequest(whatsapp: string): Promise<boolean> {
-  const { count, error } = await db()
-    .from("requests")
-    .select("id", { count: "exact", head: true })
-    .eq("whatsapp", whatsapp)
-    .eq("status", "abierta")
-    // La de "Cualquier día" no tiene día: vale hasta que la cierre.
-    .or(`service_date.gte.${todayInBogota()},service_date.is.null`);
-  if (error) throw error;
-  return (count ?? 0) > 0;
-}
-
-/** Si el número está como transportista y no se ha apagado (lo mismo que ven los clientes). */
-async function hasActiveTrip(whatsapp: string): Promise<boolean> {
-  const { count, error } = await db()
-    .from("availabilities")
-    .select("id", { count: "exact", head: true })
-    .eq("whatsapp", whatsapp)
-    .eq("status", "activa")
-    .not("destination_city", "is", null)
-    .in("space", Object.keys(DRIVER_SPACES));
-  if (error) throw error;
-  return (count ?? 0) > 0;
 }
 
 /** Cierra la solicitud si el token es el suyo. Devuelve si la encontró. */

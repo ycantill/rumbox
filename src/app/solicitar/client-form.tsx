@@ -35,7 +35,7 @@ import {
   type Volume,
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
-import { KEYS, load, save } from "@/lib/local-store";
+import { KEYS, forget, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { requestInputError } from "@/lib/validate";
@@ -60,7 +60,6 @@ export function ClientForm() {
   const day = useServiceDay(pickedDate);
   const date = pickedDate === ANY_DAY ? ANY_DAY : day;
   const [volume, setVolume] = useState<Volume | "">("");
-  const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   // "Tu solicitud anterior ya pasó", cuando vuelve el formulario porque se venció.
   const [notice, setNotice] = useState<string | null>(null);
@@ -78,12 +77,13 @@ export function ClientForm() {
   useEffect(() => {
     // Hace falta saber qué día es hoy para ver si la solicitud guardada ya pasó.
     if (!today) return;
-    // localStorage solo existe en el navegador: se lee después de hidratar.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setWhatsapp(load(KEYS.clientPhone, ""));
+    // Ya no se pide el teléfono (Yohany, 23 de octubre de 2026): se borra el que quedó guardado.
+    forget(KEYS.clientPhone);
     const saved = load<MyRequest | null>(KEYS.clientRequest, null);
     if (saved) {
       // El formulario queda con sus datos, para cambiar solo lo que haga falta.
+      // localStorage solo existe en el navegador: se lee después de hidratar.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrigin(saved.origin);
       setDestination(saved.destination);
       setVolume(saved.volume);
@@ -102,7 +102,7 @@ export function ClientForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const input = { origin, destination, date, volume, whatsapp };
+    const input = { origin, destination, date, volume };
     // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
     const invalid = requestInputError(input, today);
     if (invalid) {
@@ -121,7 +121,6 @@ export function ClientForm() {
         setError(res.error);
         return;
       }
-      save(KEYS.clientPhone, whatsapp);
       const mine: MyRequest = {
         id: res.id,
         editToken: res.editToken,
@@ -191,20 +190,7 @@ export function ClientForm() {
           <Choices options={VOLUMES} value={volume} onChange={setVolume} columns={1} />
         </Field>
 
-        <Field label="Tu teléfono" hint="Solo lo guardamos nosotros: los transportistas no lo ven.">
-          <input
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            className="input"
-            placeholder="300 123 4567"
-            value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
-            required
-          />
-        </Field>
-
-        <PrivacyNote>Al continuar, aceptas que guardemos tu teléfono mientras tu solicitud esté abierta.</PrivacyNote>
+        <PrivacyNote>Al continuar, aceptas que guardemos tu solicitud mientras esté abierta.</PrivacyNote>
         <ErrorNote message={error} />
         <button type="submit" className="btn-primary" disabled={isPending}>
           {isPending ? "Un momento…" : "Solicitar transportista"}
