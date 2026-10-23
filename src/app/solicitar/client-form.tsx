@@ -6,7 +6,6 @@ import {
   createRequest,
   getLiveConfig,
   getMyRequest,
-  reportDriver,
   type DriverMatch,
 } from "@/app/actions";
 import {
@@ -18,7 +17,6 @@ import {
   Field,
   InfoNote,
   PrivacyNote,
-  ReportForm,
   SafetyTips,
   useBogotaDates,
   useServiceDay,
@@ -40,7 +38,7 @@ import {
 import { listenForDrivers } from "@/lib/live";
 import { KEYS, forget, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
-import { CLIENT_REPORT_REASONS, CLIENT_TIPS } from "@/lib/safety";
+import { CLIENT_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { requestInputError } from "@/lib/validate";
 
@@ -353,7 +351,6 @@ function MyRequestView({
                   message={`Hola, te encontré en Mudavía. Necesito un servicio ${route}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puedes ayudar?`}
                 />
               </div>
-              <ReportDriver requestId={id} editToken={editToken} availabilityId={m.id} />
             </article>
           ))}
           <p role="status" className="flex items-center gap-2 text-sm text-muted">
@@ -388,39 +385,6 @@ function MyRequestView({
           Cambiar mi solicitud
         </button>
       </div>
-    </div>
-  );
-}
-
-/**
- * "Reportar" en la tarjeta de un transportista (Yohany, 23 de octubre de
- * 2026): si le pidió plata por adelantado, no llegó o se quedó con sus cosas.
- * Yohany lo revisa y puede bloquear el número.
- */
-function ReportDriver({
-  requestId,
-  editToken,
-  availabilityId,
-}: {
-  requestId: string;
-  editToken: string;
-  availabilityId: string;
-}) {
-  const [open, setOpen] = useState(false);
-  if (!open) {
-    return (
-      <button type="button" className="mt-3 text-xs text-muted underline" onClick={() => setOpen(true)}>
-        Reportar
-      </button>
-    );
-  }
-  return (
-    <div className="mt-4 border-t border-line pt-4">
-      <ReportForm
-        reasons={CLIENT_REPORT_REASONS}
-        onCancel={() => setOpen(false)}
-        onSend={(reason) => reportDriver({ requestId, editToken, availabilityId, reason })}
-      />
     </div>
   );
 }

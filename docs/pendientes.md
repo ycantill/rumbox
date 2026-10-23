@@ -308,6 +308,5 @@ se probó en un teléfono:
   la cuida el navegador. La columna `whatsapp` de `requests` queda vacía en
   las nuevas. Sin migración.
 - **PR #59:** consejos de seguridad ("Para cuidarte") para el cliente y el
-  transportista, "Reportar" en las tarjetas, "Reportar un número" para el
-  transportista y números bloqueados (requiere la migración
-  `0020_reportes.sql`).
+  transportista, y "Mudavía no te cobra y nunca te escribe" en el inicio.
+  "Reportar" se probó y se quitó: queda para después en docs/MVP.md.

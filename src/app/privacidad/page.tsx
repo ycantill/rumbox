@@ -55,10 +55,6 @@ export default function PrivacyPage() {
             Si el transportista toca &ldquo;Comienza tu viaje&rdquo;, se abre Google Maps (o Mapas, en iPhone) con su
             destino. Lo que haga ahí lo manejan Google o Apple y no vuelve a Mudavía.
           </p>
-          <p className="mt-2 text-muted">
-            Si alguien reporta un número por una estafa o un abuso, guardamos ese número y qué pasó, para revisarlo y,
-            si hace falta, bloquearlo. De quien reporta no guardamos nada suyo.
-          </p>
           <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación.</p>
         </section>
 
@@ -85,8 +81,7 @@ export default function PrivacyPage() {
           <h2 className="text-base font-bold">Cuánto tiempo los guardamos</h2>
           <p className="mt-1 text-muted">
             El teléfono del transportista se borra cuando su viaje deja de valer, poco después de que lo apaga.
-            Las solicitudes de antes que guardaron un teléfono también lo borran al dejar de valer. Un número
-            reportado sí se queda guardado, para poder bloquearlo si lo vuelven a reportar.
+            Las solicitudes de antes que guardaron un teléfono también lo borran al dejar de valer.
           </p>
         </section>
 
