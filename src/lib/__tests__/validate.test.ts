@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ANY_DAY, SAME_CITY_ERROR } from "../domain";
+import { ANY_DAY, ROUTE_ERROR } from "../domain";
 import { driverInputError, isValidServiceDate, requestInputError } from "../validate";
 
 const today = "2026-10-20";
@@ -25,18 +25,23 @@ describe("driverInputError", () => {
     expect(driverInputError({ ...driver, destination: "cualquiera" }, today)).toBeNull();
   });
 
-  it("con el formulario vacío pide primero dónde está", () => {
+  it("con el formulario vacío pide primero la ruta", () => {
     const empty = { origin: "", destination: "", date: today, services: [], space: "", whatsapp: "" };
-    expect(driverInputError(empty, today)).toBe("Elija el municipio donde está.");
+    expect(driverInputError(empty, today)).toBe(ROUTE_ERROR);
   });
 
   it("dice qué falta, en orden", () => {
-    expect(driverInputError({ ...driver, destination: "" }, today)).toBe("Elija hacia dónde va.");
-    expect(driverInputError({ ...driver, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
-    expect(driverInputError({ ...driver, services: [] }, today)).toBe("Elija qué servicios hace.");
-    expect(driverInputError({ ...driver, services: ["trasteo"] }, today)).toBe("Elija qué servicios hace.");
+    expect(driverInputError({ ...driver, destination: "" }, today)).toBe(ROUTE_ERROR);
+    expect(driverInputError({ ...driver, destination: "monteria" }, today)).toBe(ROUTE_ERROR);
+    expect(driverInputError({ ...driver, services: [] }, today)).toBe("Elija al menos un servicio.");
+    expect(driverInputError({ ...driver, services: ["trasteo"] }, today)).toBe("Elija al menos un servicio.");
     expect(driverInputError({ ...driver, space: "" }, today)).toBe("Elija cuánto espacio tiene.");
-    expect(driverInputError({ ...driver, whatsapp: "300 12" }, today)).toBe("Revise el número de teléfono.");
+    expect(driverInputError({ ...driver, whatsapp: "300 12" }, today)).toBe("Escriba su número de 10 dígitos.");
+  });
+
+  it("el espacio solo se pregunta si hace mudanzas, con las dos opciones de la mudanza", () => {
+    expect(driverInputError({ ...driver, space: "carga_parcial" }, today)).toBe("Elija cuánto espacio tiene.");
+    expect(driverInputError({ ...driver, services: ["flete", "encargo"], space: "" }, today)).toBeNull();
   });
 });
 
@@ -46,18 +51,17 @@ describe("requestInputError", () => {
   });
 
   it("dice qué falta, en orden", () => {
-    expect(requestInputError({ ...request, service: "" }, today)).toBe("Elija qué necesita.");
+    expect(requestInputError({ ...request, service: "" }, today)).toBe("Elija qué servicio necesita.");
     expect(requestInputError({ ...request, volume: "" }, today)).toBe("Elija qué tan grande es.");
-    expect(requestInputError({ ...request, origin: "" }, today)).toBe("Elija desde dónde.");
-    expect(requestInputError({ ...request, destination: "" }, today)).toBe("Elija hacia dónde.");
-    expect(requestInputError({ ...request, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
+    expect(requestInputError({ ...request, origin: "" }, today)).toBe(ROUTE_ERROR);
+    expect(requestInputError({ ...request, destination: "" }, today)).toBe(ROUTE_ERROR);
+    expect(requestInputError({ ...request, destination: "monteria" }, today)).toBe(ROUTE_ERROR);
   });
 
-  it("solo la mudanza y el flete preguntan qué tan grande", () => {
-    expect(requestInputError({ ...request, service: "flete", volume: "" }, today)).toBe("Elija qué tan grande es.");
+  it("solo la mudanza pregunta qué tan grande", () => {
     // "¿Qué tan grande?" tiene dos opciones: una habitación o una casa.
     expect(requestInputError({ ...request, volume: "carga_parcial" }, today)).toBe("Elija qué tan grande es.");
-    for (const service of ["encomienda", "encargo", "diligencia"]) {
+    for (const service of ["flete", "encomienda", "encargo", "diligencia"]) {
       expect(requestInputError({ ...request, service, volume: "" }, today)).toBeNull();
     }
   });
@@ -68,7 +72,7 @@ describe("requestInputError", () => {
   });
 
   it("el cliente no puede pedir cualquier destino", () => {
-    expect(requestInputError({ ...request, destination: "cualquiera" }, today)).toBe("Elija hacia dónde.");
+    expect(requestInputError({ ...request, destination: "cualquiera" }, today)).toBe(ROUTE_ERROR);
   });
 });
 

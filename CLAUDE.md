@@ -48,7 +48,8 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
                                  createRequest,
                                  getMyRequest, closeRequest,
                                  getLiveConfig, trackEvent)
-src/components/ui.tsx            Componentes compartidos y useBogotaDates
+src/components/ui.tsx            Componentes compartidos (hojas de abajo, Toast) y useBogotaDates
+src/components/support.tsx       Piezas de /ayuda y /privacidad
 src/lib/domain.ts                Vocabulario: tamaños de carga
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
@@ -129,10 +130,20 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   hace?" (`availabilities.services`, migración `0020_servicios.sql`), y solo
   le salen los clientes que piden uno de esos. Reemplaza el "sin casillas,
   todos hacen todo" del 26 de octubre.
-- Solo la mudanza y el flete preguntan "¿Qué tan grande?", con dos opciones:
-  "Una habitación" (`medio_camion`) y "Una casa" (`camion_entero`). La
-  encomienda, el encargo y la diligencia se guardan como `sobres`, así le
-  salen a cualquiera que tenga espacio.
+- Solo la mudanza pregunta "¿Qué tan grande?" (Yohany, 27 de octubre de
+  2026, con el prototipo; antes también el flete), con dos tarjetas: "Una
+  habitación" (`medio_camion`) y "Una casa" (`camion_entero`). Los demás
+  servicios se guardan como `sobres`, así le salen a cualquiera que los haga.
+- El que viaja responde "¿Cuánto espacio tiene?" solo si marca mudanzas, con
+  esas mismas dos tarjetas (`MOVING_SPACES`). Si no hace mudanzas no se le
+  pregunta y se guarda según sus servicios (`spaceForServices`):
+  `carga_parcial` si hace fletes ("Tiene espacio para algunas cosas") y
+  `solo_paquetes` si no.
+- Los errores de los formularios son los del prototipo: el botón se ve
+  apagado (opacidad 50%) mientras falta algo y, al tocarlo, dice debajo qué
+  falta ("Elija qué servicio necesita.", "Revise la ruta.", "Elija al menos
+  un servicio.", "Escriba su número de 10 dígitos."). El teléfono se va
+  escribiendo como "300 123 4567".
 - Lo guardado antes de los servicios: las solicitudes sin servicio le sirven
   a cualquiera y las disponibilidades sin servicios hacen todos.
 - En los resultados del cliente, cada tarjeta lleva ↑ si el conductor va
@@ -168,8 +179,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   transportista no ve la lista de clientes que esperan, porque una lista con
   la que no puede hacer nada solo frustra (Yohany): espera que lo llamen.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
-  datos, el transportista tiene una lista desplegable con las opciones de
-  "¿Cuánto puedes llevar?", las cuatro siempre (`updateSpace`): cuando carga,
+  datos, si hace mudanzas, el transportista tiene las dos tarjetas de la
+  mudanza (antes, una lista con las cuatro; `updateSpace`): cuando carga,
   la baja, y cuando descarga, la sube, aunque quede con más espacio del que
   tenía al empezar, porque pudo salir lleno (Yohany, 21 de octubre de 2026).
   `space` guarda lo que le queda (lo que miran los clientes) y
@@ -180,10 +191,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
-  Cada vez que toca uno, primero sale una ventana "Antes de escribir" (o
-  "Antes de llamar") con los consejos para cuidarse, y el contacto sigue solo
-  al tocar "Entendido" (Yohany, 23 de octubre de 2026). No hay "Cancelar"
-  porque son solo consejos (Yohany); tocar fuera de la ventana la cierra.
+  La primera vez que toca uno en cada visita (Yohany, 27 de octubre de 2026,
+  con el prototipo; antes era cada vez), sube una hoja desde abajo, "Antes de
+  escribir" (o "Antes de llamar"), con los consejos para cuidarse, y el
+  contacto sigue con "Entendido, escribir" (o "llamar"). Tiene "Cancelar".
+  Después de eso, los botones abren WhatsApp o el teléfono de una vez.
 - La columna `whatsapp` de la base y los campos que guarda el navegador
   conservan ese nombre aunque guardan el teléfono: no se renombran.
 
@@ -220,8 +232,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   futura para el transportista: las "disponibilidades programadas". No van
   en el MVP: quien repite una ruta registra cada viaje.
 - Un solo botón para apagarla: "Ya no estoy disponible" (también sirve si se
-  llenó). Pide confirmar y luego vuelve al formulario con
-  los mismos datos. "Solo queda espacio para paquetes" ya no existe: para
+  llenó). Pide confirmar en una hoja ("¿Dejar de estar disponible?", con el
+  sí en rojo) y luego vuelve al inicio con el aviso "Ya no aparece en las
+  búsquedas. Buen viaje." (Yohany, 27 de octubre de 2026). Está dentro del
+  bloque oscuro de arriba. "Solo queda espacio para paquetes" ya no existe: para
   eso está "¿Cuánto espacio te queda?".
 
 **Emparejamiento**
@@ -240,8 +254,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   carretera, uno cada ~40 km de la línea recta, como mucho 12. El dibujo
   tiene un punto por pueblo, del origen al destino, y cada uno se toca para
   marcarlo (Yohany, 22 de octubre de 2026): el de ahora dice "Vas por
-  aquí" y los que ya pasó quedan tachados, pero se pueden tocar por si se
-  equivocó. Ya no hay lista desplegable con los pueblos de la ruta. Lo cambia él a mano (Yohany, 22 de octubre
+  aquí" y los que ya pasó quedan en gris, con la línea recorrida en Señal,
+  pero se pueden tocar por si se equivocó. Ya no hay lista desplegable con los pueblos de la ruta. Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
   (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
   (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
@@ -312,8 +326,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - La carga se mide por tamaño de casa, con cuatro opciones: "Sobres y
   paquetes", "Algunas cosas", "Una habitación" y "Una casa", cada una con
   una pista corta de lo que incluye y su ícono.
-- El transportista responde "¿Cuánto espacio tiene?" con las cuatro; el
-  cliente solo elige tamaño en la mudanza y el flete (ver "Servicios"). Al
+- El transportista responde "¿Cuánto espacio tiene?" solo si hace mudanzas,
+  y el cliente solo elige tamaño en la mudanza (ver "Servicios"). Al
   transportista le salen los clientes cuya carga es igual o más chica que la
   suya.
 - No se pregunta el vehículo (Yohany lo quitó en octubre de 2026): importa
@@ -367,12 +381,16 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   solicitud: la ruta, el día y qué va a mover (con su pista).
 - Es una pantalla de espera (Yohany, octubre de 2026): mientras no hay
   transportistas sale "Buscando transportistas…" con ondas que salen del
-  centro, como un radar (`animate-radar` en `globals.css`; quietas si el
-  teléfono pide menos movimiento). Con transportistas, debajo de la lista
-  sigue "Seguimos buscando más transportistas." con una onda chica.
-- "Ya no necesito este servicio" la cierra (pide confirmar: "¿Dejamos de mostrar
-  tu solicitud a los transportistas?") y vuelve el formulario con los mismos
-  datos. "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
+  centro, como una señal (`animate-signal` en `globals.css`, detrás del
+  símbolo; quietas si el teléfono pide menos movimiento). Con
+  transportistas, debajo de la lista sigue "Seguimos buscando conductores."
+  con un punto que late. Al tocar "Buscar conductor" sale primero, por lo
+  menos 1,4 segundos, "Buscando conductores" con el símbolo y la ruta.
+- "Ya no necesito el servicio", la última fila de "Su solicitud", la cierra:
+  pide confirmar en una hoja ("¿Cerrar su solicitud?", con el sí en rojo) y
+  vuelve al inicio con el aviso "Listo. Cerramos su solicitud." (`Toast` en
+  el layout, `announce` en `src/lib/toast.ts`; Yohany, 27 de octubre de 2026).
+  "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
   reemplaza la de antes.
 - Vale hasta que termina el día del viaje: después se olvida y vuelve el
   formulario. La de "Cualquier día" no se vence.
@@ -384,7 +402,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
   nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no estoy
-  disponible") o se vence, vuelven el formulario y "← Inicio".
+  disponible"), vuelve al inicio; si se vence, vuelven el formulario y "←
+  Inicio".
 - Lo revisa solo el navegador, con lo que guarda. Antes el servidor lo
   cruzaba por número, pero el cliente ya no da el suyo (Yohany, 23 de octubre
   de 2026).

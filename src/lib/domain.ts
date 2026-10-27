@@ -13,7 +13,9 @@ import { getCity } from "./cities";
 // `baul`, `asientos`) siguen permitidas en la base de datos.
 
 /** Origen y destino nunca son el mismo municipio, ni para el cliente ni para el transportista. */
-export const SAME_CITY_ERROR = "Elija otro municipio: no puede ser el mismo de salida.";
+export const SAME_CITY_ERROR = "El origen y el destino deben ser distintos.";
+/** El error del botón cuando la ruta no sirve: falta un municipio o son el mismo. */
+export const ROUTE_ERROR = "Revise la ruta.";
 
 /**
  * "Cualquier destino": el transportista sale de su municipio y va a donde le
@@ -46,11 +48,11 @@ export function destinationName(slug: string | null): string | undefined {
  * Las claves se guardan en la base (`requests.service`, `availabilities.services`).
  */
 export const SERVICES = {
-  mudanza: { label: "Mudanza", plural: "Mudanzas" },
-  flete: { label: "Flete", plural: "Fletes" },
-  encomienda: { label: "Encomienda", plural: "Encomiendas" },
-  encargo: { label: "Encargo", plural: "Encargos" },
-  diligencia: { label: "Diligencia", plural: "Diligencias" },
+  mudanza: { label: "Mudanza", plural: "Mudanzas", hint: "Una habitación o una casa completa." },
+  flete: { label: "Flete", plural: "Fletes", hint: "Un mueble, una nevera o unas cajas." },
+  encomienda: { label: "Encomienda", plural: "Encomiendas", hint: "Un paquete, un sobre o documentos." },
+  encargo: { label: "Encargo", plural: "Encargos", hint: "Que le compren algo y se lo traigan." },
+  diligencia: { label: "Diligencia", plural: "Diligencias", hint: "Una vuelta, un trámite, recoger algo." },
 } as const;
 export type Service = keyof typeof SERVICES;
 
@@ -63,19 +65,23 @@ export function servicesOf(raw: unknown): Service[] | null {
   return (Object.keys(SERVICES) as Service[]).filter((s) => raw.includes(s));
 }
 
-/** Solo la mudanza y el flete preguntan "¿Qué tan grande?". */
+/**
+ * Solo la mudanza pregunta "¿Qué tan grande?" (Yohany, 27 de octubre de 2026,
+ * con el prototipo de Rumbox; antes también el flete).
+ */
 export function serviceHasSize(service: Service): boolean {
-  return service === "mudanza" || service === "flete";
+  return service === "mudanza";
 }
 
 /**
- * "¿Qué tan grande?" del cliente: dos opciones, con las claves de siempre. La
- * encomienda, el encargo y la diligencia no preguntan el tamaño: se guardan
- * como sobres y paquetes (`UNSIZED_VOLUME`), así le salen a cualquiera.
+ * "¿Qué tan grande?" de la mudanza: dos opciones, con las claves de siempre y
+ * los mismos textos del espacio del que viaja. Los demás servicios no
+ * preguntan el tamaño: se guardan como sobres y paquetes (`UNSIZED_VOLUME`),
+ * así le salen a cualquiera que haga ese servicio.
  */
 export const CLIENT_SIZES = {
-  medio_camion: { label: "Una habitación", hint: "Cama, clóset, nevera", short: "1 habitación" },
-  camion_entero: { label: "Una casa", hint: "2 habitaciones o más", short: "una casa" },
+  medio_camion: { label: "Una habitación", hint: "Cama, clóset, nevera y lavadora", short: "1 habitación" },
+  camion_entero: { label: "Una casa", hint: "Trasteo de 2 habitaciones o más", short: "casa" },
 } as const;
 export type ClientSize = keyof typeof CLIENT_SIZES;
 export const UNSIZED_VOLUME: Volume = "sobres";
@@ -97,6 +103,27 @@ export const DRIVER_SPACES = {
   camion_entero: VOLUMES.camion_entero,
 } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
+
+/**
+ * "¿Cuánto espacio tiene?" del que viaja: solo si hace mudanzas, con las dos
+ * opciones de la mudanza (Yohany, 27 de octubre de 2026, con el prototipo).
+ */
+export const MOVING_SPACES = {
+  medio_camion: DRIVER_SPACES.medio_camion,
+  camion_entero: DRIVER_SPACES.camion_entero,
+} as const;
+export type MovingSpace = keyof typeof MOVING_SPACES;
+
+/**
+ * El espacio que se guarda según los servicios. Si hace mudanzas, el que eligió.
+ * Si no, no se le pregunta: los demás servicios se guardan como sobres y
+ * paquetes, así que cualquier espacio les sirve, y este solo da el texto de su
+ * tarjeta ("Tiene espacio para algunas cosas" si hace fletes).
+ */
+export function spaceForServices(services: readonly Service[], chosen: string): DriverSpace | null {
+  if (services.includes("mudanza")) return isKey(MOVING_SPACES, chosen) ? chosen : null;
+  return services.includes("flete") ? "carga_parcial" : "solo_paquetes";
+}
 
 /** Dentro de una frase: "Tiene espacio para una casa entera". */
 const SPACE_IN_SENTENCE: Record<DriverSpace, string> = {

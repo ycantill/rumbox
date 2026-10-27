@@ -5,6 +5,7 @@ import {
   spaceFitsVolume,
   SERVICES,
   serviceHasSize,
+  spaceForServices,
   servicesOf,
   spaceInSentence,
   type DriverSpace,
@@ -61,12 +62,23 @@ describe("servicios", () => {
     expect(Object.keys(SERVICES)).toEqual(["mudanza", "flete", "encomienda", "encargo", "diligencia"]);
   });
 
-  it("solo la mudanza y el flete preguntan el tamaño", () => {
+  it("solo la mudanza pregunta el tamaño", () => {
     expect(serviceHasSize("mudanza")).toBe(true);
-    expect(serviceHasSize("flete")).toBe(true);
+    expect(serviceHasSize("flete")).toBe(false);
     expect(serviceHasSize("encomienda")).toBe(false);
     expect(serviceHasSize("encargo")).toBe(false);
     expect(serviceHasSize("diligencia")).toBe(false);
+  });
+
+  it("el espacio del que viaja: el que eligió si hace mudanzas, y si no, sale de sus servicios", () => {
+    expect(spaceForServices(["mudanza", "flete"], "camion_entero")).toBe("camion_entero");
+    expect(spaceForServices(["mudanza"], "medio_camion")).toBe("medio_camion");
+    // Con mudanza solo valen las dos de la mudanza.
+    expect(spaceForServices(["mudanza"], "carga_parcial")).toBeNull();
+    expect(spaceForServices(["mudanza"], "")).toBeNull();
+    // Sin mudanza no se pregunta.
+    expect(spaceForServices(["flete", "encargo"], "")).toBe("carga_parcial");
+    expect(spaceForServices(["encomienda", "diligencia"], "camion_entero")).toBe("solo_paquetes");
   });
 
   it("de una lista deja los que existen, sin repetir y en orden; sin lista, null", () => {

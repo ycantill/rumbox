@@ -10,15 +10,17 @@ import {
   ANY_DESTINATION_HINT,
   ANY_DESTINATION_LABEL,
   CLIENT_SIZES,
-  DRIVER_SPACES,
+  MOVING_SPACES,
   SERVICES,
   type ClientSize,
   type DriverSpace,
+  type MovingSpace,
   type Service,
 } from "@/lib/domain";
 import type { Page } from "@/lib/analytics";
 import { KEYS, load, save } from "@/lib/local-store";
-import { CLIENT_TIPS } from "@/lib/safety";
+import { CLIENT_TIPS, NO_CHARGE_TIP } from "@/lib/safety";
+import { TOAST_EVENT, takeAnnouncement } from "@/lib/toast";
 import { track } from "@/lib/track";
 import { telLink, waLink } from "@/lib/whatsapp";
 
@@ -356,11 +358,13 @@ export function ServicePicker({ value, onChange }: { value: Service | ""; onChan
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(key)}
-            className={`flex flex-col items-center gap-1.5 rounded-lg px-1.5 pb-3.5 pt-3 active:translate-y-px ${
-              selected ? "bg-brand text-white" : "border border-line-soft bg-surface text-ink"
+            className={`flex flex-col items-center gap-2 rounded-lg border px-1.5 pb-3.5 pt-3 active:translate-y-px ${
+              selected ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink"
             }`}
           >
-            <ServiceIcon service={key} size={64} />
+            <span className="grid size-14 place-items-center rounded-[10px] bg-white">
+              <ServiceIcon service={key} size={46} />
+            </span>
             <span className="font-display text-lg font-extrabold uppercase leading-none">{SERVICES[key].label}</span>
           </button>
         );
@@ -369,31 +373,9 @@ export function ServicePicker({ value, onChange }: { value: Service | ""; onChan
   );
 }
 
-/** "¿Qué tan grande?", solo para la mudanza y el flete. Lo elegido va en Noche. */
+/** "¿Qué tan grande?", solo para la mudanza: las mismas tarjetas del espacio del que viaja. */
 export function SizePicker({ value, onChange }: { value: ClientSize | ""; onChange: (s: ClientSize) => void }) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {(Object.keys(CLIENT_SIZES) as ClientSize[]).map((key) => {
-        const selected = value === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(key)}
-            className={`flex flex-col gap-0.5 rounded-md p-3.5 text-left active:translate-y-px ${
-              selected ? "bg-ink text-white" : "border border-line-soft bg-surface text-ink"
-            }`}
-          >
-            <span className="text-[15px] font-bold">{CLIENT_SIZES[key].label}</span>
-            <span className={`text-[13px] ${selected ? "text-on-brand-muted" : "text-muted"}`}>
-              {CLIENT_SIZES[key].hint}
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
+  return <SpaceCards options={CLIENT_SIZES} value={value} onChange={onChange} />;
 }
 
 /** "¿Qué servicios hace?": puede marcar varios. */
@@ -412,12 +394,15 @@ export function ServiceChecklist({
         return (
           <label
             key={key}
-            className={`flex cursor-pointer items-center gap-2.5 py-2 pl-1.5 pr-3.5 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-brand ${
+            className={`flex cursor-pointer items-center gap-3 py-2 pl-2 pr-3.5 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-brand ${
               checked ? "bg-paper" : ""
-            } ${i > 0 ? "border-t border-line-soft" : ""}`}
+            } ${i > 0 ? "border-t border-[#dfe3e8]" : ""}`}
           >
             <ServiceIcon service={key} size={40} />
-            <span className={`flex-1 text-base ${checked ? "font-bold" : ""}`}>{SERVICES[key].plural}</span>
+            <span className="flex flex-1 flex-col gap-0.5">
+              <span className={`text-base ${checked ? "font-bold" : ""}`}>{SERVICES[key].plural}</span>
+              <span className="text-[13px] leading-snug text-muted">{SERVICES[key].hint}</span>
+            </span>
             <input
               type="checkbox"
               className="peer sr-only"
@@ -426,8 +411,8 @@ export function ServiceChecklist({
             />
             <span
               aria-hidden
-              className={`grid size-6 place-items-center rounded-sm text-sm ${
-                checked ? "bg-ink text-white" : "border-2 border-[#a3abb5]"
+              className={`grid size-6 shrink-0 place-items-center rounded-sm border-2 text-sm text-white ${
+                checked ? "border-ink bg-ink" : "border-[#a3abb5] bg-white"
               }`}
             >
               {checked && "✓"}
@@ -439,11 +424,27 @@ export function ServiceChecklist({
   );
 }
 
-/** "¿Cuánto espacio tiene?": las cuatro tarjetas con su ícono y ejemplos. */
-export function SpacePicker({ value, onChange }: { value: DriverSpace | ""; onChange: (s: DriverSpace) => void }) {
+/**
+ * "¿Cuánto espacio tiene?" del que viaja: solo si hace mudanzas, con las dos
+ * tarjetas de la mudanza.
+ */
+export function SpacePicker({ value, onChange }: { value: string; onChange: (s: MovingSpace) => void }) {
+  return <SpaceCards options={MOVING_SPACES} value={value} onChange={onChange} />;
+}
+
+/** Tarjetas con ícono, nombre y ejemplos. Lo elegido va en Señal. */
+function SpaceCards<K extends DriverSpace>({
+  options,
+  value,
+  onChange,
+}: {
+  options: Record<K, { label: string; hint: string }>;
+  value: string;
+  onChange: (key: K) => void;
+}) {
   return (
     <div className="grid grid-cols-2 gap-2">
-      {(Object.keys(DRIVER_SPACES) as DriverSpace[]).map((key) => {
+      {(Object.keys(options) as K[]).map((key) => {
         const selected = value === key;
         return (
           <button
@@ -451,18 +452,16 @@ export function SpacePicker({ value, onChange }: { value: DriverSpace | ""; onCh
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(key)}
-            className={`flex flex-col gap-2 rounded-md p-3 text-left active:translate-y-px ${
-              selected ? "bg-brand text-white" : "border border-line bg-surface text-ink"
+            className={`flex flex-col gap-2 rounded-md border p-3 text-left active:translate-y-px ${
+              selected ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink"
             }`}
           >
             <span className={`grid size-[52px] place-items-center rounded-lg ${selected ? "bg-white" : "bg-bg"}`}>
               <SpaceIcon space={key} size={44} />
             </span>
             <span className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-bold">{DRIVER_SPACES[key].label}</span>
-              <span className={`text-[13px] leading-snug ${selected ? "text-on-brand-muted" : "text-muted"}`}>
-                {DRIVER_SPACES[key].hint}
-              </span>
+              <span className="text-[15px] font-bold">{options[key].label}</span>
+              <span className="text-[13px] leading-snug opacity-85">{options[key].hint}</span>
             </span>
           </button>
         );
@@ -595,6 +594,16 @@ export function InfoNote({ message }: { message: string | null }) {
   return <p className="rounded-md bg-notice px-3.5 py-3 text-[15px]">{message}</p>;
 }
 
+/** Un error corto, en rojo y sin recuadro: debajo de la ruta o del botón. */
+export function FieldError({ message, center = false }: { message: string | null; center?: boolean }) {
+  if (!message) return null;
+  return (
+    <p role="alert" className={`text-sm text-danger ${center ? "text-center" : ""}`}>
+      {message}
+    </p>
+  );
+}
+
 export function ErrorNote({ message }: { message: string | null }) {
   if (!message) return null;
   return (
@@ -605,9 +614,111 @@ export function ErrorNote({ message }: { message: string | null }) {
 }
 
 /**
+ * Una hoja que sube desde abajo, sobre la pantalla oscurecida: los consejos
+ * antes de contactar y las preguntas de "¿Seguro?". Tocar fuera o el botón de
+ * atrás la cierra sin seguir.
+ */
+function Sheet({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    const dialog = ref.current;
+    if (!dialog) return;
+    if (open && !dialog.open) dialog.showModal();
+    if (!open && dialog.open) dialog.close();
+  }, [open]);
+  return (
+    <dialog
+      ref={ref}
+      onClose={onClose}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="mx-auto mb-0 mt-auto w-full max-w-md rounded-t-[20px] bg-surface p-0 text-ink backdrop:bg-ink/55"
+    >
+      <div className="flex flex-col gap-4 px-[22px] pb-[26px] pt-3">
+        <span aria-hidden className="h-1 w-10 self-center rounded-sm bg-line-soft" />
+        {children}
+      </div>
+    </dialog>
+  );
+}
+
+/**
+ * "¿Seguro?" antes de algo que no se deshace, como cerrar la solicitud. El sí
+ * va en rojo y el no, debajo, deja todo como estaba.
+ */
+export function ConfirmSheet({
+  open,
+  title,
+  body,
+  yes,
+  no,
+  busy = false,
+  onYes,
+  onNo,
+}: {
+  open: boolean;
+  title: string;
+  body: string;
+  yes: string;
+  no: string;
+  busy?: boolean;
+  onYes: () => void;
+  onNo: () => void;
+}) {
+  return (
+    <Sheet open={open} onClose={onNo}>
+      <h2 className="font-display text-[32px] font-black uppercase leading-none">{title}</h2>
+      <p className="text-base leading-normal text-muted">{body}</p>
+      <div className="flex flex-col gap-2 pt-1">
+        <button
+          type="button"
+          onClick={onYes}
+          disabled={busy}
+          className="rounded-lg bg-[oklch(0.48_0.16_28)] p-[17px] font-display text-[22px] font-black uppercase leading-none text-white active:translate-y-px disabled:opacity-50"
+        >
+          {yes}
+        </button>
+        <button type="button" onClick={onNo} className="btn-secondary">
+          {no}
+        </button>
+      </div>
+    </Sheet>
+  );
+}
+
+// Los consejos salen antes del primer contacto de cada visita (Yohany, 27 de
+// octubre de 2026, con el prototipo): repetirlos en cada tarjeta cansa.
+const TIPS_SEEN = "muvia.consejos-vistos";
+
+function tipsSeen(): boolean {
+  try {
+    return window.sessionStorage.getItem(TIPS_SEEN) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markTipsSeen(): void {
+  try {
+    window.sessionStorage.setItem(TIPS_SEEN, "1");
+  } catch {
+    // Sin almacenamiento, los vuelve a ver la próxima vez.
+  }
+}
+
+/**
  * Las dos formas de contactar a alguien: escribirle por WhatsApp, con el
- * mensaje listo, o llamarlo. Antes de cada contacto salen los consejos para
- * cuidarse (Yohany, 23 de octubre de 2026), y solo con "Entendido" sigue.
+ * mensaje listo, o llamarlo. Antes del primer contacto salen los consejos para
+ * cuidarse, con "Entendido, escribir" (o "llamar") y "Cancelar".
  */
 export function ContactButtons({
   phone,
@@ -619,68 +730,144 @@ export function ContactButtons({
   availabilityId: string;
 }) {
   const [kind, setKind] = useState<"whatsapp" | "llamada" | null>(null);
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [shown, setShown] = useState<"whatsapp" | "llamada">("whatsapp");
+  const href = (k: "whatsapp" | "llamada") => (k === "whatsapp" ? waLink(phone, message) : telLink(phone));
+  const linkProps = (k: "whatsapp" | "llamada") =>
+    k === "whatsapp" ? { target: "_blank", rel: "noopener noreferrer" } : {};
 
-  function ask(next: "whatsapp" | "llamada") {
-    setKind(next);
-    dialogRef.current?.showModal();
-  }
-
-  function close() {
-    dialogRef.current?.close();
+  function contact(k: "whatsapp" | "llamada", e: React.MouseEvent) {
+    if (tipsSeen()) {
+      // Ya los vio: el enlace sigue solo.
+      track({ kind: k, availabilityId });
+      return;
+    }
+    e.preventDefault();
+    setShown(k);
+    setKind(k);
   }
 
   return (
     <>
       <div className="grid grid-cols-[1fr_auto] gap-2">
-        <button
-          type="button"
-          onClick={() => ask("whatsapp")}
+        <a
+          href={href("whatsapp")}
+          {...linkProps("whatsapp")}
+          onClick={(e) => contact("whatsapp", e)}
           className="rounded-md bg-brand p-[13px] text-center text-base font-bold text-white active:translate-y-px"
         >
           Escribir por WhatsApp
-        </button>
-        <button
-          type="button"
-          onClick={() => ask("llamada")}
-          className="rounded-md border border-line bg-surface px-4 py-[11px] text-base font-bold text-ink active:translate-y-px"
+        </a>
+        <a
+          href={href("llamada")}
+          onClick={(e) => contact("llamada", e)}
+          className="rounded-md border border-line bg-surface px-4 py-[12px] text-center text-base font-bold text-ink active:translate-y-px"
         >
           Llamar
-        </button>
+        </a>
       </div>
-      <dialog
-        ref={dialogRef}
-        onClose={() => setKind(null)}
-        // Son solo consejos: no hay "Cancelar", pero tocar fuera de la
-        // tarjeta (o el botón de atrás) la cierra sin seguir.
-        onClick={(e) => {
-          if (e.target === e.currentTarget) close();
-        }}
-        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-lg border border-line bg-surface p-0 text-ink backdrop:bg-ink/60"
-      >
-        <div className="flex flex-col gap-4 p-5">
-          <h2 className="card-title">Antes de {kind === "llamada" ? "llamar" : "escribir"}</h2>
-          <ul className="flex flex-col gap-2.5 text-[15px] leading-snug">
-            {CLIENT_TIPS.map((tip) => (
-              <li key={tip}>{tip}</li>
-            ))}
-          </ul>
-          {kind && (
-            <a
-              href={kind === "whatsapp" ? waLink(phone, message) : telLink(phone)}
-              {...(kind === "whatsapp" ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-              onClick={() => {
-                track({ kind, availabilityId });
-                close();
-              }}
-              className="btn-primary"
-            >
-              Entendido
-            </a>
-          )}
+      <Sheet open={kind !== null} onClose={() => setKind(null)}>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="font-display text-[32px] font-black uppercase leading-none">
+            Antes de {shown === "llamada" ? "llamar" : "escribir"}
+          </h2>
+          <Stamp>Frágil</Stamp>
         </div>
-      </dialog>
+        <ul className="flex flex-col gap-3">
+          {CLIENT_TIPS.map((tip) => (
+            <li key={tip} className="grid grid-cols-[22px_1fr] gap-2.5 text-base leading-snug">
+              <span
+                aria-hidden
+                className="grid size-[22px] place-items-center rounded-sm border border-line bg-paper text-[13px] font-bold text-brand"
+              >
+                ✓
+              </span>
+              <span>{tip}</span>
+            </li>
+          ))}
+        </ul>
+        <p className="rounded-md bg-notice px-3.5 py-3 text-[15px] font-semibold leading-snug">{NO_CHARGE_TIP}</p>
+        <div className="flex flex-col gap-2">
+          <a
+            href={href(shown)}
+            {...linkProps(shown)}
+            onClick={() => {
+              markTipsSeen();
+              track({ kind: shown, availabilityId });
+              setKind(null);
+            }}
+            className="btn-primary text-2xl"
+          >
+            Entendido, {shown === "llamada" ? "llamar" : "escribir"}
+          </a>
+          <button type="button" onClick={() => setKind(null)} className="btn-secondary">
+            Cancelar
+          </button>
+        </div>
+      </Sheet>
     </>
+  );
+}
+
+/**
+ * El aviso de abajo después de cerrar algo ("Listo. Cerramos su solicitud."),
+ * con "OK". Se va solo a los pocos segundos.
+ */
+export function Toast() {
+  const [message, setMessage] = useState<string | null>(null);
+  const show = useEffectEvent((text: string | null) => {
+    if (text) setMessage(text);
+  });
+  useEffect(() => {
+    // sessionStorage solo existe en el navegador: se lee después de hidratar.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    show(takeAnnouncement());
+    const onAnnounce = () => show(takeAnnouncement());
+    window.addEventListener(TOAST_EVENT, onAnnounce);
+    return () => window.removeEventListener(TOAST_EVENT, onAnnounce);
+  }, []);
+  useEffect(() => {
+    if (!message) return;
+    const timer = setTimeout(() => setMessage(null), 5000);
+    return () => clearTimeout(timer);
+  }, [message]);
+  if (!message) return null;
+  return (
+    <div
+      role="status"
+      className="fixed inset-x-4 bottom-5 z-10 mx-auto flex max-w-[calc(28rem-2rem)] items-center gap-3 rounded-lg bg-ink px-4 py-3.5 text-[15px] leading-snug text-white"
+    >
+      <span className="flex-1">{message}</span>
+      <button type="button" onClick={() => setMessage(null)} className="text-sm font-bold text-accent">
+        OK
+      </button>
+    </div>
+  );
+}
+
+/**
+ * La señal: un círculo Ocre que crece y se desvanece detrás de lo que lleva
+ * adentro (el símbolo mientras busca, o un punto). Quieta si el teléfono pide
+ * menos movimiento.
+ */
+export function Signal({ size, children }: { size: number; children: React.ReactNode }) {
+  return (
+    <span className="relative grid shrink-0 place-items-center">
+      <span
+        aria-hidden
+        className="absolute left-1/2 top-1/2 rounded-full bg-accent motion-safe:animate-signal motion-reduce:opacity-0"
+        style={{ width: size, height: size, marginLeft: -size / 2, marginTop: -size / 2 }}
+      />
+      <span className="relative grid place-items-center">{children}</span>
+    </span>
+  );
+}
+
+/** El punto que late en "Usted está disponible" y "Seguimos buscando". */
+export function SignalDot({ className = "bg-ink" }: { className?: string }) {
+  return (
+    <Signal size={10}>
+      <span className={`block size-2.5 rounded-full ${className}`} />
+    </Signal>
   );
 }
 
@@ -738,7 +925,7 @@ export function SafetyTips({ tips }: { tips: readonly string[] }) {
 /** El sello de manejo de una caja. Se usa con moderación. */
 function Stamp({ children }: { children: React.ReactNode }) {
   return (
-    <span className="mr-1 shrink-0 whitespace-nowrap rounded-sm border border-line px-2 py-[3px] font-display text-sm font-extrabold uppercase leading-none tracking-[0.06em]">
+    <span className="shrink-0 whitespace-nowrap rounded-sm border-2 border-ink px-2 py-[3px] font-display text-sm font-extrabold uppercase leading-none tracking-[0.06em]">
       {children}
     </span>
   );

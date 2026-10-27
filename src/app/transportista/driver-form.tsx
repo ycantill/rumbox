@@ -8,14 +8,18 @@ import {
   updateLocation,
   updateSpace,
 } from "@/app/actions";
+import { useRouter } from "next/navigation";
 import {
   CitySelect,
+  ConfirmSheet,
   DayPicker,
   ErrorNote,
   Field,
+  FieldError,
   PrivacyNote,
   SafetyTips,
   ServiceChecklist,
+  SignalDot,
   SpacePicker,
   useBogotaDates,
   useServiceDay,
@@ -25,11 +29,13 @@ import { getCity } from "@/lib/cities";
 import { capitalize, whenText } from "@/lib/dates";
 import {
   DRIVER_SPACES,
+  MOVING_SPACES,
   SAME_CITY_ERROR,
   SERVICES,
   destinationName,
   isKey,
   type DriverSpace,
+  type MovingSpace,
   type Service,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -38,6 +44,7 @@ import { refreshWhileOpen } from "@/lib/refresh";
 import { routeProgress, routeStops } from "@/lib/route";
 import { DRIVER_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
+import { announce } from "@/lib/toast";
 import { driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
@@ -74,7 +81,8 @@ export function DriverForm() {
   const [pickedDate, setDate] = useState("");
   const date = useServiceDay(pickedDate);
   const [services, setServices] = useState<Service[]>([]);
-  const [space, setSpace] = useState<DriverSpace | "">("");
+  // Solo si hace mudanzas: una habitación o una casa.
+  const [space, setSpace] = useState<MovingSpace | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   // Si se acaba de poner disponible: el título dice "¡Listo!".
@@ -86,13 +94,14 @@ export function DriverForm() {
   const current = posts[0];
   // Una cosa a la vez en el teléfono: si tiene una solicitud abierta, se va a esa pantalla.
   const screen = useActiveScreen();
+  const router = useRouter();
 
   // Precarga el número desde el teléfono.
   useEffect(() => {
     const p = load<Profile>(KEYS.driverProfile, { whatsapp: "" });
     // localStorage solo existe en el navegador: se lee después de hidratar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setWhatsapp(p.whatsapp);
+    setWhatsapp(phoneInput(p.whatsapp));
     setPosts(load<MyPost[]>(KEYS.driverPosts, []));
     setLoaded(Boolean(today));
   }, [today]);
@@ -113,16 +122,24 @@ export function DriverForm() {
     });
   }, []);
 
-  function endCurrent() {
-    // El formulario vuelve con los datos de antes, para ponerse otra vez con un toque.
+  function endCurrent(reason?: "closed") {
+    // Lo apagó él: vuelve al inicio con el aviso (Yohany, 27 de octubre de 2026).
+    if (reason === "closed") {
+      save(KEYS.driverPosts, []);
+      announce("Ya no aparece en las búsquedas. Buen viaje.");
+      router.push("/");
+      return;
+    }
+    // Se apagó en el servidor o es de antes: el formulario vuelve con los
+    // mismos datos, para ponerse otra vez con un toque.
     if (current) {
       setOrigin(current.origin);
       setDestination(current.destination ?? "");
       if (current.services) setServices(current.services);
       // Lo que podía llevar al empezar, no lo que le quedó libre al final del viaje.
       const space = current.fullSpace ?? current.space;
-      // El baúl o los asientos de un carro particular ya no son una opción.
-      if (isKey(DRIVER_SPACES, space)) setSpace(space);
+      // Solo las dos de la mudanza son una opción.
+      if (isKey(MOVING_SPACES, space)) setSpace(space);
     }
     setPosts([]);
     setJustPublished(false);
@@ -130,12 +147,15 @@ export function DriverForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  const input = { origin, destination, date, services, space, whatsapp };
+  // Lo que falta: el botón se ve apagado y, al tocarlo, se dice debajo.
+  const invalid = today ? driverInputError(input, today) : null;
+  const moving = services.includes("mudanza");
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
-    const input = { origin, destination, date, services, space, whatsapp };
-    const invalid = driverInputError(input, today);
+    // Se dice aquí, con el tono de la app y aunque no haya señal.
     if (invalid) {
       setError(invalid);
       return;
@@ -154,7 +174,7 @@ export function DriverForm() {
         destination,
         date,
         services,
-        space: space as DriverSpace,
+        space: res.space,
         route: res.route,
       };
       updateCurrent(post);
@@ -193,14 +213,14 @@ export function DriverForm() {
             el municipio de donde sale. Es lógica interna: no la ve. El origen no
             sale en la lista del destino. El aviso queda para lo guardado de antes. */}
         <div className="flex flex-col gap-2.5">
-          <div className="relative grid grid-cols-2 rounded-md border border-line bg-paper">
-            <div className="min-w-0 border-r border-ink px-3.5 py-2.5">
+          <div className="flex flex-col rounded-md border border-line bg-paper">
+            <div className="relative min-w-0 border-b border-line-soft px-3.5 py-2.5">
               <span aria-hidden className="guide-label block">
                 Está en
               </span>
               <CitySelect name="origin" label="Está en" variant="guide" value={origin} onChange={setOrigin} exclude={destination} />
             </div>
-            <div className="min-w-0 px-3.5 py-2.5">
+            <div className="relative min-w-0 px-3.5 py-2.5">
               <span aria-hidden className="guide-label block">
                 Va a
               </span>
@@ -215,7 +235,7 @@ export function DriverForm() {
               />
             </div>
           </div>
-          <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
+          <FieldError message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </div>
 
         {/* "Hoy" viene elegido. Viaja desde ese día en adelante, hasta que se apague. */}
@@ -231,10 +251,12 @@ export function DriverForm() {
           <ServiceChecklist value={services} onChange={setServices} />
         </fieldset>
 
-        {/* La misma lista de tamaños del cliente. */}
-        <Field label="¿Cuánto espacio tiene?">
-          <SpacePicker value={space} onChange={setSpace} />
-        </Field>
+        {/* Solo si hace mudanzas, con los tamaños de la mudanza del cliente. */}
+        {moving && (
+          <Field label="¿Cuánto espacio tiene?">
+            <SpacePicker value={space} onChange={setSpace} />
+          </Field>
+        )}
 
         <div className="flex flex-col gap-2">
           <label htmlFor="phone" className="label">
@@ -248,7 +270,7 @@ export function DriverForm() {
             className="input py-[15px] text-[19px] font-medium tracking-[0.03em]"
             placeholder="300 123 4567"
             value={whatsapp}
-            onChange={(e) => setWhatsapp(e.target.value)}
+            onChange={(e) => setWhatsapp(phoneInput(e.target.value))}
             required
           />
           <p className="text-sm text-muted">Aquí lo llaman o le escriben por WhatsApp.</p>
@@ -256,10 +278,10 @@ export function DriverForm() {
 
         <div className="flex flex-col gap-3.5">
           <PrivacyNote>Su número se ve solo durante este viaje.</PrivacyNote>
-          <ErrorNote message={error} />
-          <button type="submit" className="btn-primary" disabled={isPending}>
+          <button type="submit" className={`btn-primary ${invalid ? "opacity-50" : ""}`} disabled={isPending}>
             {isPending ? "Un momento…" : "Ponerme disponible"}
           </button>
+          <FieldError message={error} center />
         </div>
       </form>
     </div>
@@ -280,7 +302,7 @@ function CurrentWork({
   justPublished: boolean;
   onChange: (p: MyPost) => void;
   onPatch: (patch: Partial<MyPost>) => void;
-  onEnd: () => void;
+  onEnd: (reason?: "closed") => void;
 }) {
   const { today, tomorrow } = useBogotaDates();
   const [busy, setBusy] = useState(false);
@@ -375,11 +397,12 @@ function CurrentWork({
     const res = await callServer(() => updateAvailability({ id, editToken, status: "llena" }));
     latest.current++;
     setBusy(false);
+    setConfirmEnd(false);
     if (!res.ok) {
       setError(res.error);
       return;
     }
-    onEnd();
+    onEnd("closed");
   }
 
   // Viaja desde su día en adelante: si ya pasó, desde hoy.
@@ -389,13 +412,13 @@ function CurrentWork({
     <div className="flex flex-col gap-[18px]">
       <section className="bleed flex flex-col gap-4 bg-ink px-[22px] pb-[22px] pt-[26px] text-white">
         <h1 className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.14em] text-accent">
-          <span aria-hidden className="size-2.5 rounded-xs bg-accent" />
+          <SignalDot className="bg-accent" />
           Usted está disponible
         </h1>
         {/* El aviso de la vía: de dónde sale, a dónde va y qué servicios hace. */}
         <div className="rounded-lg bg-brand p-1.5">
           <div className="flex flex-col gap-3 rounded-[5px] border-[1.5px] border-white/40 p-4">
-            <p className="font-display text-[38px] font-black uppercase leading-[0.92]">
+            <p className="font-display text-4xl font-black uppercase leading-[0.95]">
               {getCity(post.origin)?.name}
               <br />
               <span aria-hidden className="text-accent">
@@ -425,32 +448,36 @@ function CurrentWork({
           )}
         </p>
         <StartTrip post={post} onStart={() => onPatch({ started: true })} />
+        <button
+          type="button"
+          onClick={() => setConfirmEnd(true)}
+          className="rounded-md border border-white/35 p-[13px] text-[15px] font-semibold text-white hover:bg-white/8"
+        >
+          Ya no estoy disponible
+        </button>
       </section>
+
+      <ErrorNote message={error} />
 
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
-      <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
+      {/* Solo si hace mudanzas (las de antes, sin servicios, hacen todo). */}
+      {(!post.services || post.services.includes("mudanza")) && (
+        <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
+      )}
 
       <SafetyTips tips={DRIVER_TIPS} />
 
-      <ErrorNote message={error} />
-      {confirmEnd ? (
-        <div className="card flex flex-col gap-3">
-          <p className="text-[15px]">¿Dejamos de mostrarlo a los clientes?</p>
-          <div className="grid grid-cols-2 gap-2">
-            <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
-              No
-            </button>
-            <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
-              Sí
-            </button>
-          </div>
-        </div>
-      ) : (
-        <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-          Ya no estoy disponible
-        </button>
-      )}
+      <ConfirmSheet
+        open={confirmEnd}
+        title="¿Dejar de estar disponible?"
+        body="Los clientes de esta ruta ya no lo verán ni podrán llamarlo. Puede ponerse disponible otra vez cuando quiera."
+        yes="Sí, ya no estoy disponible"
+        no="No, seguir disponible"
+        busy={busy}
+        onYes={end}
+        onNo={() => setConfirmEnd(false)}
+      />
     </div>
   );
 }
@@ -485,8 +512,9 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
 
 /**
  * "¿Cuánto espacio tiene ahora?": cuando carga o descarga, él mismo cambia lo
- * que le queda, y los clientes solo lo ven si les cabe. Tiene todas las
- * opciones: pudo empezar lleno y descargar en el camino.
+ * que le queda, y los clientes de mudanza solo lo ven si les cabe. Son las dos
+ * tarjetas de la mudanza: puede subir, porque pudo empezar lleno y descargar
+ * en el camino.
  */
 function SpaceLeft({
   space,
@@ -499,24 +527,11 @@ function SpaceLeft({
 }) {
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-line-soft bg-surface p-[18px]">
-      <label htmlFor="space-left" className="card-title">
-        ¿Cuánto espacio tiene ahora?
-      </label>
-      <select
-        id="space-left"
-        className="input"
-        value={space}
-        disabled={busy}
-        onChange={(e) => {
-          if (isKey(DRIVER_SPACES, e.target.value)) onChange(e.target.value);
-        }}
-      >
-        {(Object.keys(DRIVER_SPACES) as DriverSpace[]).map((s) => (
-          <option key={s} value={s}>
-            {DRIVER_SPACES[s].label}
-          </option>
-        ))}
-      </select>
+      <h2 className="card-title">¿Cuánto espacio tiene ahora?</h2>
+      <fieldset disabled={busy}>
+        <legend className="sr-only">¿Cuánto espacio tiene ahora?</legend>
+        <SpacePicker value={space} onChange={(s) => s !== space && onChange(s)} />
+      </fieldset>
       <p className="text-sm leading-snug text-muted">Cámbielo cuando cargue o descargue.</p>
     </section>
   );
@@ -669,8 +684,9 @@ function WhereYouAre({
 /**
  * Un pueblo del dibujo, que se puede tocar para marcarlo (Yohany, 22 de
  * octubre de 2026): un punto (más grande en el origen y el destino) unido al
- * siguiente por una línea gris. El de ahora va en Señal con "Usted va aquí";
- * los que ya pasó van tachados, pero se pueden tocar por si se equivocó.
+ * siguiente por una línea. El de ahora va en Señal con "Usted va aquí"; los
+ * que ya pasó quedan en gris y la línea recorrida en Señal, pero se pueden
+ * tocar por si se equivocó.
  */
 function StopRow({
   name,
@@ -689,29 +705,21 @@ function StopRow({
   busy: boolean;
   onTap: () => void;
 }) {
-  const dot = here
-    ? "size-[18px] bg-brand"
-    : end
-      ? "size-[18px] bg-ink"
-      : `mt-0.5 size-3 bg-white ${passed ? "opacity-60" : ""}`;
   return (
     <button
       type="button"
       disabled={busy || here}
       onClick={onTap}
-      className="grid w-full grid-cols-[40px_1fr] gap-x-3 text-left disabled:cursor-default"
+      className="grid w-full grid-cols-[28px_1fr] gap-x-3 text-left disabled:cursor-default"
     >
-      <span aria-hidden className="flex flex-col items-center">
-        <span className={`mt-[5px] shrink-0 rounded-full border border-line ${dot}`} />
-        {!last && <span className="my-1 min-h-3.5 w-0.5 flex-1 bg-[#c3c9d0]" />}
-      </span>
-      <span className={`flex items-center gap-2.5 pt-1 text-[17px] ${last ? "" : "pb-[18px]"}`}>
-        <span className={`${here || end ? "font-bold" : ""} ${passed && !here ? "text-muted line-through" : ""}`}>
-          {name}
-        </span>
-        {here && (
-          <span className="rounded-[3px] bg-brand px-2 py-0.5 text-xs font-bold uppercase text-white">Usted va aquí</span>
-        )}
+      <Dot end={end} here={here} passed={passed} last={last} traveled={passed} />
+      <span
+        className={`flex items-center gap-2.5 pt-1 text-[17px] ${last ? "" : "pb-4"} ${
+          here || end ? "font-bold" : ""
+        } ${passed && !here ? "text-[#7a8290]" : ""}`}
+      >
+        {name}
+        {here && <HereTag />}
         {passed && !here && <span className="sr-only">(ya pasó)</span>}
       </span>
     </button>
@@ -721,15 +729,50 @@ function StopRow({
 /** "Usted va aquí" cuando su pueblo no está en la ruta. */
 function HereRow({ name, last = false }: { name: string; last?: boolean }) {
   return (
-    <li className="grid grid-cols-[40px_1fr] gap-x-3">
-      <span aria-hidden className="flex flex-col items-center">
-        <span className="mt-[5px] size-[18px] shrink-0 rounded-full border border-line bg-brand" />
-        {!last && <span className="my-1 min-h-3.5 w-0.5 flex-1 bg-[#c3c9d0]" />}
-      </span>
-      <span className={`flex items-center gap-2.5 pt-1 text-[17px] ${last ? "" : "pb-[18px]"}`}>
-        <b>{name}</b>
-        <span className="rounded-[3px] bg-brand px-2 py-0.5 text-xs font-bold uppercase text-white">Usted va aquí</span>
+    <li className="grid grid-cols-[28px_1fr] gap-x-3">
+      <Dot end={false} here passed={false} last={last} traveled={false} />
+      <span className={`flex items-center gap-2.5 pt-1 text-[17px] font-bold ${last ? "" : "pb-4"}`}>
+        {name}
+        <HereTag />
       </span>
     </li>
   );
+}
+
+/** El punto del pueblo y la línea hasta el siguiente: en Señal si ya la recorrió. */
+function Dot({
+  end,
+  here,
+  passed,
+  last,
+  traveled,
+}: {
+  end: boolean;
+  here: boolean;
+  passed: boolean;
+  last: boolean;
+  traveled: boolean;
+}) {
+  const fill = here ? "bg-brand" : passed ? "bg-[#a3abb5]" : last ? "bg-ink" : "bg-white";
+  return (
+    <span aria-hidden className="flex flex-col items-center">
+      <span className={`mt-1.5 shrink-0 rounded-full border-2 border-ink ${end ? "size-[18px]" : "size-3"} ${fill}`} />
+      {!last && <span className={`mt-1 min-h-4 w-0.5 flex-1 ${traveled ? "bg-brand" : "bg-[#c3c9d0]"}`} />}
+    </span>
+  );
+}
+
+function HereTag() {
+  return <span className="rounded-[3px] bg-brand px-2 py-0.5 text-xs font-bold uppercase text-white">Usted va aquí</span>;
+}
+
+/**
+ * El teléfono como se escribe en Colombia, "300 123 4567", con 10 números como
+ * mucho. Si empieza con "+" es de otro país y queda como lo escribió.
+ */
+function phoneInput(raw: string): string {
+  if (raw.trim().startsWith("+")) return raw;
+  // Lo guardado de antes puede traer el 57 adelante.
+  const digits = raw.replace(/\D/g, "").replace(/^57(?=3\d{9}$)/, "").slice(0, 10);
+  return [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6)].filter(Boolean).join(" ");
 }
