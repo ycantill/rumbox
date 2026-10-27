@@ -3,7 +3,7 @@
 // pierde lo que había llenado.
 
 /** Lo que ve la persona cuando no hay cómo hablar con el servidor. */
-export const NO_CONNECTION = "No pudimos conectarnos. Revisa tu señal e intenta otra vez.";
+export const NO_CONNECTION = "No pudimos conectarnos. Revise su señal e intente otra vez.";
 
 /**
  * Llama una acción del servidor. Si la llamada no llega (sin señal o el

@@ -15,6 +15,7 @@ import {
   ANY_DESTINATION,
   spaceFitsVolume,
   type DriverSpace,
+  type Service,
   type Volume,
 } from "./domain";
 
@@ -48,6 +49,8 @@ export type AvailabilityLike = {
   current_city?: string | null;
   /** La carretera de su viaje (`encodePath`), si se pudo calcular. */
   route?: string | null;
+  /** Los servicios que hace. Lo guardado antes de los servicios no los tiene: hace todos. */
+  services?: readonly string[] | null;
 };
 
 export type RequestLike = {
@@ -56,6 +59,8 @@ export type RequestLike = {
   /** El día del viaje, o null si es "Cualquier día". */
   service_date: string | null;
   volume: Volume;
+  /** Lo que necesita. Las solicitudes de antes no lo tienen: le sirve cualquiera. */
+  service?: Service | null;
 };
 
 /** Si el servicio que pide el cliente le sirve al transportista en su viaje. */
@@ -64,6 +69,9 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   // (Yohany, 21 de octubre de 2026). Con "Cualquier día" le sirve cualquiera.
   if (r.service_date !== null && a.service_date > r.service_date) return false;
   if (!spaceFitsVolume(a.space, r.volume)) return false;
+  // Solo le salen los clientes que piden uno de los servicios que hace (Yohany,
+  // 27 de octubre de 2026).
+  if (r.service && a.services && !a.services.includes(r.service)) return false;
   // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas
   // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.
   if (r.origin_city === r.destination_city) return false;

@@ -11,28 +11,34 @@ import {
 } from "@/app/actions";
 import {
   CitySelect,
-  Choices,
   ContactButtons,
   DayPicker,
   ErrorNote,
   Field,
   InfoNote,
   PrivacyNote,
+  ServicePicker,
+  SizePicker,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
-import { useActiveScreen } from "@/components/one-at-a-time";
+import { BackHome, useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
 import { capitalize, isStillValid, whenText } from "@/lib/dates";
 import {
   ANY_DAY,
   ANY_DAY_LABEL,
   ANY_DESTINATION,
+  CLIENT_SIZES,
   SAME_CITY_ERROR,
+  SERVICES,
+  UNSIZED_VOLUME,
   VOLUMES,
   isKey,
+  serviceHasSize,
   spaceInSentence,
-  volumeInSentence,
+  type ClientSize,
+  type Service,
   type Volume,
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
@@ -48,6 +54,8 @@ export type MyRequest = {
   origin: string;
   destination: string;
   date: string;
+  /** Lo que necesita. Las guardadas antes de los servicios no lo tienen. */
+  service?: Service;
   volume: Volume;
 };
 
@@ -60,7 +68,9 @@ export function ClientForm() {
   const [pickedDate, setDate] = useState(ANY_DAY);
   const day = useServiceDay(pickedDate);
   const date = pickedDate === ANY_DAY ? ANY_DAY : day;
-  const [volume, setVolume] = useState<Volume | "">("");
+  const [service, setService] = useState<Service | "">("");
+  // "¿Qué tan grande?", solo para la mudanza y el flete.
+  const [size, setSize] = useState<ClientSize | "">("");
   const [error, setError] = useState<string | null>(null);
   // "Tu solicitud anterior ya pasó", cuando vuelve el formulario porque se venció.
   const [notice, setNotice] = useState<string | null>(null);
@@ -87,7 +97,8 @@ export function ClientForm() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setOrigin(saved.origin);
       setDestination(saved.destination);
-      setVolume(saved.volume);
+      if (saved.service) setService(saved.service);
+      if (isKey(CLIENT_SIZES, saved.volume)) setSize(saved.volume);
       // Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
       if (isStillValid(saved.date, today)) {
         setDate(saved.date);
@@ -103,7 +114,8 @@ export function ClientForm() {
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const input = { origin, destination, date, volume };
+    const volume = service && serviceHasSize(service) ? size : UNSIZED_VOLUME;
+    const input = { origin, destination, date, service, volume };
     // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
     const invalid = requestInputError(input, today);
     if (invalid) {
@@ -128,6 +140,7 @@ export function ClientForm() {
         origin,
         destination,
         date,
+        service: service as Service,
         volume: volume as Volume,
       };
       save(KEYS.clientRequest, mine);
@@ -165,43 +178,67 @@ export function ClientForm() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <p className="-mt-4 text-sm text-muted">
-        Cuéntanos qué vas a mover, hacia dónde y qué día. No tienes que crear cuenta ni pagar comisiones.
-      </p>
+    <div className="flex flex-col gap-6">
+      <BackHome />
+      <h1 className="title">¿Qué necesita?</h1>
       <InfoNote message={notice} />
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-        <Field label="¿Desde dónde?">
-          <CitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
-        </Field>
+        <fieldset className="-mt-2">
+          <legend className="sr-only">¿Qué necesita?</legend>
+          <ServicePicker value={service} onChange={setService} />
+        </fieldset>
 
-        <Field label="¿Hacia dónde?">
-          {/* El origen no sale en la lista. El aviso queda para lo guardado de antes. */}
-          <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} />
+        {service && serviceHasSize(service) && (
+          <Field label="¿Qué tan grande?">
+            <SizePicker value={size} onChange={setSize} />
+          </Field>
+        )}
+
+        {/* La ruta, como en una guía de envío. El origen no sale en la lista
+            del destino. El aviso queda para lo guardado de antes. */}
+        <Field label="Ruta">
+          <div className="flex flex-col rounded-md border border-line bg-paper">
+            <div className="relative border-b border-ink px-3.5 py-2.5">
+              <span aria-hidden className="guide-label block">
+                Desde
+              </span>
+              <CitySelect name="origin" label="Desde" variant="guide" value={origin} onChange={setOrigin} exclude={destination} />
+            </div>
+            <div className="relative px-3.5 py-2.5">
+              <span aria-hidden className="guide-label block">
+                Hasta
+              </span>
+              <CitySelect
+                name="destination"
+                label="Hasta"
+                variant="guide"
+                value={destination}
+                onChange={setDestination}
+                exclude={origin}
+              />
+            </div>
+          </div>
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
 
-        <Field label="¿Qué día?">
+        <Field label="¿Para cuándo?">
           <DayPicker value={date} onChange={setDate} anyDay />
         </Field>
 
-        {/* La misma lista de tamaños que elige el transportista. */}
-        <Field label="¿Qué vas a mover?">
-          <Choices options={VOLUMES} value={volume} onChange={setVolume} columns={1} />
-        </Field>
-
-        <PrivacyNote>Al continuar, aceptas que guardemos tu solicitud mientras esté abierta.</PrivacyNote>
-        <ErrorNote message={error} />
-        <button type="submit" className="btn-primary" disabled={isPending}>
-          {isPending ? "Un momento…" : "Solicitar transportista"}
-        </button>
+        <div className="flex flex-col gap-3.5">
+          <PrivacyNote>Guardamos su solicitud solo mientras esté abierta.</PrivacyNote>
+          <ErrorNote message={error} />
+          <button type="submit" className="btn-primary" disabled={isPending}>
+            {isPending ? "Un momento…" : "Buscar conductor"}
+          </button>
+        </div>
       </form>
     </div>
   );
 }
 
-const EXPIRED_NOTICE = "Tu solicitud anterior ya pasó. Si todavía necesitas mover algo, haz una nueva.";
+const EXPIRED_NOTICE = "Su solicitud anterior ya pasó. Si todavía necesita el servicio, haga una nueva.";
 
 /**
  * La solicitud abierta, con los transportistas que le sirven. Se ve al
@@ -292,82 +329,115 @@ function MyRequestView({
     onEnd();
   }
 
-  const route = `${getCity(request.origin)?.name} → ${getCity(request.destination)?.name}`;
+  const from = getCity(request.origin)?.name;
+  const to = getCity(request.destination)?.name;
   const anyDay = request.date === ANY_DAY;
-  // Con "Cualquier día", el transportista que sale después de hoy dice desde cuándo.
   const whenOf = (date: string) => whenText(date, today, tomorrow);
+  const what = requestService(request);
 
-  // No hay precio: lo acuerdan el cliente y el transportista cuando hablan.
+  // No hay precio: lo acuerdan el cliente y el conductor cuando hablan.
   return (
-    <div className="flex flex-col gap-5">
-      <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
-        <h2 className="text-lg font-bold">Tu solicitud</h2>
-        <dl className="mt-3 grid gap-1 text-sm">
-          <div>
-            <dt className="sr-only">Lugar</dt>
-            <dd className="font-semibold">{route}</dd>
-          </div>
-          <div>
-            <dt className="sr-only">Día</dt>
-            <dd>{anyDay ? ANY_DAY_LABEL : capitalize(whenOf(request.date))}</dd>
-          </div>
-          {/* Lo guardado por una versión vieja puede traer un tamaño que ya no existe. */}
-          {isKey(VOLUMES, request.volume) && (
-            <div>
-              <dt className="sr-only">Qué vas a mover</dt>
-              <dd>
-                Vas a mover {volumeInSentence(request.volume)}{" "}
-                <span className="text-brand-ink/70">({VOLUMES[request.volume].hint.toLowerCase()})</span>
-              </dd>
-            </div>
-          )}
+    <div className="flex flex-col gap-[22px]">
+      {/* "Su solicitud", como una guía de envío. */}
+      <section className="rounded-lg border border-line bg-paper">
+        <div className="flex items-center justify-between rounded-t-[7px] bg-ink px-3.5 py-2.5 text-white">
+          <h2 className="text-xs font-semibold uppercase tracking-[0.14em]">Su solicitud</h2>
+          <button type="button" onClick={onRestart} className="text-[13px] font-semibold text-accent">
+            Cambiar
+          </button>
+        </div>
+        <dl className="grid grid-cols-2">
+          <GuideCell label="Desde" className="border-b border-r border-ink">
+            <span className="font-display text-2xl font-extrabold uppercase leading-none">{from}</span>
+          </GuideCell>
+          <GuideCell label="Hasta" className="border-b border-ink">
+            <span className="font-display text-2xl font-extrabold uppercase leading-none">{to}</span>
+          </GuideCell>
+          <GuideCell label="Servicio" className="border-r border-ink">
+            <span className="text-[15px] font-semibold">{what}</span>
+          </GuideCell>
+          <GuideCell label="Cuándo">
+            <span className="text-[15px] font-semibold">{anyDay ? ANY_DAY_LABEL : capitalize(whenOf(request.date))}</span>
+          </GuideCell>
         </dl>
       </section>
 
-      {/* Es una pantalla de espera: mientras no haya transportistas, o hasta
+      {/* Es una pantalla de espera: mientras no haya conductores, o hasta
           que llegue la lista, se ve que seguimos buscando. */}
       {!matches || matches.length === 0 ? (
-        <Searching anyDay={anyDay} />
+        <Searching />
       ) : (
-        <section className="flex flex-col gap-3">
-          <div>
-            <h2 className="font-semibold">Transportistas libres ({matches.length})</h2>
-            <p className="text-sm text-muted">Llama o escribe por WhatsApp y acuerden el precio.</p>
+        <>
+          <div className="flex flex-col gap-1">
+            <h2 className="font-display text-[30px] font-black uppercase leading-none">
+              {matches.length === 1 ? "1 conductor va para allá" : `${matches.length} conductores van para allá`}
+            </h2>
+            <p className="text-[15px] text-muted">Llame o escriba y acuerden el precio.</p>
           </div>
-          {matches.map((m) => (
-            <article key={m.id} className="card">
-              <p className="font-semibold">Puede llevar {spaceInSentence(m.space)}</p>
-              <p className="text-sm text-muted">
-                Va de {getCity(m.origin_city)?.name} a{" "}
-                {m.destination_city === ANY_DESTINATION ? "cualquier destino" : getCity(m.destination_city)?.name}
-                {/* Si todavía no sale, se le dice desde cuándo. */}
-                {anyDay && m.service_date > today && `, desde ${whenOf(m.service_date)}`}
-              </p>
-              <div className="mt-3">
-                <ContactButtons
-                  availabilityId={m.id}
-                  phone={m.whatsapp}
-                  message={`Hola, te encontré en Mudavía. Necesito un servicio ${route}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puedes ayudar?`}
-                />
-              </div>
-            </article>
-          ))}
-          <p role="status" className="flex items-center gap-2 text-sm text-muted">
-            <Radar size="small" />
-            Seguimos buscando más transportistas. Vuelve a mirar cada tanto.
+          <div className="flex flex-col gap-3">
+            {matches.map((m) => {
+              // ↑ Va directo a su destino (o a cualquiera); ↗ pasa por su destino y sigue.
+              const direct = m.destination_city === ANY_DESTINATION || m.destination_city === request.destination;
+              const sale = m.service_date > today ? whenOf(m.service_date) : "hoy";
+              return (
+                <article key={m.id} className="overflow-hidden rounded-lg border border-line bg-surface">
+                  <div className="flex items-start gap-3.5 p-4">
+                    <span
+                      aria-hidden
+                      className={`grid size-11 shrink-0 place-items-center rounded-md font-display text-2xl font-black ${
+                        direct ? "bg-brand text-white" : "border border-line bg-accent text-ink"
+                      }`}
+                    >
+                      {direct ? "↑" : "↗"}
+                    </span>
+                    <div className="flex flex-col gap-[3px]">
+                      <p className="text-[17px] font-bold leading-snug">Tiene espacio para {spaceInSentence(m.space)}</p>
+                      <p className="text-sm leading-snug text-muted">
+                        Sale {sale} de {getCity(m.origin_city)?.name} ·{" "}
+                        {m.destination_city === ANY_DESTINATION
+                          ? "va a cualquier destino"
+                          : direct
+                            ? `va a ${to}`
+                            : `pasa por ${to}`}
+                      </p>
+                      {m.services && (
+                        <p className="text-[13px] text-[#3a4558]">
+                          {m.services.map((s) => SERVICES[s].plural).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="border-t border-dashed border-line px-4 py-3">
+                    <ContactButtons
+                      availabilityId={m.id}
+                      phone={m.whatsapp}
+                      message={`Hola, lo encontré en Rumbox. Necesito un servicio${request.service ? ` de ${SERVICES[request.service].label.toLowerCase()}` : ""} de ${from} a ${to}${anyDay ? "" : ` para ${whenOf(request.date)}`}. ¿Me puede ayudar?`}
+                    />
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+          <p className="flex flex-wrap gap-4 text-[13px] text-muted">
+            <span>
+              <b className="text-brand">↑</b> Va directo
+            </span>
+            <span>
+              <b>↗</b> Pasa por su destino
+            </span>
           </p>
-        </section>
+          <p role="status" className="flex items-center gap-3 rounded-md bg-notice p-3.5 text-[15px] leading-snug">
+            <span aria-hidden className="size-2.5 shrink-0 rounded-xs bg-ink" />
+            Seguimos buscando conductores. Vuelva a mirar más tarde.
+          </p>
+        </>
       )}
 
-      <Link href="/ayuda" className="text-center text-sm font-semibold underline">
-        Qué hacer si te estafan
-      </Link>
-
       <ErrorNote message={error} />
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2.5">
         {confirmEnd ? (
           <div className="card flex flex-col gap-3">
-            <p className="text-sm">¿Dejamos de mostrar tu solicitud a los transportistas?</p>
+            <p className="text-[15px]">¿Dejamos de mostrar su solicitud a los conductores?</p>
             <div className="grid grid-cols-2 gap-2">
               <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
                 No
@@ -379,29 +449,57 @@ function MyRequestView({
           </div>
         ) : (
           <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya no necesito este servicio
+            Ya no necesito el servicio
           </button>
         )}
-        <button type="button" className="btn-secondary" onClick={onRestart}>
-          Cambiar mi solicitud
-        </button>
+        <Link href="/ayuda" className="pt-1.5 text-center text-[15px] text-brand underline">
+          Qué hacer si lo estafan
+        </Link>
       </div>
     </div>
   );
 }
 
-/** Mientras no hay transportistas: la solicitud quedó guardada y seguimos buscando. */
-function Searching({ anyDay }: { anyDay: boolean }) {
+/** "Mudanza · 1 habitación", o solo el servicio si no pregunta el tamaño. */
+function requestService(request: MyRequest): string {
+  // Las guardadas antes de los servicios dicen solo el tamaño.
+  if (!request.service) return isKey(VOLUMES, request.volume) ? VOLUMES[request.volume].label : "";
+  const { label } = SERVICES[request.service];
+  return serviceHasSize(request.service) && isKey(CLIENT_SIZES, request.volume)
+    ? `${label} · ${CLIENT_SIZES[request.volume].short}`
+    : label;
+}
+
+/** Una casilla de la guía: el rótulo en mayúsculas pequeñas y el dato. */
+function GuideCell({
+  label,
+  className = "",
+  children,
+}: {
+  label: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <section className="card flex flex-col items-center gap-3 py-5 text-center">
+    <div className={`flex flex-col px-3.5 py-2.5 ${className}`}>
+      <dt className="guide-label">{label}</dt>
+      <dd>{children}</dd>
+    </div>
+  );
+}
+
+/** Mientras no hay conductores: la solicitud quedó guardada y seguimos buscando. */
+function Searching() {
+  return (
+    <section className="flex flex-col items-center gap-3 rounded-lg bg-notice px-4 py-5 text-center">
       <div role="status" className="flex flex-col items-center gap-2">
         <Radar size="large" />
-        <h2 className="text-lg font-semibold">Buscando transportistas…</h2>
-        <p className="text-sm text-muted">
-          Tu solicitud quedó guardada. Cuando un transportista vaya para allá{anyDay ? "" : " ese día"}, te
-          sale aquí para que lo llames o le escribas por WhatsApp.
+        <h2 className="card-title">Buscando conductores…</h2>
+        <p className="text-[15px] leading-snug">
+          Su solicitud quedó guardada. Cuando un conductor vaya para allá, le sale aquí para que lo llame o le escriba
+          por WhatsApp.
         </p>
-        <p className="text-sm font-semibold">Entra a Mudavía cada tanto para mirar.</p>
+        <p className="text-[15px] font-semibold">Entre a Rumbox cada tanto para mirar.</p>
       </div>
     </section>
   );
@@ -418,7 +516,7 @@ function Radar({ size }: { size: "large" | "small" }) {
       {["0s", "-0.8s", "-1.6s"].map((delay) => (
         <span
           key={delay}
-          className="absolute inset-0 rounded-full bg-brand/40 motion-safe:animate-radar"
+          className="absolute inset-0 rounded-full bg-brand/30 motion-safe:animate-radar"
           style={{ animationDelay: delay }}
         />
       ))}

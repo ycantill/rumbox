@@ -9,6 +9,12 @@ import {
   ANY_DESTINATION,
   ANY_DESTINATION_HINT,
   ANY_DESTINATION_LABEL,
+  CLIENT_SIZES,
+  DRIVER_SPACES,
+  SERVICES,
+  type ClientSize,
+  type DriverSpace,
+  type Service,
 } from "@/lib/domain";
 import type { Page } from "@/lib/analytics";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -26,10 +32,10 @@ export function Field({
   children: React.ReactNode;
 }) {
   return (
-    <fieldset className="flex flex-col gap-2">
-      <legend className="mb-2 text-sm font-semibold text-ink">{label}</legend>
+    <fieldset className="flex min-w-0 flex-col gap-2.5">
+      <legend className="label mb-2.5">{label}</legend>
       {children}
-      {hint && <p className="text-xs text-muted">{hint}</p>}
+      {hint && <p className="text-sm text-muted">{hint}</p>}
     </fieldset>
   );
 }
@@ -48,10 +54,12 @@ export function Field({
 export function CitySelect({
   value,
   onChange,
-  placeholder = "Escribe o elige",
+  placeholder = "Escriba o elija",
   name,
   exclude,
   anyDestination = false,
+  label,
+  variant = "input",
 }: {
   value: string;
   onChange: (slug: string) => void;
@@ -61,7 +69,16 @@ export function CitySelect({
   exclude?: string;
   /** Destino del transportista: "Cualquier destino" va primero en la lista. */
   anyDestination?: boolean;
+  /** El nombre del campo para el lector de pantalla, cuando el rótulo no es un <label>. */
+  label?: string;
+  /**
+   * "guide": dentro de una guía (Desde / Hasta), con el municipio en letra
+   * grande y sin borde. La lista se abre a lo ancho de la guía, que debe ser
+   * `relative`.
+   */
+  variant?: "input" | "guide";
 }) {
+  const guide = variant === "guide";
   const listId = useId();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -199,7 +216,8 @@ export function CitySelect({
 
   let index = 0;
   return (
-    <div ref={wrapperRef} className="relative w-full min-w-0">
+    <div ref={wrapperRef} className={guide ? "w-full min-w-0" : "relative w-full min-w-0"}>
+      <div className="relative">
       <input
         ref={inputRef}
         name={name}
@@ -212,7 +230,12 @@ export function CitySelect({
         autoComplete="off"
         autoCorrect="off"
         spellCheck={false}
-        className="input pr-12"
+        aria-label={label}
+        className={
+          guide
+            ? "w-full truncate bg-transparent pr-9 font-display text-[26px] font-extrabold uppercase leading-none text-ink outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:normal-case placeholder:text-muted"
+            : "input pr-12"
+        }
         placeholder={placeholder}
         value={typed ?? selected?.name ?? ""}
         required
@@ -228,7 +251,7 @@ export function CitySelect({
         onBlur={close}
         onKeyDown={onKeyDown}
       />
-      <div className="absolute inset-y-0 right-1 flex items-center">
+      <div className={`absolute inset-y-0 flex items-center ${guide ? "-right-2" : "right-1"}`}>
         <button
           type="button"
           aria-label={browsing ? "Cerrar la lista de municipios" : "Ver la lista de municipios"}
@@ -237,7 +260,7 @@ export function CitySelect({
           // No le quita el foco al campo: si el teclado estaba abierto, sigue abierto.
           onMouseDown={(e) => e.preventDefault()}
           onClick={() => (browsing ? close() : openList())}
-          className="grid size-10 place-items-center rounded-lg text-muted"
+          className="grid size-10 place-items-center rounded-md text-muted"
         >
           <svg viewBox="0 0 20 20" aria-hidden="true" className={`size-5 transition ${browsing ? "rotate-180" : ""}`}>
             <path
@@ -251,12 +274,15 @@ export function CitySelect({
           </svg>
         </button>
       </div>
+      </div>
       {open && options.length > 0 && (
         <ul
           ref={listRef}
           id={listId}
           role="listbox"
-          className="absolute z-20 mt-1 max-h-80 w-full overflow-auto rounded-xl border border-line bg-surface shadow-lg"
+          className={`absolute z-20 mt-1 max-h-80 overflow-auto rounded-md border border-line bg-surface text-ink shadow-lg ${
+            guide ? "inset-x-0 top-full" : "w-full"
+          }`}
         >
           {searching
             ? options.map((c, i) =>
@@ -286,10 +312,12 @@ export function CitySelect({
       {searching && options.length === 0 && (
         <p
           role="status"
-          className="absolute z-20 mt-1 w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm text-muted shadow-lg"
+          className={`absolute z-20 mt-1 rounded-md border border-line bg-surface px-3 py-2.5 text-sm text-muted shadow-lg ${
+            guide ? "inset-x-0 top-full" : "w-full"
+          }`}
         >
           {/* Si lo único que coincide es el que está fuera de la lista, no es que no exista. */}
-          {found.length > 0 ? "Ese municipio ya lo elegiste. Elige otro." : "No encontramos ese municipio. Revisa cómo lo escribiste."}
+          {found.length > 0 ? "Ese municipio ya lo eligió. Elija otro." : "No encontramos ese municipio. Revise cómo lo escribió."}
         </p>
       )}
     </div>
@@ -313,26 +341,14 @@ function withoutCity(slug: string) {
   );
 }
 
-// Clases completas para que Tailwind las encuentre al compilar.
-const GRID_COLUMNS = { 1: "grid-cols-1", 2: "grid-cols-2", 3: "grid-cols-3" } as const;
-
-export function Choices<K extends string>({
-  options,
-  value,
-  onChange,
-  columns = 2,
-}: {
-  options: Record<K, string | { label: string; hint?: string }>;
-  value: K | "";
-  onChange: (key: K) => void;
-  columns?: 1 | 2 | 3;
-}) {
+/**
+ * "¿Qué necesita?" del cliente: los cinco servicios en fichas con su ícono. Se
+ * elige uno.
+ */
+export function ServicePicker({ value, onChange }: { value: Service | ""; onChange: (s: Service) => void }) {
   return (
-    <div className={`grid gap-2 ${GRID_COLUMNS[columns]}`}>
-      {(Object.keys(options) as K[]).map((key) => {
-        const opt = options[key];
-        const label = typeof opt === "string" ? opt : opt.label;
-        const hint = typeof opt === "string" ? undefined : opt.hint;
+    <div className="grid grid-cols-3 gap-2">
+      {(Object.keys(SERVICES) as Service[]).map((key) => {
         const selected = value === key;
         return (
           <button
@@ -340,14 +356,114 @@ export function Choices<K extends string>({
             type="button"
             aria-pressed={selected}
             onClick={() => onChange(key)}
-            className={`rounded-xl border px-3 py-3 text-left text-sm transition ${
-              selected
-                ? "border-brand bg-brand-soft font-semibold text-brand-ink"
-                : "border-line bg-surface text-ink hover:border-brand/50"
+            className={`flex flex-col items-center gap-1.5 rounded-lg px-1.5 pb-3.5 pt-3 active:translate-y-px ${
+              selected ? "bg-brand text-white" : "border border-line-soft bg-surface text-ink"
             }`}
           >
-            {label}
-            {hint && <span className="mt-0.5 block text-xs font-normal text-muted">{hint}</span>}
+            <ServiceIcon service={key} size={64} />
+            <span className="font-display text-lg font-extrabold uppercase leading-none">{SERVICES[key].label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** "¿Qué tan grande?", solo para la mudanza y el flete. Lo elegido va en Noche. */
+export function SizePicker({ value, onChange }: { value: ClientSize | ""; onChange: (s: ClientSize) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {(Object.keys(CLIENT_SIZES) as ClientSize[]).map((key) => {
+        const selected = value === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(key)}
+            className={`flex flex-col gap-0.5 rounded-md p-3.5 text-left active:translate-y-px ${
+              selected ? "bg-ink text-white" : "border border-line-soft bg-surface text-ink"
+            }`}
+          >
+            <span className="text-[15px] font-bold">{CLIENT_SIZES[key].label}</span>
+            <span className={`text-[13px] ${selected ? "text-on-brand-muted" : "text-muted"}`}>
+              {CLIENT_SIZES[key].hint}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/** "¿Qué servicios hace?": puede marcar varios. */
+export function ServiceChecklist({
+  value,
+  onChange,
+}: {
+  value: readonly Service[];
+  onChange: (services: Service[]) => void;
+}) {
+  const all = Object.keys(SERVICES) as Service[];
+  return (
+    <div className="flex flex-col overflow-hidden rounded-md border border-line bg-surface">
+      {all.map((key, i) => {
+        const checked = value.includes(key);
+        return (
+          <label
+            key={key}
+            className={`flex cursor-pointer items-center gap-2.5 py-2 pl-1.5 pr-3.5 has-focus-visible:outline-2 has-focus-visible:-outline-offset-2 has-focus-visible:outline-brand ${
+              checked ? "bg-paper" : ""
+            } ${i > 0 ? "border-t border-line-soft" : ""}`}
+          >
+            <ServiceIcon service={key} size={40} />
+            <span className={`flex-1 text-base ${checked ? "font-bold" : ""}`}>{SERVICES[key].plural}</span>
+            <input
+              type="checkbox"
+              className="peer sr-only"
+              checked={checked}
+              onChange={() => onChange(all.filter((s) => (s === key ? !checked : value.includes(s))))}
+            />
+            <span
+              aria-hidden
+              className={`grid size-6 place-items-center rounded-sm text-sm ${
+                checked ? "bg-ink text-white" : "border-2 border-[#a3abb5]"
+              }`}
+            >
+              {checked && "✓"}
+            </span>
+          </label>
+        );
+      })}
+    </div>
+  );
+}
+
+/** "¿Cuánto espacio tiene?": las cuatro tarjetas con su ícono y ejemplos. */
+export function SpacePicker({ value, onChange }: { value: DriverSpace | ""; onChange: (s: DriverSpace) => void }) {
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {(Object.keys(DRIVER_SPACES) as DriverSpace[]).map((key) => {
+        const selected = value === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            aria-pressed={selected}
+            onClick={() => onChange(key)}
+            className={`flex flex-col gap-2 rounded-md p-3 text-left active:translate-y-px ${
+              selected ? "bg-brand text-white" : "border border-line bg-surface text-ink"
+            }`}
+          >
+            <span className={`grid size-[52px] place-items-center rounded-lg ${selected ? "bg-white" : "bg-bg"}`}>
+              <SpaceIcon space={key} size={44} />
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="text-[15px] font-bold">{DRIVER_SPACES[key].label}</span>
+              <span className={`text-[13px] leading-snug ${selected ? "text-on-brand-muted" : "text-muted"}`}>
+                {DRIVER_SPACES[key].hint}
+              </span>
+            </span>
           </button>
         );
       })}
@@ -365,8 +481,9 @@ export function useServiceDay(pickedDate: string): string {
 }
 
 /**
- * El día: "Hoy", "Mañana" u otro en el calendario. No hay jornadas. El
- * cliente tiene además "Cualquier día" (`anyDay`), arriba y a lo ancho.
+ * El día, en un segmento: "Hoy", "Mañana" u "Otra fecha", que abre el
+ * calendario. No hay jornadas. El cliente tiene además "Cualquier día"
+ * (`anyDay`), primero.
  */
 export function DayPicker({
   value,
@@ -378,51 +495,83 @@ export function DayPicker({
   anyDay?: boolean;
 }) {
   const { today, tomorrow } = useBogotaDates();
+  const dateRef = useRef<HTMLInputElement>(null);
+  const other = Boolean(value) && value !== ANY_DAY && value !== today && value !== tomorrow;
+  const segments = [
+    ...(anyDay ? [{ label: ANY_DAY_LABEL, value: ANY_DAY }] : []),
+    { label: "Hoy", value: today },
+    { label: "Mañana", value: tomorrow },
+  ];
+
+  function pickOther() {
+    const input = dateRef.current;
+    if (!input) return;
+    try {
+      input.showPicker();
+    } catch {
+      input.focus();
+    }
+  }
+
   return (
-    <div className="grid grid-cols-3 gap-2">
-      {anyDay && (
-        <div className="col-span-3 grid">
-          <QuickDate label={ANY_DAY_LABEL} value={ANY_DAY} current={value} onPick={onChange} />
-        </div>
-      )}
-      <QuickDate label="Hoy" value={today} current={value} onPick={onChange} />
-      <QuickDate label="Mañana" value={tomorrow} current={value} onPick={onChange} />
+    <div
+      className={`relative grid overflow-hidden rounded-md border border-line bg-surface ${
+        anyDay ? "grid-cols-4" : "grid-cols-3"
+      }`}
+    >
+      {segments.map((s, i) => (
+        <Segment key={s.label} selected={value === s.value} divider={i > 0} onClick={() => onChange(s.value)}>
+          {s.label}
+        </Segment>
+      ))}
+      <Segment selected={other} divider onClick={pickOther}>
+        {other ? shortDay(value) : "Otra fecha"}
+      </Segment>
+      {/* El calendario del teléfono: se abre con "Otra fecha". */}
       <input
+        ref={dateRef}
         type="date"
-        className="input"
-        min={today}
-        value={value === ANY_DAY ? "" : value}
-        onChange={(e) => onChange(e.target.value)}
+        tabIndex={-1}
         aria-label="Otra fecha"
+        className="pointer-events-none absolute bottom-0 right-0 h-px w-1/4 opacity-0"
+        min={today}
+        value={other ? value : ""}
+        onChange={(e) => e.target.value && onChange(e.target.value)}
       />
     </div>
   );
 }
 
-function QuickDate({
-  label,
-  value,
-  current,
-  onPick,
+function Segment({
+  selected,
+  divider,
+  onClick,
+  children,
 }: {
-  label: string;
-  value: string;
-  current: string;
-  onPick: (v: string) => void;
+  selected: boolean;
+  divider: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
-  const selected = current === value;
   return (
     <button
       type="button"
       aria-pressed={selected}
-      onClick={() => onPick(value)}
-      className={`rounded-xl border px-3 py-3 text-sm ${
-        selected ? "border-brand bg-brand-soft font-semibold text-brand-ink" : "border-line bg-surface"
+      onClick={onClick}
+      className={`px-1 py-3 text-center text-sm leading-tight ${
+        selected ? "bg-ink font-bold text-white" : divider ? "border-l border-line-soft" : ""
       }`}
     >
-      {label}
+      {children}
     </button>
   );
+}
+
+/** "2026-11-01" → "sáb 1 nov", para que se vea qué fecha eligió en el calendario. */
+function shortDay(date: string): string {
+  return new Intl.DateTimeFormat("es-CO", { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" })
+    .format(new Date(`${date}T12:00:00Z`))
+    .replace(/[.,]/g, "");
 }
 
 /**
@@ -431,10 +580,10 @@ function QuickDate({
  */
 export function PrivacyNote({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs text-muted">
+    <p className="text-[13px] leading-normal text-muted">
       {children}{" "}
-      <Link href="/privacidad" className="underline">
-        Cómo cuidamos tus datos
+      <Link href="/privacidad" className="text-brand underline">
+        Cómo cuidamos sus datos
       </Link>
     </p>
   );
@@ -443,13 +592,13 @@ export function PrivacyNote({ children }: { children: React.ReactNode }) {
 /** Un aviso que no es un error, como que el viaje de antes ya pasó. */
 export function InfoNote({ message }: { message: string | null }) {
   if (!message) return null;
-  return <p className="rounded-lg bg-brand-soft px-3 py-2 text-sm text-brand-ink">{message}</p>;
+  return <p className="rounded-md bg-notice px-3.5 py-3 text-[15px]">{message}</p>;
 }
 
 export function ErrorNote({ message }: { message: string | null }) {
   if (!message) return null;
   return (
-    <p role="alert" className="rounded-lg bg-danger-soft px-3 py-2 text-sm text-danger">
+    <p role="alert" className="rounded-md bg-danger-soft px-3.5 py-3 text-[15px] text-danger">
       {message}
     </p>
   );
@@ -483,18 +632,18 @@ export function ContactButtons({
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
+      <div className="grid grid-cols-[1fr_auto] gap-2">
         <button
           type="button"
           onClick={() => ask("whatsapp")}
-          className="inline-flex items-center justify-center rounded-xl border border-transparent bg-whatsapp px-4 py-2.5 text-sm font-semibold text-white"
+          className="rounded-md bg-brand p-[13px] text-center text-base font-bold text-white active:translate-y-px"
         >
           Escribir por WhatsApp
         </button>
         <button
           type="button"
           onClick={() => ask("llamada")}
-          className="inline-flex items-center justify-center rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink"
+          className="rounded-md border border-line bg-surface px-4 py-[11px] text-base font-bold text-ink active:translate-y-px"
         >
           Llamar
         </button>
@@ -507,11 +656,11 @@ export function ContactButtons({
         onClick={(e) => {
           if (e.target === e.currentTarget) close();
         }}
-        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-2xl bg-surface p-0 text-ink backdrop:bg-black/50"
+        className="m-auto w-[calc(100%-2rem)] max-w-sm rounded-lg border border-line bg-surface p-0 text-ink backdrop:bg-ink/60"
       >
         <div className="flex flex-col gap-4 p-5">
-          <h2 className="text-lg font-bold">Antes de {kind === "llamada" ? "llamar" : "escribir"}</h2>
-          <ul className="grid list-disc gap-1.5 pl-5 text-sm text-muted">
+          <h2 className="card-title">Antes de {kind === "llamada" ? "llamar" : "escribir"}</h2>
+          <ul className="flex flex-col gap-2.5 text-[15px] leading-snug">
             {CLIENT_TIPS.map((tip) => (
               <li key={tip}>{tip}</li>
             ))}
@@ -524,7 +673,7 @@ export function ContactButtons({
                 track({ kind, availabilityId });
                 close();
               }}
-              className="btn-primary text-center"
+              className="btn-primary"
             >
               Entendido
             </a>
@@ -562,20 +711,191 @@ export function useBogotaDates(): { today: string; tomorrow: string } {
   return { today, tomorrow: t.toISOString().slice(0, 10) };
 }
 
-/** Consejos de seguridad: Mudavía no maneja plata, así que lo que más ayuda es avisar antes. */
+
+/**
+ * "Para cuidarse": consejos en el aviso suave, con el sello de FRÁGIL. Rumbox
+ * no maneja plata, así que lo que más ayuda es avisar antes.
+ */
 export function SafetyTips({ tips }: { tips: readonly string[] }) {
   return (
-    <section className="card flex flex-col gap-2">
-      <h2 className="font-semibold">Para cuidarte</h2>
-      <ul className="grid list-disc gap-1 pl-5 text-sm text-muted">
+    <section className="flex flex-col gap-3 rounded-lg border border-line bg-notice p-[18px]">
+      <div className="flex items-center justify-between gap-2.5">
+        <h2 className="card-title">Para cuidarse</h2>
+        <Stamp>Frágil</Stamp>
+      </div>
+      <ul className="flex flex-col gap-2.5 text-[15px] leading-snug">
         {tips.map((tip) => (
           <li key={tip}>{tip}</li>
         ))}
       </ul>
-      <Link href="/ayuda" className="text-sm font-semibold underline">
-        Qué hacer si te estafan
+      <Link href="/ayuda" className="text-[15px] font-bold text-brand underline">
+        Qué hacer si lo estafan
       </Link>
     </section>
   );
 }
 
+/** El sello de manejo de una caja. Se usa con moderación. */
+function Stamp({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="mr-1 shrink-0 whitespace-nowrap rounded-sm border border-line px-2 py-[3px] font-display text-sm font-extrabold uppercase leading-none tracking-[0.06em]">
+      {children}
+    </span>
+  );
+}
+
+// --------------------------------------------------------------------- Marca
+
+/**
+ * El logotipo: se lee RUMBO de corrido sobre la vía, y una caja de cartón
+ * encierra BOX. Todo va en em, así que escala con el tamaño de la letra
+ * (mínimo 28px). Sobre Señal o Noche, RUM va en blanco y, sobre Noche, la vía
+ * va en Señal.
+ */
+export function Logo({ size = 32, on = "light" }: { size?: number; on?: "light" | "brand" | "ink" }) {
+  return (
+    <span
+      role="img"
+      aria-label="Rumbox"
+      className="font-display font-black leading-[0.8]"
+      style={{ fontSize: size }}
+    >
+      <span aria-hidden className="relative inline-flex items-end whitespace-nowrap pb-[0.3em] pl-[0.02em] pr-[0.12em] pt-[0.18em]">
+        <span
+          className={`absolute inset-x-0 bottom-0 h-[0.2em] rounded-[0.03em] ${on === "ink" ? "bg-brand" : "bg-ink"}`}
+        >
+          <span
+            className="absolute left-[0.08em] right-[0.06em] top-1/2 -mt-[0.025em] h-[0.05em]"
+            style={{
+              background: "repeating-linear-gradient(90deg, var(--accent) 0 0.16em, transparent 0.16em 0.26em)",
+            }}
+          />
+        </span>
+        <span className={`relative ${on === "light" ? "text-ink" : "text-white"}`}>RUM</span>
+        <span className="relative ml-[0.03em]">
+          <span className="absolute -bottom-[0.1em] -left-[0.03em] -right-[0.03em] -top-[0.14em] rounded-[0.03em] border-[0.035em] border-ink bg-carton" />
+          <span className="relative text-ink">BOX</span>
+        </span>
+      </span>
+    </span>
+  );
+}
+
+/** La "R" de Big Shoulders 900, en trazos para no depender de la fuente. */
+const SYMBOL_R =
+  "M27.24 38.5V19.3H31.87Q34.56 19.3 35.75 20.39Q36.94 21.47 37.03 23.98Q37.05 24.65 37.06 25.16Q37.06 25.66 37.06 26.16Q37.05 26.67 37.03 27.34Q36.98 28.9 36.51 29.9Q36.03 30.89 35.04 31.42L37.29 38.5H33.48L31.65 32.02H30.84V38.5ZM30.84 28.85H31.87Q32.62 28.85 33.01 28.5Q33.39 28.16 33.43 27.53Q33.46 26.94 33.48 26.3Q33.49 25.66 33.48 25.02Q33.46 24.38 33.43 23.79Q33.39 23.15 33.01 22.81Q32.62 22.47 31.87 22.47H30.84Z";
+
+/** El símbolo: la caja con la R, apoyada sobre la vía. Sobre Noche, la vía va en Señal. */
+export function Symbol({ size = 40, on = "light" }: { size?: number; on?: "light" | "ink" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden className="shrink-0">
+      <rect x="4" y="44" width="56" height="12" rx="2" fill={on === "ink" ? "var(--brand)" : "var(--ink)"} />
+      <line x1="9" y1="50" x2="56" y2="50" stroke="var(--accent)" strokeWidth="3" strokeDasharray="7 4.5" />
+      <rect x="18" y="14" width="28" height="30" rx="1.5" fill="var(--carton)" stroke="var(--ink)" strokeWidth="2.4" />
+      <path d={SYMBOL_R} fill="var(--ink)" />
+    </svg>
+  );
+}
+
+/** Los íconos: línea de 2.2 en Noche, relleno de Cartón y algunos detalles en blanco. */
+function Icon({ size, children }: { size: number; children: React.ReactNode }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 48 48" aria-hidden className="shrink-0">
+      <g fill="var(--carton)" stroke="var(--ink)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        {children}
+      </g>
+    </svg>
+  );
+}
+
+const SERVICE_ICONS: Record<Service, React.ReactNode> = {
+  // Cajas apiladas.
+  mudanza: (
+    <>
+      <rect x="10" y="24" width="14" height="13" rx="1" />
+      <rect x="24" y="24" width="14" height="13" rx="1" />
+      <rect x="17" y="11" width="14" height="13" rx="1" />
+    </>
+  ),
+  // Carretilla con caja.
+  flete: (
+    <>
+      <path d="M13 9 V35 H37" fill="none" />
+      <circle cx="15.5" cy="38.5" r="2.5" fill="#fff" />
+      <rect x="18" y="16" width="16" height="16" rx="1" />
+    </>
+  ),
+  // Paquete con guía.
+  encomienda: (
+    <>
+      <rect x="9" y="14" width="30" height="22" rx="1.5" />
+      <line x1="9" y1="20" x2="39" y2="20" />
+      <line x1="24" y1="14" x2="24" y2="20" />
+      <rect x="28" y="26" width="7" height="5" fill="#fff" />
+    </>
+  ),
+  // Bolsa de compra.
+  encargo: (
+    <>
+      <path d="M12 18 H36 L34 38 H14 Z" />
+      <path d="M19 18 V15 a5 5 0 0 1 10 0 V18" fill="none" />
+    </>
+  ),
+  // Sobre.
+  diligencia: (
+    <>
+      <rect x="9" y="14" width="30" height="21" rx="2" />
+      <path d="M9 16 L24 27 L39 16" fill="none" />
+    </>
+  ),
+};
+
+export function ServiceIcon({ service, size = 48 }: { service: Service; size?: number }) {
+  return <Icon size={size}>{SERVICE_ICONS[service]}</Icon>;
+}
+
+const SPACE_ICONS: Record<DriverSpace, React.ReactNode> = {
+  // Sobre y cajita.
+  solo_paquetes: (
+    <>
+      <rect x="6" y="15" width="24" height="16" rx="1.5" />
+      <path d="M6 17 L18 25 L30 17" fill="none" />
+      <rect x="27" y="23" width="15" height="13" rx="1" />
+      <line x1="34.5" y1="23" x2="34.5" y2="27" />
+    </>
+  ),
+  // Caja y maleta.
+  carga_parcial: (
+    <>
+      <rect x="6" y="22" width="17" height="16" rx="1" />
+      <line x1="6" y1="27" x2="23" y2="27" />
+      <rect x="26" y="17" width="16" height="21" rx="2.5" />
+      <path d="M30 17 V13 H38 V17" fill="none" />
+      <line x1="31" y1="22" x2="31" y2="33" />
+      <line x1="37" y1="22" x2="37" y2="33" />
+    </>
+  ),
+  // Cama.
+  medio_camion: (
+    <>
+      <rect x="5" y="14" width="6" height="24" rx="1" />
+      <rect x="11" y="26" width="32" height="8" rx="1" />
+      <rect x="14" y="21" width="9" height="5" rx="1.5" fill="#fff" />
+      <line x1="11" y1="34" x2="11" y2="38" />
+      <line x1="42" y1="34" x2="42" y2="38" />
+    </>
+  ),
+  // Casa.
+  camion_entero: (
+    <>
+      <path d="M6 22 L24 9 L42 22 V39 H6 Z" />
+      <rect x="13" y="28" width="8" height="11" fill="#fff" />
+      <rect x="27" y="25" width="9" height="7" fill="#fff" />
+      <line x1="31.5" y1="25" x2="31.5" y2="32" />
+    </>
+  ),
+};
+
+export function SpaceIcon({ space, size = 48 }: { space: DriverSpace; size?: number }) {
+  return <Icon size={size}>{SPACE_ICONS[space]}</Icon>;
+}

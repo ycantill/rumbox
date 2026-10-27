@@ -23,9 +23,9 @@ export const LIMITS: Record<"requests" | "availabilities", { phone?: number; ip:
 
 export type LimitedTable = keyof typeof LIMITS;
 
-export const RATE_LIMIT_ERROR = "Ya hiciste muchas solicitudes seguidas. Espera un rato e intenta otra vez.";
+export const RATE_LIMIT_ERROR = "Ya hizo muchas solicitudes seguidas. Espere un rato e intente otra vez.";
 /** Para el transportista: él no hace solicitudes, y "disponible" no se repite. */
-export const DRIVER_RATE_LIMIT_ERROR = "Ya enviaste tus datos muchas veces seguidas. Espera un rato e intenta otra vez.";
+export const DRIVER_RATE_LIMIT_ERROR = "Ya envió sus datos muchas veces seguidas. Espere un rato e intente otra vez.";
 
 export function overLimit(table: LimitedTable, counts: { phone: number; ip: number }): boolean {
   const max = LIMITS[table];

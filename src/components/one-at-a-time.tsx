@@ -1,7 +1,7 @@
 "use client";
 
 // Una cosa a la vez en cada teléfono: si tiene una solicitud o un viaje
-// abierto, Mudavía lo lleva siempre a esa pantalla. El inicio y la pantalla del
+// abierto, Rumbox lo lleva siempre a esa pantalla. El inicio y la pantalla del
 // otro papel no se ven hasta que lo cierre: desde ahí no podría hacer nada.
 
 import Link from "next/link";
@@ -59,7 +59,7 @@ export function BackHome() {
   const screen = useActiveScreen();
   if (screen !== null) return <span className="block h-5" aria-hidden />;
   return (
-    <Link href="/" className="text-sm text-muted">
+    <Link href="/" className="text-[15px] text-muted">
       ← Inicio
     </Link>
   );
@@ -73,7 +73,7 @@ export function BackLink() {
   const screen = useActiveScreen();
   if (screen === undefined) return <span className="block h-5" aria-hidden />;
   return (
-    <Link href={screen ?? "/"} className="text-sm text-muted">
+    <Link href={screen ?? "/"} className="text-[15px] text-muted">
       {screen ? "← Volver" : "← Inicio"}
     </Link>
   );

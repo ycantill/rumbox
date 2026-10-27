@@ -23,6 +23,26 @@ const request = (o: Partial<RequestLike> = {}): RequestLike => ({
   ...o,
 });
 
+describe("servicios", () => {
+  it("solo le salen los clientes que piden uno de los servicios que hace", () => {
+    const fletes = driver({ services: ["flete", "encomienda"] });
+    expect(matchesTrip(fletes, request({ service: "flete" }))).toBe(true);
+    expect(matchesTrip(fletes, request({ service: "encomienda", volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(fletes, request({ service: "mudanza" }))).toBe(false);
+    expect(matchesTrip(driver({ services: ["mudanza"], destination_city: ANY_DESTINATION }), request({ service: "diligencia", volume: "sobres" }))).toBe(false);
+  });
+
+  it("lo guardado antes de los servicios: el transportista hace todos y la solicitud le sirve a cualquiera", () => {
+    expect(matchesTrip(driver({ services: null }), request({ service: "diligencia", volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(driver({ services: ["diligencia"] }), request({ service: null }))).toBe(true);
+  });
+
+  it("el servicio no salta las otras reglas: el tamaño y la ruta siguen contando", () => {
+    expect(matchesTrip(driver({ services: ["mudanza"], space: "carga_parcial" }), request({ service: "mudanza" }))).toBe(false);
+    expect(matchesTrip(driver({ services: ["mudanza"] }), request({ service: "mudanza", destination_city: "medellin" }))).toBe(false);
+  });
+});
+
 describe("matchesTrip", () => {
   it("atiende cargas sobre el corredor y en el mismo sentido", () => {
     expect(matchesTrip(driver(), request())).toBe(true);

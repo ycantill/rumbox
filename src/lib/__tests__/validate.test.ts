@@ -7,6 +7,7 @@ const driver = {
   origin: "monteria",
   destination: "sincelejo",
   date: today,
+  services: ["mudanza", "flete"],
   space: "camion_entero",
   whatsapp: "310 444 5566",
 };
@@ -14,6 +15,7 @@ const request = {
   origin: "monteria",
   destination: "sincelejo",
   date: today,
+  service: "mudanza",
   volume: "medio_camion",
 };
 
@@ -24,15 +26,17 @@ describe("driverInputError", () => {
   });
 
   it("con el formulario vacío pide primero dónde está", () => {
-    const empty = { origin: "", destination: "", date: today, space: "", whatsapp: "" };
-    expect(driverInputError(empty, today)).toBe("Elige la ciudad donde estás.");
+    const empty = { origin: "", destination: "", date: today, services: [], space: "", whatsapp: "" };
+    expect(driverInputError(empty, today)).toBe("Elija el municipio donde está.");
   });
 
   it("dice qué falta, en orden", () => {
-    expect(driverInputError({ ...driver, destination: "" }, today)).toBe("Elige hacia dónde vas.");
+    expect(driverInputError({ ...driver, destination: "" }, today)).toBe("Elija hacia dónde va.");
     expect(driverInputError({ ...driver, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
-    expect(driverInputError({ ...driver, space: "" }, today)).toBe("Elige cuánto puedes llevar.");
-    expect(driverInputError({ ...driver, whatsapp: "300 12" }, today)).toBe("Revisa el número de teléfono.");
+    expect(driverInputError({ ...driver, services: [] }, today)).toBe("Elija qué servicios hace.");
+    expect(driverInputError({ ...driver, services: ["trasteo"] }, today)).toBe("Elija qué servicios hace.");
+    expect(driverInputError({ ...driver, space: "" }, today)).toBe("Elija cuánto espacio tiene.");
+    expect(driverInputError({ ...driver, whatsapp: "300 12" }, today)).toBe("Revise el número de teléfono.");
   });
 });
 
@@ -42,19 +46,29 @@ describe("requestInputError", () => {
   });
 
   it("dice qué falta, en orden", () => {
-    expect(requestInputError({ ...request, origin: "" }, today)).toBe("Elige desde dónde.");
-    expect(requestInputError({ ...request, destination: "" }, today)).toBe("Elige hacia dónde.");
+    expect(requestInputError({ ...request, service: "" }, today)).toBe("Elija qué necesita.");
+    expect(requestInputError({ ...request, volume: "" }, today)).toBe("Elija qué tan grande es.");
+    expect(requestInputError({ ...request, origin: "" }, today)).toBe("Elija desde dónde.");
+    expect(requestInputError({ ...request, destination: "" }, today)).toBe("Elija hacia dónde.");
     expect(requestInputError({ ...request, destination: "monteria" }, today)).toBe(SAME_CITY_ERROR);
-    expect(requestInputError({ ...request, volume: "" }, today)).toBe("Elige qué vas a mover.");
+  });
+
+  it("solo la mudanza y el flete preguntan qué tan grande", () => {
+    expect(requestInputError({ ...request, service: "flete", volume: "" }, today)).toBe("Elija qué tan grande es.");
+    // "¿Qué tan grande?" tiene dos opciones: una habitación o una casa.
+    expect(requestInputError({ ...request, volume: "carga_parcial" }, today)).toBe("Elija qué tan grande es.");
+    for (const service of ["encomienda", "encargo", "diligencia"]) {
+      expect(requestInputError({ ...request, service, volume: "" }, today)).toBeNull();
+    }
   });
 
   it("el cliente puede dejar cualquier día; el transportista no", () => {
     expect(requestInputError({ ...request, date: ANY_DAY }, today)).toBeNull();
-    expect(driverInputError({ ...driver, date: ANY_DAY }, today)).toBe("Elige un día de hoy en adelante.");
+    expect(driverInputError({ ...driver, date: ANY_DAY }, today)).toBe("Elija un día de hoy en adelante.");
   });
 
   it("el cliente no puede pedir cualquier destino", () => {
-    expect(requestInputError({ ...request, destination: "cualquiera" }, today)).toBe("Elige hacia dónde.");
+    expect(requestInputError({ ...request, destination: "cualquiera" }, today)).toBe("Elija hacia dónde.");
   });
 });
 

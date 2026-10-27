@@ -9,8 +9,12 @@ import {
   ANY_DAY,
   ANY_DESTINATION,
   DRIVER_SPACES,
+  UNSIZED_VOLUME,
   isKey,
+  serviceHasSize,
+  servicesOf,
   type DriverSpace,
+  type Service,
   type Volume,
 } from "@/lib/domain";
 import { matchesTrip, newestBy } from "@/lib/matching";
@@ -36,6 +40,8 @@ export type DriverMatch = {
   /** Desde qué día viaja: con "Cualquier día" el cliente lo ve si es después de hoy. */
   service_date: string;
   space: DriverSpace;
+  /** Los servicios que hace. null en las de antes de los servicios: hace todos. */
+  services: Service[] | null;
   whatsapp: string;
 };
 
@@ -55,12 +61,13 @@ export async function publishAvailability(input: {
   origin: string;
   destination: string;
   date: string;
+  services: string[];
   space: string;
   whatsapp: string;
 }): Promise<PublishResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   const invalid = driverInputError(input, todayInBogota());
-  if (invalid || !whatsapp) return fail(invalid ?? "Revisa el número de teléfono.");
+  if (invalid || !whatsapp) return fail(invalid ?? "Revise el número de teléfono.");
 
   const editToken = randomBytes(24).toString("base64url");
   const ipHash = hashIp(clientIp(await headers()));
@@ -68,6 +75,8 @@ export async function publishAvailability(input: {
     origin_city: input.origin,
     destination_city: input.destination,
     service_date: input.date,
+    // "¿Qué servicios hace?": solo le salen los clientes que piden uno de esos.
+    services: servicesOf(input.services),
     // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
     time_slot: "todo_el_dia",
     space: input.space,
@@ -107,7 +116,7 @@ export async function updateAvailability(input: {
   editToken: string;
   status: "llena";
 }): Promise<{ ok: true } | Fail> {
-  if (input.status !== "llena") return fail("Algo salió mal. Intenta de nuevo.");
+  if (input.status !== "llena") return fail("Algo salió mal. Intente de nuevo.");
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
@@ -116,7 +125,7 @@ export async function updateAvailability(input: {
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return fail("No encontramos tus datos en este teléfono.");
+      return fail("No encontramos sus datos en este teléfono.");
     }
     const { error: upErr } = await db().from("availabilities").update({ status: "llena" }).eq("id", input.id);
     if (upErr) throw upErr;
@@ -136,6 +145,8 @@ export type MyAvailabilityResult =
       currentCity: string | null;
       /** La carretera de su viaje, o null si va por la línea recta. */
       route: string | null;
+      /** Los servicios que hace. null en las de antes: hace todos. */
+      services: Service[] | null;
     }
   | (Fail & { gone?: true });
 
@@ -147,12 +158,12 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, full_space, current_city, route, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, full_space, current_city, route, services, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return { ...fail("No encontramos tus datos en este teléfono."), gone: true as const };
+      return { ...fail("No encontramos sus datos en este teléfono."), gone: true as const };
     }
     // No se vence (Yohany, 21 de octubre de 2026): sigue hasta "Ya no estoy
     // disponible". Las de antes, sin destino o en carro particular (baúl o
@@ -167,6 +178,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       fullSpace: fullSpace(data),
       currentCity: getCity(data.current_city) ? (data.current_city as string) : null,
       route: (data.route as string | null) ?? null,
+      services: servicesOf(data.services),
     };
   });
 }
@@ -185,7 +197,7 @@ export async function updateLocation(input: {
   city: string;
 }): Promise<{ ok: true; route: string | null } | Fail> {
   const city = getCity(input.city);
-  if (!city) return fail("Elige el pueblo por donde vas.");
+  if (!city) return fail("Elija el pueblo por donde va.");
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
@@ -194,7 +206,7 @@ export async function updateLocation(input: {
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return fail("No encontramos tus datos en este teléfono.");
+      return fail("No encontramos sus datos en este teléfono.");
     }
     const before = (data.route as string | null) ?? null;
     // Si sigue en el mismo municipio no se guarda: así no se les avisa a las
@@ -224,7 +236,7 @@ export async function updateSpace(input: {
   editToken: string;
   space: string;
 }): Promise<{ ok: true } | Fail> {
-  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elige cuánto espacio te queda.");
+  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elija cuánto espacio tiene ahora.");
   const space = input.space;
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
@@ -234,7 +246,7 @@ export async function updateSpace(input: {
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return fail("No encontramos tus datos en este teléfono.");
+      return fail("No encontramos sus datos en este teléfono.");
     }
     const patch: Record<string, string> = { space };
     // Las de antes no guardaban lo que podía llevar al empezar: con eso vuelve el formulario.
@@ -270,11 +282,13 @@ export async function createRequest(input: {
   origin: string;
   destination: string;
   date: string;
+  service: string;
   volume: string;
   replaces?: { id: string; editToken: string };
 }): Promise<RequestResult> {
   const invalid = requestInputError(input, todayInBogota());
   if (invalid) return fail(invalid);
+  const service = input.service as Service;
 
   const request = {
     origin_city: input.origin,
@@ -282,7 +296,9 @@ export async function createRequest(input: {
     // "Cualquier día" queda sin día: no se vence y su teléfono no se borra
     // hasta que la cierre.
     service_date: input.date === ANY_DAY ? null : input.date,
-    volume: input.volume as Volume,
+    service,
+    // La encomienda, el encargo y la diligencia no preguntan el tamaño.
+    volume: (serviceHasSize(service) ? input.volume : UNSIZED_VOLUME) as Volume,
   };
 
   const editToken = randomBytes(24).toString("base64url");
@@ -327,12 +343,12 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
   return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
-      .select("origin_city, destination_city, service_date, volume, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, service, volume, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
-      return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
+      return { ...fail("No encontramos su solicitud en este teléfono."), gone: true as const };
     }
     // Vale hasta que termina el día del viaje: después ya no les sale a los
     // transportistas. La de "Cualquier día" no se vence.
@@ -348,9 +364,9 @@ export async function closeRequest(input: {
   id: string;
   editToken: string;
 }): Promise<{ ok: true } | (Fail & { gone?: true })> {
-  return withDb("Algo salió mal. Intenta de nuevo en un momento.", async () => {
+  return withDb("Algo salió mal. Intente de nuevo en un momento.", async () => {
     if (!(await closeOwnRequest(input))) {
-      return { ...fail("No encontramos tu solicitud en este teléfono."), gone: true as const };
+      return { ...fail("No encontramos su solicitud en este teléfono."), gone: true as const };
     }
     return { ok: true as const };
   });
@@ -436,11 +452,12 @@ async function findDrivers(r: {
   origin_city: string;
   destination_city: string;
   service_date: string | null;
+  service?: Service | null;
   volume: Volume;
 }): Promise<DriverMatch[]> {
   const drivers = db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, space, current_city, route, whatsapp");
+    .select("id, origin_city, destination_city, service_date, space, services, current_city, route, whatsapp");
   const { data, error } = await (r.service_date === null ? drivers : drivers.lte("service_date", r.service_date))
     // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
     .not("destination_city", "is", null)
@@ -458,7 +475,8 @@ async function findDrivers(r: {
   for (const a of newestBy(data ?? [], (a) => a.whatsapp)) {
     // Por dónde va no se le muestra al cliente (Yohany, 21 de octubre de 2026),
     // y la carretera solo sirve para el match.
-    const { current_city, route, ...driver } = a;
+    const { current_city, route, ...rest } = a;
+    const driver = { ...rest, services: servicesOf(rest.services) };
     if (matchesTrip({ ...driver, current_city, route }, r)) matches.push(driver);
   }
   return matches.slice(0, 20);
@@ -498,9 +516,9 @@ function fail(error: string): Fail {
 }
 
 /** Lo que ve el cliente si falla la base de datos. */
-const CLIENT_DB_ERROR = "No pudimos guardar tu solicitud. Intenta de nuevo en un momento.";
+const CLIENT_DB_ERROR = "No pudimos guardar su solicitud. Intente de nuevo en un momento.";
 /** Lo que ve el transportista: él no hace solicitudes, y la palabra "disponible" no se repite. */
-const DRIVER_DB_ERROR = "No pudimos guardar tus datos. Intenta de nuevo en un momento.";
+const DRIVER_DB_ERROR = "No pudimos guardar sus datos. Intente de nuevo en un momento.";
 
 async function withDb<T>(message: string, fn: () => Promise<T>): Promise<T | Fail> {
   try {

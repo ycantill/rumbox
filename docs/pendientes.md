@@ -1,10 +1,19 @@
-# Mudavía · Pendientes
+# Rumbox · Pendientes
 
 Lo que falta por decidir o construir en el MVP, por orden de importancia.
 Actualizado el 18 de octubre de 2026. Los números son los de la revisión de
 ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Decisiones de Yohany
+
+### 0. Modo oscuro y dominio de Rumbox
+
+- **Modo oscuro:** el diseño de Rumbox no lo cubre y la app quedó siempre
+  clara (27 de octubre de 2026). Propuesta del handoff: fondo `#0f1b2d`,
+  superficies `#18263d` y los mismos ocre y cartón. Falta que Yohany lo
+  confirme.
+- **Dominio y marca:** revisar rumbox.co y la marca Rumbox en la SIC. El
+  correo de prueba de `src/lib/legal.ts` ahora es `ayuda@rumbox.co`.
 
 ### 10. Datos de verdad en el aviso de privacidad
 
@@ -22,8 +31,8 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 - **Decisión:** entran en el MVP (Yohany, 20 de octubre de 2026).
 - **Falta:** escribirlos y enlazarlos junto al aviso de privacidad. Deberían
-  decir, por lo menos, que Mudavía solo conecta a las personas, que el precio y
-  el servicio los acuerdan el cliente y el transportista, que Mudavía no
+  decir, por lo menos, que Rumbox solo conecta a las personas, que el precio y
+  el servicio los acuerdan el cliente y el transportista, que Rumbox no
   responde por la carga ni por el viaje, y qué está prohibido (números
   ajenos, datos falsos). Necesitan los mismos datos del responsable que el
   punto 10.
@@ -51,7 +60,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
      con la palabra "trasteo", que es como se busca en Colombia, y un botón a
      "Necesito mover algo". Empezar con las ciudades principales, sin
      favorecer ninguna región.
-- **Dominio:** la app se llama Mudavía (Yohany, 21 de octubre de 2026,
+- **Dominio:** la app se llama Rumbox (Yohany, 21 de octubre de 2026,
   porque muvia.co ya tenía dueño). mudavia.co y mudavia.com.co estaban
   libres ese día; falta comprarlos y revisar la marca en la SIC.
 - **Falta decidir:** cuándo se retoma.
@@ -99,9 +108,9 @@ se probó en un teléfono:
   Bogotá a Cartagena: la lista de "¿Por dónde vas?" muestra pueblos de la carretera
   (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
 - "Comienza tu viaje" en Android (abre Google Maps) y en iPhone (abre
-  Mapas): abre el camino hasta el destino, y al volver a Mudavía dice
+  Mapas): abre el camino hasta el destino, y al volver a Rumbox dice
   "Continúa tu viaje".
-- Instalar la app en Android y en iPhone y ver el logo de Mudavía.
+- Instalar la app en Android y en iPhone y ver el logo de Rumbox.
 - Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
   salir el aviso de señal sin perder lo llenado.
 - El cliente no ve ningún precio ni le preguntan por escaleras. Al final ve
@@ -137,7 +146,7 @@ se probó en un teléfono:
 - Un transportista que puede llevar "Algunas cosas" le sale a un cliente que
   mueve algunas cosas, pero no a uno que mueve una habitación.
 - Tocar "Ponerme disponible" o "Solicitar transportista" sin llenar nada: sale
-  el mensaje de Mudavía de lo primero que falta, no el globito del navegador.
+  el mensaje de Rumbox de lo primero que falta, no el globito del navegador.
 - Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
   el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
   pasó…".
@@ -231,7 +240,7 @@ se probó en un teléfono:
 - **Revisión de seguridad (20 de octubre de 2026, segunda parte):** límite
   para el transportista (3 por hora por teléfono y 10 por conexión), los
   avisos solo se mandan a los servicios de avisos de los navegadores, y
-  cabeceras para que ninguna otra página meta Mudavía dentro de la suya.
+  cabeceras para que ninguna otra página meta Rumbox dentro de la suya.
   Requiere la migración `0008_limite_transportista.sql`.
 - **Teléfonos solo mientras valen (20 de octubre de 2026):** el teléfono y la
   huella de la conexión se borran cuando la solicitud o la disponibilidad deja
@@ -245,7 +254,7 @@ se probó en un teléfono:
   También Vercel Web Analytics (gratis), que hay que activar en el panel de
   Vercel.
 - **PR #36:** una cosa a la vez en cada teléfono: o es transportista o pide
-  uno. Con algo abierto, Mudavía lo lleva siempre a esa pantalla (sin inicio ni
+  uno. Con algo abierto, Rumbox lo lleva siempre a esa pantalla (sin inicio ni
   la pantalla del otro papel), y el servidor lo revisa con el número. No
   necesita migración.
 - **PR #37:** "Tu solicitud" muestra la ruta, el día, qué va a mover y la
@@ -260,7 +269,7 @@ se probó en un teléfono:
   Supabase (Yohany, 20 de octubre de 2026).
 - **"Te encontraron" (20 de octubre de 2026):** el transportista ve a los
   clientes que tocaron su tarjeta, con los dos últimos números del teléfono,
-  y contesta "Lo llevo" o "No lo llevo". Con "Lo llevo", Mudavía le resta el
+  y contesta "Lo llevo" o "No lo llevo". Con "Lo llevo", Rumbox le resta el
   espacio con puntos, y se quita "Solo queda espacio para paquetes". Requiere la
   migración `0012_te_encontraron.sql`.
 - **Sin ayuda para cargar (20 de octubre de 2026):** ni el cliente ni el
@@ -308,7 +317,7 @@ se probó en un teléfono:
   la cuida el navegador. La columna `whatsapp` de `requests` queda vacía en
   las nuevas. Sin migración.
 - **PR #59:** consejos de seguridad ("Para cuidarte") para el cliente y el
-  transportista, y "Mudavía no te cobra y nunca te escribe" en el inicio.
+  transportista, y "Rumbox no te cobra y nunca te escribe" en el inicio.
   "Reportar" se probó y se quitó: queda para después en docs/MVP.md.
 - **PR #60:** página de ayuda (`/ayuda`), solo de seguridad: qué acordar antes
   del trasteo y qué hacer si hubo fraude, enlazada

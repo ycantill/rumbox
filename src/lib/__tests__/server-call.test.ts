@@ -6,9 +6,9 @@ describe("callServer", () => {
 
   it("devuelve lo mismo que la acción cuando hay señal", async () => {
     await expect(callServer(async () => ({ ok: true as const, id: "a" }))).resolves.toEqual({ ok: true, id: "a" });
-    await expect(callServer(async () => ({ ok: false as const, error: "Elige qué vas a mover." }))).resolves.toEqual({
+    await expect(callServer(async () => ({ ok: false as const, error: "Elija qué necesita." }))).resolves.toEqual({
       ok: false,
-      error: "Elige qué vas a mover.",
+      error: "Elija qué necesita.",
     });
   });
 

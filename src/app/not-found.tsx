@@ -9,10 +9,10 @@ export const metadata: Metadata = {
 export default function NotFound() {
   return (
     <main className="page flex flex-1 flex-col">
-      <h1 className="mt-10 text-2xl font-bold">No encontramos esta página</h1>
-      <p className="mt-2 text-muted">Puede que el enlace esté mal escrito o que ya no exista.</p>
+      <h1 className="title mt-10">No encontramos esta página</h1>
+      <p className="mt-3 text-muted">Puede que el enlace esté mal escrito o que ya no exista.</p>
       <div className="mt-8 flex flex-col gap-3">
-        <Link href="/" className="btn-primary py-3.5 text-center text-base">
+        <Link href="/" className="btn-primary">
           Volver al inicio
         </Link>
       </div>

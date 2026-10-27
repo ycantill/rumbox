@@ -1,8 +1,8 @@
 @AGENTS.md
 
-# Mudavía · guía para Claude
+# Rumbox · guía para Claude
 
-Mudavía es una PWA de mudanzas, fletes y envíos en Colombia; todavía no está
+Rumbox es una PWA de mudanzas, fletes, encomiendas, encargos y diligencias en Colombia; todavía no está
 definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
 clientes con transportistas que ya van hacia otro lado y tienen espacio libre.
 Sin registro, sin comisiones y con contacto directo por llamada o WhatsApp. El
@@ -98,12 +98,45 @@ public/sw.js                     Service worker
 Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Nombre**
-- La app se llama Mudavía, con tilde en pantalla y `mudavia` en el dominio
-  (Yohany, 21 de octubre de 2026): mudanza y flete por la vía, para
-  camioneros independientes. Antes se llamaba Muvia, pero muvia.co ya tenía
-  dueño. El repo sigue siendo `ycantill/muvia`, y las claves de localStorage
-  (`muvia.*`) y la caché del service worker (`muvia-v1`) conservan el nombre
-  de antes para que nadie pierda lo que tiene guardado.
+- La app se llama Rumbox (Yohany, 27 de octubre de 2026): rumbo + box, la vía
+  y la caja de cartón. Antes se llamó Muvia (muvia.co ya tenía dueño) y luego
+  Mudavía. El repo sigue siendo `ycantill/muvia`, y las claves de
+  localStorage (`muvia.*`) y la caché del service worker (`muvia-v1`)
+  conservan el nombre de antes para que nadie pierda lo que tiene guardado.
+
+**Diseño de Rumbox** (Yohany, 27 de octubre de 2026, hecho en Claude Design)
+- La identidad y las pantallas vienen del handoff de Claude Design: colores
+  Señal `#1a3f73`, Ocre vial `#e2bf76`, Cartón `#b7987b` y Noche `#0f1b2d`
+  (tokens en `globals.css`), Big Shoulders Display para títulos en
+  mayúsculas y Archivo para el texto, bordes de 1px, radios de 6 a 8px y sin
+  sombras. `Logo`, `Symbol` y los íconos de servicios y de espacio están en
+  `src/components/ui.tsx`.
+- Los textos del diseño mandan (Yohany: "respeta los textos del diseño"),
+  aunque difieran de los que se citan más abajo en esta guía: donde una
+  decisión de abajo cite un texto viejo, vale la decisión y el texto es el
+  de la app. Toda la app trata de **usted** ("¿Hacia dónde va?", "Elija
+  cuánto espacio tiene"), incluidos errores, consejos, `/ayuda` y
+  `/privacidad`.
+- Al que viaja, en la pantalla del cliente, se le dice "conductor" ("Buscar
+  conductor", "3 conductores van para allá"); en el inicio, su botón es "Voy
+  de viaje". En el código y la base sigue siendo transportista.
+- El diseño no cubre el modo oscuro: por ahora la app se ve siempre clara.
+
+**Servicios** (Yohany, 27 de octubre de 2026, con el diseño)
+- Son cinco: mudanza, flete, encomienda, encargo y diligencia (`SERVICES` en
+  `src/lib/domain.ts`). El cliente elige uno en "¿Qué necesita?" y se guarda
+  en `requests.service`. El que viaja marca los que hace en "¿Qué servicios
+  hace?" (`availabilities.services`, migración `0020_servicios.sql`), y solo
+  le salen los clientes que piden uno de esos. Reemplaza el "sin casillas,
+  todos hacen todo" del 26 de octubre.
+- Solo la mudanza y el flete preguntan "¿Qué tan grande?", con dos opciones:
+  "Una habitación" (`medio_camion`) y "Una casa" (`camion_entero`). La
+  encomienda, el encargo y la diligencia se guardan como `sobres`, así le
+  salen a cualquiera que tenga espacio.
+- Lo guardado antes de los servicios: las solicitudes sin servicio le sirven
+  a cualquiera y las disponibilidades sin servicios hacen todos.
+- En los resultados del cliente, cada tarjeta lleva ↑ si el conductor va
+  directo a su destino (o a cualquiera) y ↗ si pasa por su destino y sigue.
 
 **Audiencia y tono**
 - La app es para personas que no manejan mucho el celular. Textos cortos, que
@@ -111,7 +144,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   "¿Hacia dónde?", "¿Cuánto puedes llevar?").
 - Nada de jerga técnica en pantalla: no "cotizar", "ruta programada", "mano de
   obra", "tarifa", "GPS", "Modo Ruta", "local", "zona" ni distancias en km.
-- Los errores usan el mismo tono, por ejemplo "Elige cuánto puedes llevar".
+- Los errores usan el mismo tono, por ejemplo "Elija cuánto espacio tiene".
 
 **Sin cuentas**
 - No hay login ni contraseñas ("Cero registros"). El número de teléfono
@@ -247,7 +280,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   desde donde está el teléfono, así que sirve igual después de un desvío.
   Cuando ya lo tocó (`started`, solo en el teléfono) o marcó un pueblo en
   "¿Por dónde vas?", dice "Continúa tu viaje". El mapa no le devuelve nada a
-  Mudavía: "¿Por dónde vas?" sigue a mano. Con "Cualquier destino" no sale.
+  Rumbox: "¿Por dónde vas?" sigue a mano. Con "Cualquier destino" no sale.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
@@ -276,12 +309,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   dejan vacía. El emparejamiento ya no la mira.
 
 **Carga por tamaño de casa**
-- La carga se mide por tamaño de casa, con cuatro opciones: "Paquetes o
-  sobres", "Algunas cosas", "Una habitación o apartaestudio" y "Una casa de 2
-  habitaciones o más", cada una con una pista corta de lo que incluye.
-- Es la misma lista para los dos: el cliente responde "¿Qué vas a mover?" y el
-  transportista "¿Cuánto puedes llevar?". Al transportista le salen los
-  clientes cuya carga es igual o más chica que la suya.
+- La carga se mide por tamaño de casa, con cuatro opciones: "Sobres y
+  paquetes", "Algunas cosas", "Una habitación" y "Una casa", cada una con
+  una pista corta de lo que incluye y su ícono.
+- El transportista responde "¿Cuánto espacio tiene?" con las cuatro; el
+  cliente solo elige tamaño en la mudanza y el flete (ver "Servicios"). Al
+  transportista le salen los clientes cuya carga es igual o más chica que la
+  suya.
 - No se pregunta el vehículo (Yohany lo quitó en octubre de 2026): importa
   cuánto puede llevar, no en qué. La columna `vehicle_type` queda en la base
   para lo guardado antes y lo nuevo la deja vacía.
@@ -308,7 +342,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - El campo vacío dice "Escribe o elige", para invitar a las dos formas.
 - No hay botón "Ubicarme" (Yohany, 22 de octubre de 2026): el origen de las
   dos pantallas se elige igual que el destino, para simplificar el MVP.
-  Mudavía no pide la ubicación del teléfono en ninguna pantalla.
+  Rumbox no pide la ubicación del teléfono en ninguna pantalla.
 - Los slugs se guardan en la base de datos: no se cambian.
 
 **El cliente llena una sola pantalla**
@@ -346,7 +380,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Una cosa a la vez en cada teléfono**
 - Un teléfono tiene una sola cosa abierta: una solicitud o un viaje como
   transportista, nunca las dos (Yohany, octubre de 2026).
-- Mientras la tenga, Mudavía lo lleva siempre a esa pantalla: el inicio y la
+- Mientras la tenga, Rumbox lo lleva siempre a esa pantalla: el inicio y la
   pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
   nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no estoy
@@ -383,7 +417,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Consejos de seguridad**
 - Yohany, 23 de octubre de 2026, tras revisar los fraudes posibles: "Para
   cuidarte" con consejos cortos debajo de los datos del transportista, y
-  "Mudavía no te cobra y nunca te escribe" también en el inicio. Los del
+  "Rumbox no te cobra y nunca te escribe" también en el inicio. Los del
   cliente salen solo antes de cada contacto (ver "Llamada o WhatsApp"): Yohany
   quitó "Para cuidarte" de "Tu solicitud", que solo tiene el enlace "Qué hacer
   si te estafan". Los textos están en `src/lib/safety.ts`.
@@ -392,7 +426,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   qué acordar por WhatsApp antes del trasteo y lo que se puede hacer si hubo
   fraude: el 123 si está en peligro; si pagó, avisar ya al banco,
   Nequi o Daviplata, guardar pantallazos y denunciar en ADenunciar o el CAI
-  Virtual de la Policía; consejos para el transportista; y que Mudavía no
+  Virtual de la Policía; consejos para el transportista; y que Rumbox no
   cobra. Se llega desde "Qué hacer si te estafan" (en "Tu solicitud" y en
   "Para cuidarte" del transportista) y desde
   "Ayuda" en el pie del inicio. Su "← Volver" lleva a lo que el teléfono tiene
@@ -425,9 +459,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Sin avisos al celular**
 - No hay avisos al celular (Yohany, 22 de octubre de 2026): en iPhone había
-  que agregar Mudavía a la pantalla de inicio para recibirlos y era muy
+  que agregar Rumbox a la pantalla de inicio para recibirlos y era muy
   complicado. El cliente entra a "Tu solicitud" cada tanto, y la pantalla se
-  lo dice ("Entra a Mudavía cada tanto para mirar."). Con la pantalla
+  lo dice ("Entra a Rumbox cada tanto para mirar."). Con la pantalla
   abierta, la lista se pone al día sola. Antes había "Sí, avísame" con Web
   Push (VAPID); la tabla `push_subscriptions` se borró en
   `0018_sin_avisos_al_celular.sql`. El service worker se queda, para que la

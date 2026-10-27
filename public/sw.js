@@ -1,4 +1,4 @@
-// Service worker mínimo de Mudavía: guarda las páginas visitadas para que la app
+// Service worker mínimo de Rumbox: guarda las páginas visitadas para que la app
 // abra aunque la señal sea mala. Red primero; si falla, se usa la copia guardada.
 const CACHE = "muvia-v1";
 const SHELL = ["/", "/solicitar", "/transportista"];
