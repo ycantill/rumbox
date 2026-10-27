@@ -13,6 +13,7 @@ import {
   isKey,
   serviceHasSize,
   servicesOf,
+  spaceForServices,
   type DriverSpace,
   type Service,
   type Volume,
@@ -54,6 +55,8 @@ export type PublishResult =
       editToken: string;
       /** La carretera de su viaje (`encodePath`), o null si va por la línea recta. */
       route: string | null;
+      /** El espacio que quedó guardado: si no hace mudanzas, sale de sus servicios. */
+      space: DriverSpace;
     }
   | Fail;
 
@@ -67,7 +70,10 @@ export async function publishAvailability(input: {
 }): Promise<PublishResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   const invalid = driverInputError(input, todayInBogota());
-  if (invalid || !whatsapp) return fail(invalid ?? "Revise el número de teléfono.");
+  if (invalid || !whatsapp) return fail(invalid ?? "Escriba su número de 10 dígitos.");
+  const services = servicesOf(input.services) ?? [];
+  // El espacio solo se pregunta si hace mudanzas; si no, sale de los servicios.
+  const space = spaceForServices(services, input.space) as DriverSpace;
 
   const editToken = randomBytes(24).toString("base64url");
   const ipHash = hashIp(clientIp(await headers()));
@@ -76,12 +82,12 @@ export async function publishAvailability(input: {
     destination_city: input.destination,
     service_date: input.date,
     // "¿Qué servicios hace?": solo le salen los clientes que piden uno de esos.
-    services: servicesOf(input.services),
+    services,
     // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
     time_slot: "todo_el_dia",
-    space: input.space,
-    // Lo que podía llevar al empezar: `space` es lo que le queda y él lo baja en su tarjeta.
-    full_space: input.space,
+    space,
+    // Lo que podía llevar al empezar: `space` es lo que le queda y él lo cambia en su tarjeta.
+    full_space: space,
     whatsapp,
     edit_token_hash: hashToken(editToken),
   };
@@ -103,7 +109,7 @@ export async function publishAvailability(input: {
     if (error) throw error;
     // No se le muestran los clientes: por su privacidad, ellos lo ven a él
     // (Vía B) y son los que llaman o escriben.
-    return { ok: true as const, id: data.id as string, editToken, route };
+    return { ok: true as const, id: data.id as string, editToken, route, space };
   });
 }
 
@@ -297,7 +303,7 @@ export async function createRequest(input: {
     // hasta que la cierre.
     service_date: input.date === ANY_DAY ? null : input.date,
     service,
-    // La encomienda, el encargo y la diligencia no preguntan el tamaño.
+    // Solo la mudanza pregunta el tamaño.
     volume: (serviceHasSize(service) ? input.volume : UNSIZED_VOLUME) as Volume,
   };
 

@@ -5,12 +5,11 @@
 /** Lo que más se repite en las estafas: pedir plata a nombre de Rumbox. */
 export const NO_CHARGE_TIP = "Rumbox nunca le cobra ni le escribe.";
 
-/** Para el cliente, en la ventana antes de escribir o llamar. */
+/** Para el cliente, en la ventana antes de escribir o llamar, con `NO_CHARGE_TIP` aparte. */
 export const CLIENT_TIPS = [
   "No pague nada antes de ver el carro y a la persona.",
   "Pídale la cédula y la placa, y tómeles foto.",
   "Acuerden el precio por WhatsApp y pague al entregar.",
-  NO_CHARGE_TIP,
 ] as const;
 
 /** Para el transportista, en "Para cuidarse", debajo de sus datos. */

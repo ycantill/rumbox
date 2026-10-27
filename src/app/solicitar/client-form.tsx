@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   closeRequest,
@@ -11,14 +12,19 @@ import {
 } from "@/app/actions";
 import {
   CitySelect,
+  ConfirmSheet,
   ContactButtons,
   DayPicker,
   ErrorNote,
   Field,
+  FieldError,
   InfoNote,
   PrivacyNote,
   ServicePicker,
+  Signal,
+  SignalDot,
   SizePicker,
+  Symbol,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -45,6 +51,7 @@ import { listenForDrivers } from "@/lib/live";
 import { KEYS, forget, load, save } from "@/lib/local-store";
 import { refreshWhileOpen } from "@/lib/refresh";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
+import { announce } from "@/lib/toast";
 import { requestInputError } from "@/lib/validate";
 
 /** La solicitud que el cliente tiene abierta, guardada en su teléfono. Una a la vez. */
@@ -69,9 +76,12 @@ export function ClientForm() {
   const day = useServiceDay(pickedDate);
   const date = pickedDate === ANY_DAY ? ANY_DAY : day;
   const [service, setService] = useState<Service | "">("");
-  // "¿Qué tan grande?", solo para la mudanza y el flete.
+  // "¿Qué tan grande?", solo para la mudanza.
   const [size, setSize] = useState<ClientSize | "">("");
   const [error, setError] = useState<string | null>(null);
+  // "Buscando conductores", mientras se guarda la solicitud.
+  const [searching, setSearching] = useState(false);
+  const router = useRouter();
   // "Tu solicitud anterior ya pasó", cuando vuelve el formulario porque se venció.
   const [notice, setNotice] = useState<string | null>(null);
   // La solicitud abierta: si hay una, se muestra esa en vez del formulario.
@@ -111,25 +121,33 @@ export function ClientForm() {
     setLoaded(true);
   }, [today]);
 
+  const volume = service && serviceHasSize(service) ? size : UNSIZED_VOLUME;
+  const input = { origin, destination, date, service, volume };
+  // Lo que falta: el botón se ve apagado y, al tocarlo, se dice debajo.
+  const invalid = today ? requestInputError(input, today) : null;
+
   function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const volume = service && serviceHasSize(service) ? size : UNSIZED_VOLUME;
-    const input = { origin, destination, date, service, volume };
-    // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
-    const invalid = requestInputError(input, today);
+    // Se dice aquí, con el tono de la app y aunque no haya señal.
     if (invalid) {
       setError(invalid);
       return;
     }
+    setSearching(true);
     startTransition(async () => {
-      const res = await callServer(() =>
-        createRequest({
-          ...input,
-          // Una solicitud a la vez: la nueva reemplaza la que estaba abierta.
-          replaces: current ? { id: current.id, editToken: current.editToken } : undefined,
-        }),
-      );
+      const [res] = await Promise.all([
+        callServer(() =>
+          createRequest({
+            ...input,
+            // Una solicitud a la vez: la nueva reemplaza la que estaba abierta.
+            replaces: current ? { id: current.id, editToken: current.editToken } : undefined,
+          }),
+        ),
+        // "Buscando conductores" se alcanza a leer aunque el servidor conteste rápido.
+        new Promise((resolve) => setTimeout(resolve, 1400)),
+      ]);
+      setSearching(false);
       if (!res.ok) {
         setError(res.error);
         return;
@@ -154,6 +172,22 @@ export function ClientForm() {
 
   if (!loaded || (!current && screen === "/transportista")) return null;
 
+  if (searching) {
+    return (
+      <div role="status" className="flex min-h-[70vh] flex-col items-center justify-center gap-7 text-center">
+        <span className="grid size-[90px] place-items-center">
+          <Signal size={70}>
+            <Symbol size={64} />
+          </Signal>
+        </span>
+        <p className="font-display text-[32px] font-black uppercase leading-none">Buscando conductores</p>
+        <p className="text-[15px] text-muted">
+          {getCity(origin)?.name} → {getCity(destination)?.name}
+        </p>
+      </div>
+    );
+  }
+
   if (current && !editing) {
     return (
       <MyRequestView
@@ -166,8 +200,14 @@ export function ClientForm() {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
         onEnd={(reason) => {
-          // Ya consiguió, o se cerró o pasó el día: se olvida y vuelve el formulario con sus datos.
           save(KEYS.clientRequest, null);
+          // La cerró él: vuelve al inicio con el aviso (Yohany, 27 de octubre de 2026).
+          if (reason === "closed") {
+            announce("Listo. Cerramos su solicitud.");
+            router.push("/");
+            return;
+          }
+          // Se cerró en el servidor o pasó el día: vuelve el formulario con sus datos.
           setNotice(reason === "expired" ? EXPIRED_NOTICE : null);
           setCurrent(null);
           setMatches(null);
@@ -187,6 +227,7 @@ export function ClientForm() {
         <fieldset className="-mt-2">
           <legend className="sr-only">¿Qué necesita?</legend>
           <ServicePicker value={service} onChange={setService} />
+          {service && <p className="mt-3 text-sm leading-snug text-muted">{SERVICES[service].hint}</p>}
         </fieldset>
 
         {service && serviceHasSize(service) && (
@@ -199,7 +240,7 @@ export function ClientForm() {
             del destino. El aviso queda para lo guardado de antes. */}
         <Field label="Ruta">
           <div className="flex flex-col rounded-md border border-line bg-paper">
-            <div className="relative border-b border-ink px-3.5 py-2.5">
+            <div className="relative border-b border-line-soft px-3.5 py-2.5">
               <span aria-hidden className="guide-label block">
                 Desde
               </span>
@@ -219,7 +260,7 @@ export function ClientForm() {
               />
             </div>
           </div>
-          <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
+          <FieldError message={origin && origin === destination ? SAME_CITY_ERROR : null} />
         </Field>
 
         <Field label="¿Para cuándo?">
@@ -228,10 +269,14 @@ export function ClientForm() {
 
         <div className="flex flex-col gap-3.5">
           <PrivacyNote>Guardamos su solicitud solo mientras esté abierta.</PrivacyNote>
-          <ErrorNote message={error} />
-          <button type="submit" className="btn-primary" disabled={isPending}>
-            {isPending ? "Un momento…" : "Buscar conductor"}
+          <button
+            type="submit"
+            className={`btn-primary ${invalid ? "opacity-50" : ""}`}
+            disabled={isPending}
+          >
+            Buscar conductor
           </button>
+          <FieldError message={error} center />
         </div>
       </form>
     </div>
@@ -253,7 +298,7 @@ function MyRequestView({
   request: MyRequest;
   matches: DriverMatch[] | null;
   onRestart: () => void;
-  onEnd: (reason?: "expired") => void;
+  onEnd: (reason?: "expired" | "closed") => void;
 }) {
   const { today, tomorrow } = useBogotaDates();
   const [matches, setMatches] = useState<DriverMatch[] | null>(initialMatches);
@@ -321,12 +366,13 @@ function MyRequestView({
     latest.current++;
     const res = await callServer(() => closeRequest({ id, editToken }));
     setBusy(false);
+    setConfirmEnd(false);
     // Si el servidor ya no la tiene, tampoco les sale a los transportistas.
     if (!res.ok && !("gone" in res && res.gone)) {
       setError(res.error);
       return;
     }
-    onEnd();
+    onEnd("closed");
   }
 
   const from = getCity(request.origin)?.name;
@@ -347,19 +393,26 @@ function MyRequestView({
           </button>
         </div>
         <dl className="grid grid-cols-2">
-          <GuideCell label="Desde" className="border-b border-r border-ink">
+          <GuideCell label="Desde" className="border-b border-r border-line-soft">
             <span className="font-display text-2xl font-extrabold uppercase leading-none">{from}</span>
           </GuideCell>
-          <GuideCell label="Hasta" className="border-b border-ink">
+          <GuideCell label="Hasta" className="border-b border-line-soft">
             <span className="font-display text-2xl font-extrabold uppercase leading-none">{to}</span>
           </GuideCell>
-          <GuideCell label="Servicio" className="border-r border-ink">
+          <GuideCell label="Servicio" className="border-r border-line-soft">
             <span className="text-[15px] font-semibold">{what}</span>
           </GuideCell>
           <GuideCell label="Cuándo">
             <span className="text-[15px] font-semibold">{anyDay ? ANY_DAY_LABEL : capitalize(whenOf(request.date))}</span>
           </GuideCell>
         </dl>
+        <button
+          type="button"
+          onClick={() => setConfirmEnd(true)}
+          className="w-full rounded-b-[7px] border-t border-line-soft bg-surface p-[13px] text-[15px] font-semibold hover:bg-bg"
+        >
+          Ya no necesito el servicio
+        </button>
       </section>
 
       {/* Es una pantalla de espera: mientras no haya conductores, o hasta
@@ -426,32 +479,25 @@ function MyRequestView({
               <b>↗</b> Pasa por su destino
             </span>
           </p>
-          <p role="status" className="flex items-center gap-3 rounded-md bg-notice p-3.5 text-[15px] leading-snug">
-            <span aria-hidden className="size-2.5 shrink-0 rounded-xs bg-ink" />
+          <p role="status" className="flex items-center gap-3.5 rounded-md bg-notice p-3.5 text-[15px] leading-snug">
+            <SignalDot />
             Seguimos buscando conductores. Vuelva a mirar más tarde.
           </p>
         </>
       )}
 
       <ErrorNote message={error} />
+      <ConfirmSheet
+        open={confirmEnd}
+        title="¿Cerrar su solicitud?"
+        body="Los conductores ya no la verán. Si la necesita otra vez, tendrá que pedirla de nuevo."
+        yes="Sí, ya no lo necesito"
+        no="No, seguir buscando"
+        busy={busy}
+        onYes={end}
+        onNo={() => setConfirmEnd(false)}
+      />
       <div className="flex flex-col gap-2.5">
-        {confirmEnd ? (
-          <div className="card flex flex-col gap-3">
-            <p className="text-[15px]">¿Dejamos de mostrar su solicitud a los conductores?</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
-                No
-              </button>
-              <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
-                Sí
-              </button>
-            </div>
-          </div>
-        ) : (
-          <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya no necesito el servicio
-          </button>
-        )}
         <Link href="/ayuda" className="pt-1.5 text-center text-[15px] text-brand underline">
           Qué hacer si lo estafan
         </Link>
@@ -491,36 +537,20 @@ function GuideCell({
 /** Mientras no hay conductores: la solicitud quedó guardada y seguimos buscando. */
 function Searching() {
   return (
-    <section className="flex flex-col items-center gap-3 rounded-lg bg-notice px-4 py-5 text-center">
-      <div role="status" className="flex flex-col items-center gap-2">
-        <Radar size="large" />
-        <h2 className="card-title">Buscando conductores…</h2>
-        <p className="text-[15px] leading-snug">
-          Su solicitud quedó guardada. Cuando un conductor vaya para allá, le sale aquí para que lo llame o le escriba
-          por WhatsApp.
-        </p>
-        <p className="text-[15px] font-semibold">Entre a Rumbox cada tanto para mirar.</p>
-      </div>
+    <section role="status" className="flex flex-col items-center gap-3.5 rounded-lg bg-notice px-[22px] py-8 text-center">
+      <span className="grid size-[84px] place-items-center">
+        <Signal size={70}>
+          <Symbol size={60} />
+        </Signal>
+      </span>
+      <h2 className="font-display text-[30px] font-black uppercase leading-none">Buscando conductores...</h2>
+      <p className="text-base leading-normal text-[#4a5568] text-pretty">
+        Su solicitud quedó guardada. Cuando un conductor vaya para allá, le sale aquí para que lo llame o le escriba por
+        WhatsApp.
+      </p>
+      <p className="self-stretch border-t border-[#e3d9c6] pt-3.5 text-[15px] font-bold leading-snug">
+        Entre a Rumbox cada tanto para mirar.
+      </p>
     </section>
-  );
-}
-
-/** Ondas que salen del centro: la app sigue buscando. */
-function Radar({ size }: { size: "large" | "small" }) {
-  const box = size === "large" ? "size-20" : "size-4";
-  const dot = size === "large" ? "size-5" : "size-2";
-  return (
-    <span aria-hidden className={`relative grid shrink-0 place-items-center ${box}`}>
-      {/* Tres ondas desfasadas. El retraso va en style: la clase animate-radar
-          trae la animación completa y pisaría un retraso puesto con clase. */}
-      {["0s", "-0.8s", "-1.6s"].map((delay) => (
-        <span
-          key={delay}
-          className="absolute inset-0 rounded-full bg-brand/30 motion-safe:animate-radar"
-          style={{ animationDelay: delay }}
-        />
-      ))}
-      <span className={`relative rounded-full bg-brand ${dot}`} />
-    </span>
   );
 }

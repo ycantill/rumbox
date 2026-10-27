@@ -4,8 +4,10 @@
 > Rumbox y tiene la identidad y las pantallas del diseño de Claude Design:
 > trato de usted, cinco servicios (mudanza, flete, encomienda, encargo y
 > diligencia) y "¿Qué servicios hace?" para el que viaja, que filtra el
-> emparejamiento (migración `0020_servicios.sql`). Solo la mudanza y el flete
-> preguntan el tamaño. Donde este documento cite textos de antes, valen los
+> emparejamiento (migración `0020_servicios.sql`). Solo la mudanza pregunta
+> el tamaño, y el que viaja solo dice cuánto espacio tiene si hace mudanzas
+> (prototipo de Rumbox, también del 27 de octubre). Al cerrar la solicitud o
+> dejar de estar disponible, la app vuelve al inicio con un aviso. Donde este documento cite textos de antes, valen los
 > de la app (ver CLAUDE.md, "Diseño de Rumbox" y "Servicios").
 
 Basado en el documento de producto "Plataforma Web de Logística Inteligente:
@@ -80,7 +82,7 @@ se elige igual que el destino.
   también la sigue: se calcula una vez al ponerse disponible con
   OpenRouteService (gratis) y, si no responde, se usa la línea recta.
   El dibujo tiene un punto por pueblo, del origen al destino: los que ya pasó
-  quedan tachados, pero se pueden tocar por si se equivocó (Yohany, 22 de
+  quedan en gris, pero se pueden tocar por si se equivocó (Yohany, 22 de
   octubre de 2026).
 - Si el pueblo por donde va no está en la ruta, lo escribe debajo, en "¿Vas
   por un pueblo que no está en la ruta?": su camino pasa a ir por ahí, y la lista y los
@@ -101,8 +103,8 @@ se elige igual que el destino.
   disponibilidad sigue encendida. Los clientes que solicitan después de que
   él se puso disponible lo ven en su lista y lo llaman.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
-  datos tiene una lista desplegable con las mismas opciones de "¿Cuánto puedes
-  llevar?", las cuatro siempre. Cuando carga, la baja, y cuando descarga, la
+  datos, si hace mudanzas, tiene las dos tarjetas de la mudanza (una
+  habitación o una casa). Cuando carga, la baja, y cuando descarga, la
   sube, aunque haya salido lleno. Los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
   (la lista de clientes que tocaron su tarjeta, con "Lo llevo"), que se quitó.
 

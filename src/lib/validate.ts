@@ -7,12 +7,12 @@ import {
   ANY_DAY,
   ANY_DESTINATION,
   CLIENT_SIZES,
-  DRIVER_SPACES,
-  SAME_CITY_ERROR,
+  ROUTE_ERROR,
   SERVICES,
   isKey,
   serviceHasSize,
   servicesOf,
+  spaceForServices,
 } from "./domain";
 import { normalizeWhatsApp } from "./whatsapp";
 
@@ -27,13 +27,15 @@ export function driverInputError(
   input: Trip & { services: readonly string[]; space: string; whatsapp: string },
   today: string,
 ): string | null {
-  if (!getCity(input.origin)) return "Elija el municipio donde está.";
-  if (input.destination !== ANY_DESTINATION && !getCity(input.destination)) return "Elija hacia dónde va.";
-  if (input.destination === input.origin) return SAME_CITY_ERROR;
+  if (!getCity(input.origin)) return ROUTE_ERROR;
+  if (input.destination !== ANY_DESTINATION && !getCity(input.destination)) return ROUTE_ERROR;
+  if (input.destination === input.origin) return ROUTE_ERROR;
   if (!isValidServiceDate(input.date, today)) return "Elija un día de hoy en adelante.";
-  if (!servicesOf(input.services)?.length) return "Elija qué servicios hace.";
-  if (!isKey(DRIVER_SPACES, input.space)) return "Elija cuánto espacio tiene.";
-  if (!normalizeWhatsApp(input.whatsapp ?? "")) return "Revise el número de teléfono.";
+  const services = servicesOf(input.services);
+  if (!services?.length) return "Elija al menos un servicio.";
+  // El espacio solo se pregunta si hace mudanzas.
+  if (!spaceForServices(services, input.space)) return "Elija cuánto espacio tiene.";
+  if (!normalizeWhatsApp(input.whatsapp ?? "")) return "Escriba su número de 10 dígitos.";
   return null;
 }
 
@@ -43,12 +45,11 @@ export function driverInputError(
  */
 export function requestInputError(input: Trip & { service: string; volume: string }, today: string): string | null {
   // En el orden del formulario: qué necesita, qué tan grande, la ruta y el día.
-  if (!isKey(SERVICES, input.service)) return "Elija qué necesita.";
-  // Solo la mudanza y el flete preguntan el tamaño.
+  if (!isKey(SERVICES, input.service)) return "Elija qué servicio necesita.";
+  // Solo la mudanza pregunta el tamaño.
   if (serviceHasSize(input.service) && !isKey(CLIENT_SIZES, input.volume)) return "Elija qué tan grande es.";
-  if (!getCity(input.origin)) return "Elija desde dónde.";
-  if (!getCity(input.destination)) return "Elija hacia dónde.";
-  if (input.destination === input.origin) return SAME_CITY_ERROR;
+  if (!getCity(input.origin) || !getCity(input.destination)) return ROUTE_ERROR;
+  if (input.destination === input.origin) return ROUTE_ERROR;
   // El cliente puede dejar "Cualquier día"; el transportista siempre dice qué día viaja.
   if (input.date !== ANY_DAY && !isValidServiceDate(input.date, today)) return "Elija un día de hoy en adelante.";
   return null;

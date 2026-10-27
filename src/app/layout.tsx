@@ -2,6 +2,7 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Archivo, Big_Shoulders } from "next/font/google";
 import { ServiceWorker } from "@/components/service-worker";
+import { Toast } from "@/components/ui";
 import "./globals.css";
 
 // Big Shoulders Display para los títulos, en mayúsculas, y Archivo para el
@@ -40,6 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="es" className={`${bigShoulders.variable} ${archivo.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col font-sans">
         {children}
+        <Toast />
         <ServiceWorker />
         {/* Visitas y de dónde llegan, en el panel de Vercel. Sin cookies. */}
         <Analytics />
