@@ -6,10 +6,10 @@
 // verdad, con el nombre y la dirección del responsable (docs/pendientes.md).
 
 export const PRIVACY_CONTACT = {
-  name: "Mudavía",
-  email: "ayuda@mudavia.co",
+  name: "Rumbox",
+  email: "ayuda@rumbox.co",
   phone: "300 111 2233",
 } as const;
 
 /** Desde cuándo vale la política. Cámbiala si cambia el texto. */
-export const PRIVACY_UPDATED = "20 de octubre de 2026";
+export const PRIVACY_UPDATED = "27 de octubre de 2026";

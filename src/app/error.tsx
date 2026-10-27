@@ -12,13 +12,13 @@ export default function ErrorPage({ error, retry }: { error: unknown; retry: () 
 
   return (
     <main className="page flex flex-1 flex-col">
-      <h1 className="mt-10 text-2xl font-bold">Algo salió mal</h1>
-      <p className="mt-2 text-muted">Revisa tu señal e intenta otra vez.</p>
+      <h1 className="title mt-10">Algo salió mal</h1>
+      <p className="mt-3 text-muted">Revise su señal e intente otra vez.</p>
       <div className="mt-8 flex flex-col gap-3">
         <button type="button" className="btn-primary" onClick={() => retry()}>
           Intentar otra vez
         </button>
-        <Link href="/" className="btn-secondary py-3.5 text-center text-base">
+        <Link href="/" className="btn-secondary">
           Volver al inicio
         </Link>
       </div>

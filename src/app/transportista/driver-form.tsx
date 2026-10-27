@@ -10,24 +10,27 @@ import {
 } from "@/app/actions";
 import {
   CitySelect,
-  Choices,
   DayPicker,
   ErrorNote,
   Field,
   PrivacyNote,
   SafetyTips,
+  ServiceChecklist,
+  SpacePicker,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
-import { useActiveScreen } from "@/components/one-at-a-time";
+import { BackHome, useActiveScreen } from "@/components/one-at-a-time";
 import { getCity } from "@/lib/cities";
-import { whenText } from "@/lib/dates";
+import { capitalize, whenText } from "@/lib/dates";
 import {
   DRIVER_SPACES,
   SAME_CITY_ERROR,
+  SERVICES,
   destinationName,
   isKey,
   type DriverSpace,
+  type Service,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
 import { isAppleMobile, mapsUrl } from "@/lib/maps";
@@ -49,6 +52,8 @@ export type MyPost = {
   // cuando el destino era opcional.
   destination: string | null;
   date: string; // desde qué día viaja
+  /** Los servicios que hace. Los guardados antes de los servicios no los tienen. */
+  services?: Service[] | null;
   space: DriverSpace;
   // Lo que podía llevar al ponerse disponible; `space` es lo que le queda, que
   // él cambia en su tarjeta. Con esto vuelve el formulario, para el próximo viaje.
@@ -68,6 +73,7 @@ export function DriverForm() {
   const [destination, setDestination] = useState("");
   const [pickedDate, setDate] = useState("");
   const date = useServiceDay(pickedDate);
+  const [services, setServices] = useState<Service[]>([]);
   const [space, setSpace] = useState<DriverSpace | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -112,6 +118,7 @@ export function DriverForm() {
     if (current) {
       setOrigin(current.origin);
       setDestination(current.destination ?? "");
+      if (current.services) setServices(current.services);
       // Lo que podía llevar al empezar, no lo que le quedó libre al final del viaje.
       const space = current.fullSpace ?? current.space;
       // El baúl o los asientos de un carro particular ya no son una opción.
@@ -127,7 +134,7 @@ export function DriverForm() {
     e.preventDefault();
     setError(null);
     // Lo que falta se dice aquí, con el tono de la app y aunque no haya señal.
-    const input = { origin, destination, date, space, whatsapp };
+    const input = { origin, destination, date, services, space, whatsapp };
     const invalid = driverInputError(input, today);
     if (invalid) {
       setError(invalid);
@@ -146,6 +153,7 @@ export function DriverForm() {
         origin,
         destination,
         date,
+        services,
         space: space as DriverSpace,
         route: res.route,
       };
@@ -172,54 +180,87 @@ export function DriverForm() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      <p className="-mt-4 text-sm text-muted">
-        Cuéntanos hacia dónde vas y qué día viajas. No tienes que crear cuenta ni pagar comisiones.
-      </p>
+    <div className="flex flex-col gap-6">
+      <BackHome />
+      <div className="flex flex-col gap-2">
+        <h1 className="title">¿Hacia dónde va?</h1>
+        <p className="text-base leading-snug text-muted">Lo llaman los clientes que le quedan de camino.</p>
+      </div>
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
       <form onSubmit={submit} noValidate className="flex flex-col gap-6">
-        <Field label="¿Dónde estás?">
-          <CitySelect name="origin" value={origin} onChange={setOrigin} exclude={destination} />
-        </Field>
-
-        {/* El match va por el corredor del viaje (Modo Ruta) o, con "Cualquier
-            destino", por el municipio de donde sale. Es lógica interna: el
-            transportista no la ve. */}
-        <Field label="¿Hacia dónde vas?">
-          {/* "Cualquier destino" es la primera opción de la lista. El origen no
-              sale en ella. El aviso queda para lo guardado de antes. */}
-          <CitySelect name="destination" value={destination} onChange={setDestination} exclude={origin} anyDestination />
+        {/* La guía: dónde está y a dónde va. El match va por el corredor del
+            viaje o, con "Cualquier destino" (la primera opción de la lista), por
+            el municipio de donde sale. Es lógica interna: no la ve. El origen no
+            sale en la lista del destino. El aviso queda para lo guardado de antes. */}
+        <div className="flex flex-col gap-2.5">
+          <div className="relative grid grid-cols-2 rounded-md border border-line bg-paper">
+            <div className="min-w-0 border-r border-ink px-3.5 py-2.5">
+              <span aria-hidden className="guide-label block">
+                Está en
+              </span>
+              <CitySelect name="origin" label="Está en" variant="guide" value={origin} onChange={setOrigin} exclude={destination} />
+            </div>
+            <div className="min-w-0 px-3.5 py-2.5">
+              <span aria-hidden className="guide-label block">
+                Va a
+              </span>
+              <CitySelect
+                name="destination"
+                label="Va a"
+                variant="guide"
+                value={destination}
+                onChange={setDestination}
+                exclude={origin}
+                anyDestination
+              />
+            </div>
+          </div>
           <ErrorNote message={origin && origin === destination ? SAME_CITY_ERROR : null} />
-        </Field>
+        </div>
 
         {/* "Hoy" viene elegido. Viaja desde ese día en adelante, hasta que se apague. */}
-        <Field label="¿Qué día viajas?">
+        <Field label="¿Qué día sale?">
           <DayPicker value={date} onChange={setDate} />
         </Field>
 
-        {/* La misma lista de tamaños que elige el cliente. */}
-        <Field label="¿Cuánto puedes llevar?">
-          <Choices options={DRIVER_SPACES} value={space} onChange={setSpace} columns={1} />
+        <fieldset className="flex flex-col gap-2.5">
+          <legend className="mb-2.5 flex flex-col gap-0.5">
+            <span className="label">¿Qué servicios hace?</span>
+            <span className="text-sm text-muted">Puede elegir varios.</span>
+          </legend>
+          <ServiceChecklist value={services} onChange={setServices} />
+        </fieldset>
+
+        {/* La misma lista de tamaños del cliente. */}
+        <Field label="¿Cuánto espacio tiene?">
+          <SpacePicker value={space} onChange={setSpace} />
         </Field>
 
-        <Field label="Tu teléfono" hint="Los clientes te pueden llamar o escribir por WhatsApp a este número.">
+        <div className="flex flex-col gap-2">
+          <label htmlFor="phone" className="label">
+            Su teléfono
+          </label>
           <input
+            id="phone"
             type="tel"
             inputMode="tel"
             autoComplete="tel"
-            className="input"
+            className="input py-[15px] text-[19px] font-medium tracking-[0.03em]"
             placeholder="300 123 4567"
             value={whatsapp}
             onChange={(e) => setWhatsapp(e.target.value)}
             required
           />
-        </Field>
+          <p className="text-sm text-muted">Aquí lo llaman o le escriben por WhatsApp.</p>
+        </div>
 
-        <PrivacyNote>Al continuar, aceptas que los clientes vean tu número mientras dure este viaje.</PrivacyNote>
-        <ErrorNote message={error} />
-        <button type="submit" className="btn-primary" disabled={isPending}>
-          {isPending ? "Un momento…" : "Ponerme disponible"}
-        </button>
+        <div className="flex flex-col gap-3.5">
+          <PrivacyNote>Su número se ve solo durante este viaje.</PrivacyNote>
+          <ErrorNote message={error} />
+          <button type="submit" className="btn-primary" disabled={isPending}>
+            {isPending ? "Un momento…" : "Ponerme disponible"}
+          </button>
+        </div>
       </form>
     </div>
   );
@@ -284,6 +325,7 @@ function CurrentWork({
             fullSpace: res.fullSpace,
             current: res.currentCity,
             route: res.route,
+            services: res.services,
           });
         },
         () => {
@@ -340,36 +382,50 @@ function CurrentWork({
     onEnd();
   }
 
-  const details = (
-    <dl className="mt-3 grid gap-1 text-sm">
-      <div>
-        <dt className="sr-only">Lugar</dt>
-        <dd className="font-semibold">
-          {getCity(post.origin)?.name} → {destinationName(post.destination)}
-        </dd>
-      </div>
-      <div>
-        <dt className="sr-only">Desde qué día</dt>
-        {/* Viaja desde su día en adelante: si ya pasó, desde hoy. */}
-        <dd>Viajas desde {whenText(post.date > today ? post.date : today, today, tomorrow)}</dd>
-      </div>
-    </dl>
-  );
+  // Viaja desde su día en adelante: si ya pasó, desde hoy.
+  const sale = whenText(post.date > today ? post.date : today, today, tomorrow);
 
   return (
-    <div className="flex flex-col gap-5">
-      <section className="rounded-2xl bg-brand-soft p-5 text-brand-ink">
-        <h2 className="text-lg font-bold">
-          {justPublished ? "¡Listo! Ya estás disponible para este servicio." : "Estás disponible para este servicio"}
-        </h2>
-        {details}
-        <p className="mt-4 text-sm text-brand-ink/80">
-          Los clientes que necesiten un servicio te llamarán o te escribirán por WhatsApp
-          {phone ? ` al ${formatWhatsApp(phone)}` : ""}.
+    <div className="flex flex-col gap-[18px]">
+      <section className="bleed flex flex-col gap-4 bg-ink px-[22px] pb-[22px] pt-[26px] text-white">
+        <h1 className="flex items-center gap-2 text-[13px] font-bold uppercase tracking-[0.14em] text-accent">
+          <span aria-hidden className="size-2.5 rounded-xs bg-accent" />
+          Usted está disponible
+        </h1>
+        {/* El aviso de la vía: de dónde sale, a dónde va y qué servicios hace. */}
+        <div className="rounded-lg bg-brand p-1.5">
+          <div className="flex flex-col gap-3 rounded-[5px] border-[1.5px] border-white/40 p-4">
+            <p className="font-display text-[38px] font-black uppercase leading-[0.92]">
+              {getCity(post.origin)?.name}
+              <br />
+              <span aria-hidden className="text-accent">
+                ↑
+              </span>
+              <span className="sr-only">a</span> {destinationName(post.destination)}
+            </p>
+            {post.services && post.services.length > 0 && (
+              <ul className="flex flex-wrap gap-1.5">
+                {post.services.map((s) => (
+                  <li key={s} className="rounded-[3px] bg-accent px-2 py-[3px] text-xs font-bold uppercase text-ink">
+                    {SERVICES[s].plural}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+        <p className="text-[15px] leading-snug text-on-brand-muted">
+          {capitalize(`sale ${sale}.`)}{" "}
+          {phone ? (
+            <>
+              Lo llaman o le escriben al <b className="text-white">{formatWhatsApp(phone)}</b>.
+            </>
+          ) : (
+            "Lo llaman o le escriben por WhatsApp."
+          )}
         </p>
+        <StartTrip post={post} onStart={() => onPatch({ started: true })} />
       </section>
-
-      <StartTrip post={post} onStart={() => onPatch({ started: true })} />
 
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
@@ -378,36 +434,33 @@ function CurrentWork({
       <SafetyTips tips={DRIVER_TIPS} />
 
       <ErrorNote message={error} />
-      <div className="flex flex-col gap-2">
-        {confirmEnd ? (
-          <div className="card flex flex-col gap-3">
-            <p className="text-sm">¿Dejamos de mostrarte a los clientes?</p>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
-                No
-              </button>
-              <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
-                Sí
-              </button>
-            </div>
+      {confirmEnd ? (
+        <div className="card flex flex-col gap-3">
+          <p className="text-[15px]">¿Dejamos de mostrarlo a los clientes?</p>
+          <div className="grid grid-cols-2 gap-2">
+            <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(false)}>
+              No
+            </button>
+            <button type="button" className="btn-secondary" disabled={busy} onClick={end}>
+              Sí
+            </button>
           </div>
-        ) : (
-          <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
-            Ya no estoy disponible
-          </button>
-        )}
-      </div>
-
+        </div>
+      ) : (
+        <button type="button" className="btn-secondary" onClick={() => setConfirmEnd(true)}>
+          Ya no estoy disponible
+        </button>
+      )}
     </div>
   );
 }
 
 /**
- * "Comienza tu viaje" (Yohany, 22 de octubre de 2026): abre el mapa con el
- * camino hasta su destino, para que no lo tenga que escribir: Google Maps en
+ * "Comenzar viaje en Maps" (Yohany, 22 de octubre de 2026): abre el mapa con
+ * el camino hasta su destino, para que no lo tenga que escribir: Google Maps en
  * Android y Mapas en iPhone. Si ya lo tocó o ya marcó un pueblo en "¿Por dónde
- * vas?", va de camino: "Continúa tu viaje". Con "Cualquier destino" no hay a
- * dónde llevarlo.
+ * va?", va de camino: "Continuar viaje en Maps". Con "Cualquier destino" no
+ * hay a dónde llevarlo.
  */
 function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
   // La tarjeta sale después de leer el teléfono, así que ya hay navegador.
@@ -418,27 +471,22 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
   if (!destination) return null;
   const started = post.started || Boolean(post.current && post.current !== post.origin);
   return (
-    <div className="flex flex-col gap-2">
-      <a
-        href={mapsUrl(destination, apple)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="btn-primary text-center"
-        onClick={onStart}
-      >
-        {started ? "Continúa tu viaje" : "Comienza tu viaje"}
-      </a>
-      <p className="text-center text-sm text-muted">
-        Se abre {apple ? "Mapas" : "Google Maps"} con el camino hasta {destination.name}.
-      </p>
-    </div>
+    <a
+      href={mapsUrl(destination, apple)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="rounded-lg bg-accent p-4 text-center font-display text-2xl font-black uppercase leading-none text-ink active:translate-y-px"
+      onClick={onStart}
+    >
+      {started ? "Continuar viaje en Maps" : "Comenzar viaje en Maps"}
+    </a>
   );
 }
 
 /**
- * "¿Cuánto espacio te queda?": cuando carga o descarga, él mismo cambia lo que
- * le queda, y los clientes solo lo ven si les cabe. Tiene todas las opciones:
- * pudo empezar lleno y descargar en el camino.
+ * "¿Cuánto espacio tiene ahora?": cuando carga o descarga, él mismo cambia lo
+ * que le queda, y los clientes solo lo ven si les cabe. Tiene todas las
+ * opciones: pudo empezar lleno y descargar en el camino.
  */
 function SpaceLeft({
   space,
@@ -450,9 +498,9 @@ function SpaceLeft({
   onChange: (space: DriverSpace) => void;
 }) {
   return (
-    <section className="card flex flex-col gap-2">
-      <label htmlFor="space-left" className="font-semibold">
-        ¿Cuánto espacio te queda?
+    <section className="flex flex-col gap-3 rounded-lg border border-line-soft bg-surface p-[18px]">
+      <label htmlFor="space-left" className="card-title">
+        ¿Cuánto espacio tiene ahora?
       </label>
       <select
         id="space-left"
@@ -469,20 +517,20 @@ function SpaceLeft({
           </option>
         ))}
       </select>
-      <p className="text-sm text-muted">Cámbialo cuando cargues o descargues. Solo te ven los clientes a los que les cabe.</p>
+      <p className="text-sm leading-snug text-muted">Cámbielo cuando cargue o descargue.</p>
     </section>
   );
 }
 
 /**
- * "¿Por dónde vas?": él mismo toca en el dibujo de su ruta el pueblo por donde
+ * "¿Por dónde va?": él mismo toca en el dibujo de su ruta el pueblo por donde
  * va (Yohany, 22 de octubre de 2026; antes se marcaba con la ubicación del
  * teléfono y luego en una lista desplegable). Los que ya pasó quedan tachados,
- * pero se pueden tocar por si se equivocó. Si su pueblo no está, lo escribe
- * abajo: va por otro lado, y su ruta pasa a ir por ahí. Mientras no lo cambie,
- * cuenta desde donde sale. Con "Cualquier destino" no hay ruta: elige de todos
- * los municipios. Los clientes no lo ven (Yohany, 21 de octubre de 2026): les
- * deja de salir si su pueblo ya quedó atrás.
+ * pero se pueden tocar por si se equivocó. Si su pueblo no está, lo agrega con
+ * "+ Paso por otro pueblo": va por otro lado, y su ruta pasa a ir por ahí.
+ * Mientras no lo cambie, cuenta desde donde sale. Con "Cualquier destino" no
+ * hay ruta: elige de todos los municipios. Los clientes no lo ven (Yohany, 21
+ * de octubre de 2026): les deja de salir si su pueblo ya quedó atrás.
  */
 function WhereYouAre({
   post,
@@ -496,6 +544,8 @@ function WhereYouAre({
 }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // "+ Paso por otro pueblo" abre el campo para escribirlo.
+  const [adding, setAdding] = useState(false);
   // El pueblo por donde ahora pasa su camino, si al agregarlo cambió la ruta:
   // así entiende por qué cambió el dibujo. Se quita al escoger otro.
   const [detour, setDetour] = useState<string | null>(null);
@@ -513,6 +563,7 @@ function WhereYouAre({
       setBusy(true);
       setError(null);
       setDetour(null);
+      setAdding(false);
       latestRef.current++;
       const res = await callServer(() => updateLocation({ id, editToken, city: slug }));
       latestRef.current++;
@@ -529,22 +580,31 @@ function WhereYouAre({
     [id, editToken, value, before, route, latestRef, onPatch],
   );
 
+  const heading = (
+    <div className="flex flex-col gap-1">
+      <h2 className="card-title">¿Por dónde va?</h2>
+      <p className="text-sm leading-snug text-muted">
+        {stops.length === 0
+          ? "Cámbielo cuando pase por otro pueblo. Así lo encuentran los clientes de ese camino."
+          : "Toque el pueblo cuando pase. Así lo encuentran los clientes de ese camino."}
+      </p>
+    </div>
+  );
+
   if (stops.length === 0) {
     return (
-      <section className="card flex flex-col gap-2">
-        <p className="font-semibold">¿Por dónde vas?</p>
-        <CitySelect name="where-you-are" value={value} onChange={(slug) => void change(slug)} />
-        <p className="text-sm text-muted">
-          Cámbialo cuando pases por otro pueblo. Así te llaman los clientes que te quedan de camino.
-        </p>
+      <section className="card flex flex-col gap-3.5">
+        {heading}
+        <CitySelect name="where-you-are" label="¿Por dónde va?" value={value} onChange={(slug) => void change(slug)} />
         <ErrorNote message={error} />
       </section>
     );
   }
 
-  // El dibujo de la ruta: un punto por pueblo, del origen al destino, con el de
-  // ahora resaltado y los de antes tachados. Si el suyo no está en la ruta (la
-  // ruta no pudo pasar por ahí), sale con "Vas por …" en su lugar del camino.
+  // El dibujo de la ruta: un punto por pueblo, del origen al destino, unidos
+  // por una línea, con el de ahora resaltado y los de antes tachados. Si el
+  // suyo no está en la ruta (la ruta no pudo pasar por ahí), sale en su lugar
+  // del camino.
   const here = getCity(value);
   const hereIndex = here ? stops.findIndex((s) => s.city.slug === here.slug) : -1;
   const offList = here && hereIndex === -1 ? here : null;
@@ -555,97 +615,121 @@ function WhereYouAre({
     offAt = next === -1 ? stops.length : next;
   }
   const passedBefore = hereIndex !== -1 ? hereIndex : offAt;
+  const last = stops.length - 1;
 
   return (
-    <section className="card flex flex-col gap-2">
-      <p className="font-semibold">¿Por dónde vas?</p>
-      <p className="text-sm text-muted">
-        Cuando pases por otro pueblo, tócalo. Así te llaman los clientes que te quedan de camino.
-      </p>
-      {detour && <p className="text-sm font-semibold text-brand">Listo, tu camino ahora pasa por {detour}.</p>}
-      <ol aria-label="Tu ruta" className="mt-1 flex flex-col">
+    <section className="card flex flex-col gap-3.5">
+      {heading}
+      {detour && <p className="text-sm font-semibold text-brand">Listo, su camino ahora pasa por {detour}.</p>}
+      <ol aria-label="Su ruta" className="flex flex-col">
         {stops.map((stop, i) => (
           <Fragment key={stop.city.slug}>
             {i === offAt && offList && <HereRow name={offList.name} />}
             <li>
-              {i === hereIndex ? (
-                <span className="flex items-center gap-3 py-1.5">
-                  <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
-                  <span className="font-semibold">{stop.city.name}</span>
-                  <span className="text-sm font-semibold text-brand">Vas por aquí</span>
-                </span>
-              ) : (
-                <StopButton
-                  name={stop.city.name}
-                  passed={i < passedBefore}
-                  busy={busy}
-                  onTap={() => void change(stop.city.slug)}
-                />
-              )}
+              <StopRow
+                name={stop.city.name}
+                end={i === 0 || i === last}
+                here={i === hereIndex}
+                passed={i < passedBefore}
+                last={i === last && !(offAt === stops.length && offList)}
+                busy={busy}
+                onTap={() => void change(stop.city.slug)}
+              />
             </li>
           </Fragment>
         ))}
-        {offAt === stops.length && offList && <HereRow name={offList.name} />}
+        {offAt === stops.length && offList && <HereRow name={offList.name} last />}
       </ol>
       <ErrorNote message={error} />
-      <div className="mt-2 flex flex-col gap-2 border-t border-line pt-4">
-        <p className="font-semibold">¿Vas por un pueblo que no está en la ruta?</p>
-        <CitySelect
-          name="other-town"
-          value=""
-          exclude={origin}
-          placeholder="Escribe el pueblo por donde vas"
-          onChange={(slug) => void change(slug)}
-        />
-        <p className="text-sm text-muted">Escríbelo o elígelo. Tu camino pasará por ahí.</p>
-      </div>
+      {adding ? (
+        <div className="flex flex-col gap-2">
+          <CitySelect
+            name="other-town"
+            label="Paso por otro pueblo"
+            value=""
+            exclude={origin}
+            placeholder="Escriba el pueblo por donde va"
+            onChange={(slug) => void change(slug)}
+          />
+          <p className="text-sm text-muted">Escríbalo o elíjalo. Su camino pasará por ahí.</p>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setAdding(true)}
+          className="rounded-md border border-dashed border-[#a3abb5] p-[13px] text-left text-[15px] text-muted"
+        >
+          + Paso por otro pueblo
+        </button>
+      )}
     </section>
   );
 }
 
 /**
- * Un pueblo del dibujo que se puede tocar para marcarlo (Yohany, 22 de octubre
- * de 2026). Los que ya pasó van tachados, pero se pueden tocar por si se
- * equivocó.
+ * Un pueblo del dibujo, que se puede tocar para marcarlo (Yohany, 22 de
+ * octubre de 2026): un punto (más grande en el origen y el destino) unido al
+ * siguiente por una línea gris. El de ahora va en Señal con "Usted va aquí";
+ * los que ya pasó van tachados, pero se pueden tocar por si se equivocó.
  */
-function StopButton({
+function StopRow({
   name,
+  end,
+  here,
   passed,
+  last,
   busy,
   onTap,
 }: {
   name: string;
+  end: boolean;
+  here: boolean;
   passed: boolean;
+  last: boolean;
   busy: boolean;
   onTap: () => void;
 }) {
+  const dot = here
+    ? "size-[18px] bg-brand"
+    : end
+      ? "size-[18px] bg-ink"
+      : `mt-0.5 size-3 bg-white ${passed ? "opacity-60" : ""}`;
   return (
     <button
       type="button"
-      disabled={busy}
+      disabled={busy || here}
       onClick={onTap}
-      className="-mx-2 flex w-[calc(100%+1rem)] items-center gap-3 rounded-lg px-2 py-1.5 text-left active:bg-brand-soft disabled:opacity-50"
+      className="grid w-full grid-cols-[40px_1fr] gap-x-3 text-left disabled:cursor-default"
     >
-      <span
-        aria-hidden
-        className={
-          passed
-            ? "size-3 shrink-0 rounded-full border-2 border-line"
-            : "size-3 shrink-0 rounded-full border-2 border-brand"
-        }
-      />
-      <span className={passed ? "text-muted line-through" : undefined}>{name}</span>
-      {passed && <span className="sr-only">(ya pasaste)</span>}
+      <span aria-hidden className="flex flex-col items-center">
+        <span className={`mt-[5px] shrink-0 rounded-full border border-line ${dot}`} />
+        {!last && <span className="my-1 min-h-3.5 w-0.5 flex-1 bg-[#c3c9d0]" />}
+      </span>
+      <span className={`flex items-center gap-2.5 pt-1 text-[17px] ${last ? "" : "pb-[18px]"}`}>
+        <span className={`${here || end ? "font-bold" : ""} ${passed && !here ? "text-muted line-through" : ""}`}>
+          {name}
+        </span>
+        {here && (
+          <span className="rounded-[3px] bg-brand px-2 py-0.5 text-xs font-bold uppercase text-white">Usted va aquí</span>
+        )}
+        {passed && !here && <span className="sr-only">(ya pasó)</span>}
+      </span>
     </button>
   );
 }
 
-/** "Vas por …" cuando su pueblo no está en la ruta. */
-function HereRow({ name }: { name: string }) {
+/** "Usted va aquí" cuando su pueblo no está en la ruta. */
+function HereRow({ name, last = false }: { name: string; last?: boolean }) {
   return (
-    <li className="flex items-center gap-3 py-1.5">
-      <span aria-hidden className="size-4 shrink-0 rounded-full bg-brand ring-4 ring-brand-soft" />
-      <span className="font-semibold">Vas por {name}</span>
+    <li className="grid grid-cols-[40px_1fr] gap-x-3">
+      <span aria-hidden className="flex flex-col items-center">
+        <span className="mt-[5px] size-[18px] shrink-0 rounded-full border border-line bg-brand" />
+        {!last && <span className="my-1 min-h-3.5 w-0.5 flex-1 bg-[#c3c9d0]" />}
+      </span>
+      <span className={`flex items-center gap-2.5 pt-1 text-[17px] ${last ? "" : "pb-[18px]"}`}>
+        <b>{name}</b>
+        <span className="rounded-[3px] bg-brand px-2 py-0.5 text-xs font-bold uppercase text-white">Usted va aquí</span>
+      </span>
     </li>
   );
 }

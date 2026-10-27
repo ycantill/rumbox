@@ -1,4 +1,12 @@
-# Mudavía · Alcance del MVP
+# Rumbox · Alcance del MVP
+
+> **Rediseño de Rumbox (Yohany, 27 de octubre de 2026).** La app se llama
+> Rumbox y tiene la identidad y las pantallas del diseño de Claude Design:
+> trato de usted, cinco servicios (mudanza, flete, encomienda, encargo y
+> diligencia) y "¿Qué servicios hace?" para el que viaja, que filtra el
+> emparejamiento (migración `0020_servicios.sql`). Solo la mudanza y el flete
+> preguntan el tamaño. Donde este documento cite textos de antes, valen los
+> de la app (ver CLAUDE.md, "Diseño de Rumbox" y "Servicios").
 
 Basado en el documento de producto "Plataforma Web de Logística Inteligente:
 Mudanzas y Fletes Híbridos". El objetivo del MVP es validar que transportistas
@@ -81,7 +89,7 @@ se elige igual que el destino.
   botón abre el mapa con el camino hasta su destino, desde donde está el
   teléfono: Google Maps en Android y Mapas de Apple en iPhone. Después de
   tocarlo, o si ya marcó un pueblo en "¿Por dónde
-  vas?", dice "Continúa tu viaje". Lo que hace en el mapa no vuelve a Mudavía:
+  vas?", dice "Continúa tu viaje". Lo que hace en el mapa no vuelve a Rumbox:
   "¿Por dónde vas?" lo sigue cambiando él. Con "Cualquier destino" no sale.
 - Un trabajo a la vez: si el teléfono ya tiene uno, en vez del formulario ve
   "Estás disponible para este servicio" con sus datos y "Ya no estoy
@@ -122,14 +130,14 @@ apenas un transportista de ese día se pone disponible o cambia la suya
 
 Una cosa a la vez en cada teléfono, también entre los dos papeles (Yohany,
 octubre de 2026): o tiene una solicitud o un viaje como transportista. Mientras
-la tenga, Mudavía lo lleva siempre a esa pantalla; el inicio y la pantalla del
+la tenga, Rumbox lo lleva siempre a esa pantalla; el inicio y la pantalla del
 otro papel no se ven hasta que la cierre o se venza. Lo revisa lo que guarda
 el navegador; como el cliente ya no da su número, el servidor no lo cruza.
 
 No hay avisos al celular (Yohany, 22 de octubre de 2026): en iPhone había que
-agregar Mudavía a la pantalla de inicio para recibirlos y era muy complicado.
+agregar Rumbox a la pantalla de inicio para recibirlos y era muy complicado.
 El cliente entra cada tanto a mirar, y la pantalla de espera se lo dice ("Entra
-a Mudavía cada tanto para mirar."). El transportista tampoco recibe avisos.
+a Rumbox cada tanto para mirar."). El transportista tampoco recibe avisos.
 
 Arriba ve los datos de su solicitud: la ruta, el día y qué va a mover.
 Es una pantalla de espera: mientras no hay transportistas ve "Buscando
@@ -176,13 +184,13 @@ Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
 y condiciones también entran en el MVP; falta escribirlos.
 
 **Consejos de seguridad** (`src/lib/safety.ts`, Yohany, 23 de octubre de
-2026): Mudavía no maneja plata, así que los fraudes pasan en la llamada o el
+2026): Rumbox no maneja plata, así que los fraudes pasan en la llamada o el
 WhatsApp. El cliente ve los consejos cada vez que toca
 "Escribir por WhatsApp" o "Llamar", en una ventana que pide "Entendido" antes
 de seguir, sin "Cancelar" porque son solo consejos (no pagar antes de
 ver el carro, pedir cédula y placa, pagar al entregar). El transportista tiene
 los suyos debajo de sus datos (revisar que la plata llegó, no llevar paquetes cerrados,
-desconfiar de citas en lugares solos). Los dos y el inicio dicen "Mudavía no
+desconfiar de citas en lugares solos). Los dos y el inicio dicen "Rumbox no
 te cobra y nunca te escribe". "Qué hacer si te estafan" lleva a `/ayuda`, solo
 de fraudes y seguridad: qué acordar por WhatsApp antes del trasteo y los pasos que la persona puede dar sola: el 123, avisar al banco o a Nequi,
 guardar pantallazos y denunciar en ADenunciar o el CAI Virtual. No hay botón

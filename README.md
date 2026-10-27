@@ -1,6 +1,6 @@
-# Mudavía
+# Rumbox
 
-Plataforma web (PWA) de mudanzas, fletes y envíos que conecta clientes con
+Plataforma web (PWA) de mudanzas, fletes, encomiendas, encargos y diligencias que conecta clientes con
 transportistas que ya van hacia otro lado y tienen espacio libre. Sin
 registro, sin comisiones y con contacto directo por llamada o WhatsApp, en
 Colombia. Todavía no está definido dónde será el piloto.

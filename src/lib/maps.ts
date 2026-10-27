@@ -1,7 +1,7 @@
 // "Comienza tu viaje": abre el mapa del teléfono con el camino hasta su destino
 // (Yohany, 22 de octubre de 2026). Es un enlace, sin llave. No se manda de
 // dónde sale: el mapa arranca desde donde está el teléfono, así que sirve igual
-// para empezar que para seguir después de una parada o de un desvío. Mudavía
+// para empezar que para seguir después de una parada o de un desvío. Rumbox
 // no se entera de nada de lo que pasa en el mapa.
 //
 // En Android abre Google Maps. En iPhone, Mapas de Apple (Yohany, 22 de

@@ -3,7 +3,9 @@ import {
   DRIVER_SPACES,
   VOLUMES,
   spaceFitsVolume,
-  volumeInSentence,
+  SERVICES,
+  serviceHasSize,
+  servicesOf,
   spaceInSentence,
   type DriverSpace,
   type Volume,
@@ -47,16 +49,30 @@ describe("tamaños de carga", () => {
     expect(Object.keys(DRIVER_SPACES)).not.toContain("asientos");
   });
 
-  it("la etiqueta se puede poner dentro de una frase", () => {
-    expect(spaceInSentence("camion_entero")).toBe("una casa de 2 habitaciones o más");
-    expect(spaceInSentence("solo_paquetes")).toBe("paquetes o sobres");
+  it("el espacio se puede poner dentro de una frase: \"Tiene espacio para …\"", () => {
+    expect(spaceInSentence("camion_entero")).toBe("una casa entera");
+    expect(spaceInSentence("medio_camion")).toBe("una habitación");
+    expect(spaceInSentence("solo_paquetes")).toBe("sobres y paquetes");
   });
 });
 
-describe("Tu solicitud", () => {
-  it("dice lo que va a mover dentro de una frase", () => {
-    expect(volumeInSentence("medio_camion")).toBe("una habitación o apartaestudio");
-    expect(volumeInSentence("sobres")).toBe("paquetes o sobres");
+describe("servicios", () => {
+  it("son cinco, en el orden del diseño", () => {
+    expect(Object.keys(SERVICES)).toEqual(["mudanza", "flete", "encomienda", "encargo", "diligencia"]);
+  });
+
+  it("solo la mudanza y el flete preguntan el tamaño", () => {
+    expect(serviceHasSize("mudanza")).toBe(true);
+    expect(serviceHasSize("flete")).toBe(true);
+    expect(serviceHasSize("encomienda")).toBe(false);
+    expect(serviceHasSize("encargo")).toBe(false);
+    expect(serviceHasSize("diligencia")).toBe(false);
+  });
+
+  it("de una lista deja los que existen, sin repetir y en orden; sin lista, null", () => {
+    expect(servicesOf(["diligencia", "mudanza", "mudanza", "trasteo"])).toEqual(["mudanza", "diligencia"]);
+    expect(servicesOf(null)).toBeNull();
+    expect(servicesOf("mudanza")).toBeNull();
   });
 });
 

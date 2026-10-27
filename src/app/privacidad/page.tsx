@@ -4,7 +4,7 @@ import { PRIVACY_CONTACT, PRIVACY_UPDATED } from "@/lib/legal";
 import { TrackVisit } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Cómo cuidamos tus datos",
+  title: "Cómo cuidamos sus datos",
 };
 
 // Política de tratamiento de datos (Ley 1581 de 2012), en palabras simples.
@@ -13,21 +13,21 @@ export default function PrivacyPage() {
   return (
     <main className="page">
       <TrackVisit page="privacidad" />
-      <Link href="/" className="text-sm text-muted">
+      <Link href="/" className="text-[15px] text-muted">
         ← Inicio
       </Link>
-      <h1 className="mb-6 mt-3 text-2xl font-bold">Cómo cuidamos tus datos</h1>
+      <h1 className="title mb-6 mt-4">Cómo cuidamos sus datos</h1>
 
-      <div className="flex flex-col gap-6 text-sm leading-relaxed">
+      <div className="flex flex-col gap-6 text-[15px] leading-relaxed">
         <section>
-          <h2 className="text-base font-bold">Quién guarda tus datos</h2>
+          <h2 className="card-title">Quién guarda sus datos</h2>
           <p className="mt-1 text-muted">
-            {name}. Si tienes una pregunta o quieres que borremos tus datos, escríbenos a{" "}
-            <a className="underline" href={`mailto:${email}`}>
+            {name}. Si tiene una pregunta o quiere que borremos sus datos, escríbanos a{" "}
+            <a className="text-brand underline" href={`mailto:${email}`}>
               {email}
             </a>{" "}
-            o llámanos al{" "}
-            <a className="underline" href={`tel:+57${phone.replace(/\D/g, "")}`}>
+            o llámenos al{" "}
+            <a className="text-brand underline" href={`tel:+57${phone.replace(/\D/g, "")}`}>
               {phone}
             </a>
             .
@@ -35,12 +35,12 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Qué guardamos</h2>
+          <h2 className="card-title">Qué guardamos</h2>
           <ul className="mt-1 list-disc pl-5 text-muted">
-            <li>Si eres transportista, tu teléfono. Si necesitas mover algo, no te lo pedimos.</li>
-            <li>De dónde sales, hacia dónde vas y qué día.</li>
-            <li>Qué vas a mover o cuánto puedes llevar.</li>
-            <li>Una huella de tu conexión a internet, para frenar a quien abusa de la app. No guardamos tu dirección de internet.</li>
+            <li>Si usted va de viaje, su teléfono. Si necesita un servicio, no se lo pedimos.</li>
+            <li>De dónde sale, hacia dónde va y qué día.</li>
+            <li>Qué servicio necesita y qué tan grande es, o qué servicios hace y cuánto espacio tiene.</li>
+            <li>Una huella de su conexión a internet, para frenar a quien abusa de la app. No guardamos su dirección de internet.</li>
           </ul>
           <p className="mt-2 text-muted">
             También contamos cuántas veces se abre cada pantalla y se tocan los botones de llamar y de WhatsApp,
@@ -48,53 +48,54 @@ export default function PrivacyPage() {
             de eso dice quién fue ni usa cookies.
           </p>
           <p className="mt-2 text-muted">
-            Para saber por qué carretera va el transportista, le preguntamos el camino entre sus dos municipios a
-            OpenRouteService, que usa los mapas de OpenStreetMap. No le mandamos tu teléfono ni nada tuyo.
+            Para saber por qué carretera va el conductor, le preguntamos el camino entre sus dos municipios a
+            OpenRouteService, que usa los mapas de OpenStreetMap. No le mandamos su teléfono ni nada suyo.
           </p>
           <p className="mt-2 text-muted">
-            Si el transportista toca &ldquo;Comienza tu viaje&rdquo;, se abre Google Maps (o Mapas, en iPhone) con su
-            destino. Lo que haga ahí lo manejan Google o Apple y no vuelve a Mudavía.
+            Si el conductor toca &ldquo;Comenzar viaje en Maps&rdquo;, se abre Google Maps (o Mapas, en iPhone) con
+            su destino. Lo que haga ahí lo manejan Google o Apple y no vuelve a Rumbox.
           </p>
-          <p className="mt-2 text-muted">No pedimos tu nombre, tu cédula ni tu ubicación.</p>
+          <p className="mt-2 text-muted">No pedimos su nombre, su cédula ni su ubicación.</p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Para qué los usamos</h2>
+          <h2 className="card-title">Para qué los usamos</h2>
           <p className="mt-1 text-muted">
-            Solo para juntar a quien necesita mover algo con transportistas que van para allá. No vendemos tus datos ni los usamos para publicidad.
+            Solo para juntar a quien necesita un servicio con conductores que van para allá. No vendemos sus datos ni
+            los usamos para publicidad.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Quién ve tu teléfono</h2>
+          <h2 className="card-title">Quién ve su teléfono</h2>
           <p className="mt-1 text-muted">
-            Si necesitas mover algo, no te lo pedimos. Tú decides a quién llamar o escribir, y solo ese
-            transportista ve tu número.
+            Si necesita un servicio, no se lo pedimos. Usted decide a quién llamar o escribir, y solo ese conductor ve
+            su número.
           </p>
           <p className="mt-1 text-muted">
-            Si eres transportista, lo ven las personas que buscan un viaje como el tuyo, para llamarte o escribirte
+            Si usted va de viaje, lo ven las personas que buscan un viaje como el suyo, para llamarlo o escribirle
             por WhatsApp.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Cuánto tiempo los guardamos</h2>
+          <h2 className="card-title">Cuánto tiempo los guardamos</h2>
           <p className="mt-1 text-muted">
-            El teléfono del transportista se borra cuando su viaje deja de valer, poco después de que lo apaga.
-            Las solicitudes de antes que guardaron un teléfono también lo borran al dejar de valer.
+            El teléfono del conductor se borra cuando su viaje deja de valer, poco después de que lo apaga. Las
+            solicitudes de antes que guardaron un teléfono también lo borran al dejar de valer.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Tus derechos</h2>
+          <h2 className="card-title">Sus derechos</h2>
           <p className="mt-1 text-muted">
-            Puedes pedirnos ver tus datos, corregirlos o borrarlos, y retirar tu permiso cuando quieras. Te
-            respondemos en máximo 10 días hábiles si es una pregunta y 15 si es un reclamo. Si no te respondemos,
-            puedes quejarte ante la Superintendencia de Industria y Comercio.
+            Puede pedirnos ver sus datos, corregirlos o borrarlos, y retirar su permiso cuando quiera. Le respondemos
+            en máximo 10 días hábiles si es una pregunta y 15 si es un reclamo. Si no le respondemos, puede quejarse
+            ante la Superintendencia de Industria y Comercio.
           </p>
         </section>
 
-        <p className="text-xs text-muted">Actualizado el {PRIVACY_UPDATED}.</p>
+        <p className="text-[13px] text-muted">Actualizado el {PRIVACY_UPDATED}.</p>
       </div>
     </main>
   );

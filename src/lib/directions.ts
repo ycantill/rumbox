@@ -7,7 +7,7 @@ import { routeFromGeoJson } from "./route";
 // guarda. Si él dice que va por un pueblo que no queda en ella, se pide otra
 // vez pasando por ese pueblo. Solo se mandan las coordenadas del centro de los
 // municipios, nada de la persona. Sin llave, o si el servicio no responde, no
-// hay carretera y Mudavía usa la línea recta.
+// hay carretera y Rumbox usa la línea recta.
 
 const ORS_URL = "https://api.openrouteservice.org/v2/directions/driving-car/geojson";
 /** Lo que espera al servicio: el transportista está esperando su respuesta. */

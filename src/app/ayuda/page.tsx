@@ -8,19 +8,19 @@ export const metadata: Metadata = {
 };
 
 // Ayuda (Yohany, 23 de octubre de 2026): solo fraudes y seguridad, no cómo usar
-// la app. Mudavía no atiende los casos, así que van los pasos que la persona
+// la app. Rumbox no atiende los casos, así que van los pasos que la persona
 // puede dar sola y que sí pueden resolverlo: el banco, el 123 y la denuncia.
 export default function HelpPage() {
   return (
     <main className="page">
       <BackLink />
-      <h1 className="mb-6 mt-3 text-2xl font-bold">Ayuda</h1>
+      <h1 className="title mb-6 mt-4">Ayuda</h1>
 
-      <div className="flex flex-col gap-6 text-sm leading-relaxed">
-        <section className="rounded-2xl bg-danger-soft p-4 text-danger">
-          <h2 className="text-base font-bold">Si estás en peligro</h2>
+      <div className="flex flex-col gap-6 text-[15px] leading-relaxed">
+        <section className="rounded-lg bg-danger-soft p-4 text-danger">
+          <h2 className="card-title">Si está en peligro</h2>
           <p className="mt-1">
-            Llama ya a la Policía al{" "}
+            Llame ya a la Policía al{" "}
             <a className="font-bold underline" href="tel:123">
               123
             </a>
@@ -29,7 +29,7 @@ export default function HelpPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Antes del trasteo, acuerden por WhatsApp</h2>
+          <h2 className="card-title">Antes del servicio, acuerden por WhatsApp</h2>
           <p className="mt-1 text-muted">Que quede escrito en el chat:</p>
           <ul className="list-disc pl-5 text-muted">
             <li>El precio y qué incluye.</li>
@@ -40,59 +40,59 @@ export default function HelpPage() {
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Si pagaste y no te cumplieron</h2>
+          <h2 className="card-title">Si pagó y no le cumplieron</h2>
           <ol className="mt-1 list-decimal pl-5 text-muted">
             <li>
-              Llama de una vez a tu banco, a Nequi o a Daviplata y cuéntales lo que pasó. Si avisas rápido, a veces
+              Llame de una vez a su banco, a Nequi o a Daviplata y cuénteles lo que pasó. Si avisa rápido, a veces
               pueden frenar la plata.
             </li>
-            <li>Guarda los pantallazos del chat, el número que te habló y el comprobante del pago.</li>
+            <li>Guarde los pantallazos del chat, el número que le habló y el comprobante del pago.</li>
             <li>
-              Denuncia por internet en{" "}
-              <a className="underline" href="https://adenunciar.policia.gov.co/adenunciar/" target="_blank" rel="noopener noreferrer">
+              Denuncie por internet en{" "}
+              <a className="text-brand underline" href="https://adenunciar.policia.gov.co/adenunciar/" target="_blank" rel="noopener noreferrer">
                 ADenunciar
               </a>{" "}
-              o pide orientación en el{" "}
-              <a className="underline" href="https://caivirtual.policia.gov.co/" target="_blank" rel="noopener noreferrer">
+              o pida orientación en el{" "}
+              <a className="text-brand underline" href="https://caivirtual.policia.gov.co/" target="_blank" rel="noopener noreferrer">
                 CAI Virtual
               </a>{" "}
               de la Policía.
             </li>
-            <li>Bloquea el número en WhatsApp y no le mandes más plata, aunque te prometa devolverla.</li>
+            <li>Bloquee el número en WhatsApp y no le mande más plata, aunque le prometa devolverla.</li>
           </ol>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Si se quedaron con tus cosas o con tu carro</h2>
+          <h2 className="card-title">Si se quedaron con sus cosas o con su carro</h2>
           <p className="mt-1 text-muted">
-            Llama al 123 y denuncia en ADenunciar. Lleva la placa, la foto de la cédula y los pantallazos del chat:
+            Llame al 123 y denuncie en ADenunciar. Lleve la placa, la foto de la cédula y los pantallazos del chat:
             ayudan a encontrar a la persona.
           </p>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">Si eres transportista</h2>
+          <h2 className="card-title">Si usted va de viaje</h2>
           <ul className="mt-1 list-disc pl-5 text-muted">
-            <li>Si te mostraron un pago que no te llegó, no entregues la carga hasta verlo en la app de tu banco.</li>
-            <li>Si te citan en un lugar solo o raro, no vayas. Pide que se vean en un lugar con gente.</li>
+            <li>Si le mostraron un pago que no le llegó, no entregue la carga hasta verlo en la app de su banco.</li>
+            <li>Si lo citan en un lugar solo o raro, no vaya. Pida que se vean en un lugar con gente.</li>
             <li>
-              Si te piden llevar algo que no te dejan ver, no lo lleves. Si ya lo llevas y sospechas, llama al 123.
+              Si le piden llevar algo que no le dejan ver, no lo lleve. Si ya lo lleva y sospecha, llame al 123.
             </li>
           </ul>
         </section>
 
         <section>
-          <h2 className="text-base font-bold">{NO_CHARGE_TIP}</h2>
+          <h2 className="card-title">{NO_CHARGE_TIP}</h2>
           <p className="mt-1 text-muted">
-            Si alguien dice que es de Mudavía y te pide plata, una inscripción o un código, es una estafa. No le
-            pagues ni le mandes nada.
+            Si alguien dice que es de Rumbox y le pide plata, una inscripción o un código, es una estafa. No le pague
+            ni le mande nada.
           </p>
         </section>
 
         <p className="text-muted">
-          Mira también{" "}
-          <Link href="/privacidad" className="underline">
-            cómo cuidamos tus datos
+          Mire también{" "}
+          <Link href="/privacidad" className="text-brand underline">
+            cómo cuidamos sus datos
           </Link>
           .
         </p>
@@ -100,4 +100,3 @@ export default function HelpPage() {
     </main>
   );
 }
-

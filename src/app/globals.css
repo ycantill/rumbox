@@ -1,35 +1,38 @@
 @import "tailwindcss";
 
+/*
+ * Identidad de Rumbox (diseño de Claude Design, octubre de 2026): la vía (azul
+ * de aviso y línea punteada ocre) y el embalaje (caja de cartón). Sobria: bordes
+ * finos de 1px, radios pequeños y sin sombras. El diseño no cubre el modo
+ * oscuro, así que por ahora la app se ve siempre clara.
+ */
 :root {
-  --bg: #f7f7f4;
+  color-scheme: light;
+  /* Señal: botón principal, bloque superior del inicio, lo elegido. */
+  --brand: #1a3f73;
+  --brand-soft: #e3eaf3;
+  --brand-ink: #1a3f73;
+  /* Ocre vial: la línea de la vía, "Necesito un servicio" y el botón del mapa. */
+  --accent: #e2bf76;
+  /* Cartón: la caja del logo y el relleno de los íconos. */
+  --carton: #b7987b;
+  --carton-soft: #f0e6da;
+  /* Noche: texto, la vía del logo y el bloque del viaje activo. */
+  --ink: #0f1b2d;
+  /* Niebla: el fondo. */
+  --bg: #f0f4f7;
   --surface: #ffffff;
-  --surface-2: #eef3f1;
-  --ink: #16201d;
-  --muted: #5d6965;
-  --line: #d9e0dd;
-  --brand: #0f766e;
-  --brand-soft: #dff3ef;
-  --brand-ink: #0b4f4a;
+  --surface-2: #f0f4f7;
+  /* Papel de guía: el fondo de Desde / Hasta. */
+  --paper: #faf6ef;
+  --line: #b8bec5;
+  --line-soft: #ccd2d7;
+  --muted: #4c5666;
+  --on-brand-muted: #d6dfec;
+  /* Aviso suave: "Seguimos buscando" y "Para cuidarse". */
+  --notice: #f8f1e3;
   --danger: #b42318;
   --danger-soft: #fdecea;
-  --whatsapp: #1f9d55;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1413;
-    --surface: #171e1c;
-    --surface-2: #1d2725;
-    --ink: #e8eeec;
-    --muted: #9aa8a4;
-    --line: #2c3835;
-    --brand: #2dd4bf;
-    --brand-soft: #123a36;
-    --brand-ink: #b8f1e8;
-    --danger: #f97066;
-    --danger-soft: #3a1714;
-    --whatsapp: #22a75d;
-  }
 }
 
 @theme inline {
@@ -39,39 +42,71 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
   --color-brand: var(--brand);
   --color-brand-soft: var(--brand-soft);
   --color-brand-ink: var(--brand-ink);
+  --color-accent: var(--accent);
+  --color-carton: var(--carton);
+  --color-carton-soft: var(--carton-soft);
+  --color-paper: var(--paper);
+  --color-on-brand-muted: var(--on-brand-muted);
+  --color-notice: var(--notice);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
-  --color-whatsapp: var(--whatsapp);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-archivo);
+  --font-display: var(--font-big-shoulders);
 }
 
 body {
   background: var(--bg);
   color: var(--ink);
+  /* Big Shoulders en su corte Display, también en los textos pequeños. Archivo no tiene este eje. */
+  font-variation-settings: "opsz" 72;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
 }
 
 @layer components {
   .page {
-    @apply mx-auto w-full max-w-md px-4 pb-16 pt-6;
+    @apply mx-auto w-full max-w-md px-[22px] pb-16 pt-[22px];
+  }
+  /* El bloque de color de arriba (inicio y viaje activo) llega a los bordes. */
+  .bleed {
+    @apply -mx-[22px] -mt-[22px];
   }
   .input {
-    @apply w-full rounded-xl border border-line bg-surface px-3 py-3 text-base text-ink outline-none focus:border-brand;
+    @apply w-full rounded-md border border-line bg-surface px-3.5 py-3 text-base text-ink outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand;
   }
   .card {
-    @apply rounded-2xl border border-line bg-surface p-4;
+    @apply rounded-lg border border-line bg-surface p-[18px];
+  }
+  /* Títulos en Big Shoulders, en mayúsculas. */
+  .title {
+    @apply font-display text-[44px] font-black uppercase leading-[0.92] text-balance;
+  }
+  .label {
+    @apply font-display text-[22px] font-extrabold uppercase leading-none;
+  }
+  .card-title {
+    @apply font-display text-[26px] font-black uppercase leading-none;
+  }
+  /* Rótulos de la guía: DESDE, HASTA, SU SOLICITUD… */
+  .guide-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em];
   }
   .btn-primary {
-    @apply rounded-xl bg-brand px-4 py-3.5 text-base font-semibold text-white disabled:opacity-50 dark:text-bg;
+    @apply rounded-lg bg-brand px-4 py-[18px] text-center font-display text-[26px] font-black uppercase leading-none text-white active:translate-y-px disabled:opacity-50;
   }
   .btn-secondary {
-    @apply rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-ink disabled:opacity-50;
+    @apply rounded-md border border-line bg-surface px-4 py-[15px] text-center text-base font-semibold text-ink active:translate-y-px disabled:opacity-50;
   }
 }
 
-/* "Buscando transportistas": ondas que salen del centro, como un radar. */
+/* "Buscando conductores": ondas que salen del centro, como un radar. */
 @theme {
   --animate-radar: radar 2.4s ease-out infinite;
   @keyframes radar {
