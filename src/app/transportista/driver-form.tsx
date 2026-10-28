@@ -126,6 +126,10 @@ export function DriverForm() {
     // Lo apagó él: vuelve al inicio con el aviso (Yohany, 27 de octubre de 2026).
     if (reason === "closed") {
       save(KEYS.driverPosts, []);
+      // La pantalla queda guardada al irse (Next la conserva): sin esto, al
+      // volver saldría otra vez el viaje que apagó.
+      setPosts([]);
+      setJustPublished(false);
       announce("Ya no aparece en las búsquedas. Buen viaje.");
       router.push("/");
       return;

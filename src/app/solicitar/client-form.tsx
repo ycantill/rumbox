@@ -203,6 +203,11 @@ export function ClientForm() {
           save(KEYS.clientRequest, null);
           // La cerró él: vuelve al inicio con el aviso (Yohany, 27 de octubre de 2026).
           if (reason === "closed") {
+            // La pantalla queda guardada al irse (Next la conserva): sin esto,
+            // al volver a pedir saldría otra vez la solicitud que cerró.
+            setCurrent(null);
+            setMatches(null);
+            setNotice(null);
             announce("Listo. Cerramos su solicitud.");
             router.push("/");
             return;
