@@ -5,7 +5,7 @@ import { Bullets, SupportHeader, SupportSection, SupportText } from "@/component
 import { PRIVACY_CONTACT, TERMS_UPDATED } from "@/lib/legal";
 
 export const metadata: Metadata = {
-  title: "Términos de uso",
+  title: "Términos y condiciones",
   description: "Las reglas para usar Rumbox: qué hace, qué no hace y qué no se permite.",
 };
 
@@ -19,7 +19,7 @@ export default function TermsPage() {
   return (
     <main className="page flex flex-col gap-[22px] pb-9">
       <SupportHeader back={<BackLink />} />
-      <h1 className="title">Términos de uso</h1>
+      <h1 className="title">Términos y condiciones</h1>
 
       <p className="text-base leading-relaxed text-[#4a5568]">
         Al usar Rumbox, usted acepta estas reglas. Si no está de acuerdo, no use la app.

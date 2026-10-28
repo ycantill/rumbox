@@ -587,7 +587,7 @@ export function PrivacyNote({ children }: { children: React.ReactNode }) {
       {children}{" "}
       Al continuar acepta los{" "}
       <Link href="/terminos" className="text-brand underline">
-        términos
+        términos y condiciones
       </Link>
       .{" "}
       <Link href="/privacidad" className="text-brand underline">

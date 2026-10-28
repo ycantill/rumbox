@@ -183,10 +183,10 @@ preguntan.
 **Privacidad y términos**: permiso para guardar los datos encima de los
 botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
 Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los
-términos de uso (`/terminos`) están en borrador: Rumbox solo conecta, no
+términos y condiciones (`/terminos`) están en borrador: Rumbox solo conecta, no
 cobra, no revisa a las personas ni la carga y no responde por el servicio, y
 lo que no se permite. La misma nota de los botones dice "Al continuar acepta
-los términos", y el inicio los enlaza en el pie.
+los términos y condiciones", y el inicio los enlaza en el pie.
 
 **Consejos de seguridad** (`src/lib/safety.ts`, Yohany, 23 de octubre de
 2026): Rumbox no maneja plata, así que los fraudes pasan en la llamada o el

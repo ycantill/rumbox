@@ -33,7 +33,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 - **Decisión:** entran en el MVP (Yohany, 20 de octubre de 2026).
 - **Hecho el borrador** (28 de octubre de 2026): `/terminos`, enlazado en
   el pie del inicio y en la nota de los botones ("Al continuar acepta los
-  términos").
+  términos y condiciones").
 - **Falta:** que alguien que conozca la ley los revise. Dicen, por lo menos, que Rumbox solo conecta a las personas, que el precio y
   el servicio los acuerdan el cliente y el transportista, que Rumbox no
   responde por la carga ni por el viaje, y qué está prohibido (números

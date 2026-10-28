@@ -43,7 +43,7 @@ src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/ayuda/                   Ayuda: fraudes y seguridad
-src/app/terminos/                Términos de uso
+src/app/terminos/                Términos y condiciones
 src/app/robots.ts, sitemap.ts    Para Google; src/lib/site.ts tiene el dominio y el noindex
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
                                  getMyAvailability, updateSpace, updateLocation,
@@ -480,7 +480,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Los términos y condiciones entran en el MVP (Yohany, octubre de 2026).
   Están en `/terminos`, en borrador (28 de octubre de 2026): falta que alguien
   que conozca la ley los revise y los datos reales del responsable. La nota
-  de `PrivacyNote` dice "Al continuar acepta los términos".
+  de `PrivacyNote` dice "Al continuar acepta los términos y condiciones".
 - Google no muestra Rumbox (`noindex`) mientras dure el demo (Yohany, 28 de
   octubre de 2026): `OPEN_TO_SEARCH` en `src/lib/site.ts` pasa a `true` el
   día que se abra al público, con el contacto real puesto. El dominio
