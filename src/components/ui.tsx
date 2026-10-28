@@ -682,6 +682,7 @@ export function ConfirmSheet({
   yes,
   no,
   busy = false,
+  danger = true,
   onYes,
   onNo,
 }: {
@@ -691,6 +692,8 @@ export function ConfirmSheet({
   yes: string;
   no: string;
   busy?: boolean;
+  /** El sí va en rojo cuando cierra o apaga algo; si no, en Señal. */
+  danger?: boolean;
   onYes: () => void;
   onNo: () => void;
 }) {
@@ -703,7 +706,9 @@ export function ConfirmSheet({
           type="button"
           onClick={onYes}
           disabled={busy}
-          className="rounded-lg bg-[oklch(0.48_0.16_28)] p-[17px] font-display text-[22px] font-black uppercase leading-none text-white active:translate-y-px disabled:opacity-50"
+          className={`rounded-lg p-[17px] font-display text-[22px] font-black uppercase leading-none text-white active:translate-y-px disabled:opacity-50 ${
+            danger ? "bg-[oklch(0.48_0.16_28)]" : "bg-brand"
+          }`}
         >
           {yes}
         </button>

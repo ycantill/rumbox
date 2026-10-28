@@ -35,6 +35,7 @@ import {
   SERVICES,
   destinationName,
   isKey,
+  servicesOf,
   type DriverSpace,
   type MovingSpace,
   type Service,
@@ -312,6 +313,8 @@ function CurrentWork({
   const { today, tomorrow } = useBogotaDates();
   const [busy, setBusy] = useState(false);
   const [confirmEnd, setConfirmEnd] = useState(false);
+  // El espacio de mudanza que eligió sin hacer mudanzas, mientras se le pregunta.
+  const [askMoving, setAskMoving] = useState<DriverSpace | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   // No se vence (Yohany, 21 de octubre de 2026): sigue hasta "Ya no estoy
@@ -377,14 +380,24 @@ function CurrentWork({
   if (ended) return null;
 
 
-  // "¿Cuánto espacio te queda?": a los clientes solo les sale si les cabe.
-  async function changeSpace(space: DriverSpace) {
+  // "¿Cuánto espacio te queda?": a los clientes solo les sale si les cabe. Si
+  // salió sin mudanzas y ahora le cabe una, se le pregunta si las hace: pudo
+  // descargar todo a mitad de camino (Yohany, 28 de octubre de 2026).
+  function pickSpace(space: DriverSpace) {
+    const noMoving = post.services && !post.services.includes("mudanza");
+    if (noMoving && isKey(MOVING_SPACES, space)) setAskMoving(space);
+    else void changeSpace(space, false);
+  }
+
+  async function changeSpace(space: DriverSpace, addMoving: boolean) {
     const before = post;
     setBusy(true);
     setError(null);
     latest.current++;
-    onChange({ ...post, space, fullSpace: post.fullSpace ?? post.space });
-    const res = await callServer(() => updateSpace({ id, editToken, space }));
+    const services = addMoving && post.services ? servicesOf([...post.services, "mudanza"]) : post.services;
+    onChange({ ...post, space, services, fullSpace: post.fullSpace ?? post.space });
+    const res = await callServer(() => updateSpace({ id, editToken, space, addMoving }));
+    setAskMoving(null);
     latest.current++;
     setBusy(false);
     if (!res.ok) {
@@ -468,7 +481,7 @@ function CurrentWork({
 
       {/* Solo si hace mudanzas o fletes (las de antes, sin servicios, hacen todo). */}
       {(!post.services || post.services.includes("mudanza") || post.services.includes("flete")) && (
-        <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
+        <SpaceLeft space={post.space} busy={busy} onChange={pickSpace} />
       )}
 
       <SafetyTips tips={DRIVER_TIPS} />
@@ -482,6 +495,18 @@ function CurrentWork({
         busy={busy}
         onYes={end}
         onNo={() => setConfirmEnd(false)}
+      />
+
+      <ConfirmSheet
+        open={askMoving !== null}
+        title="¿Ahora también hace mudanzas?"
+        body="Si dice que sí, también le salen los clientes que necesitan una mudanza y les cabe en su espacio."
+        yes="Sí, también hago mudanzas"
+        no="No, solo lo de antes"
+        busy={busy}
+        danger={false}
+        onYes={() => askMoving && void changeSpace(askMoving, true)}
+        onNo={() => askMoving && void changeSpace(askMoving, false)}
       />
     </div>
   );
@@ -520,7 +545,9 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
  * que le queda, y los clientes de mudanza solo lo ven si les cabe; los de
  * flete, si le queda más que sobres y paquetes. Son las
  * cuatro tarjetas: baja hasta "Sobres y paquetes" cuando se llena, y puede
- * subir, porque pudo empezar lleno y descargar en el camino.
+ * subir, porque pudo empezar lleno y descargar en el camino. Si no hace
+ * mudanzas y sube a una habitación o una casa, se le pregunta si ahora
+ * también las hace.
  */
 function SpaceLeft({
   space,

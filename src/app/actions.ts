@@ -235,26 +235,33 @@ export async function updateLocation(input: {
  * "¿Cuánto espacio te queda?": el transportista cambia lo que le queda, que es
  * lo que miran los clientes. Puede elegir cualquiera: si descarga en el camino,
  * puede quedar con más espacio del que tenía al empezar (Yohany, 21 de
- * octubre de 2026).
+ * octubre de 2026). Si salió sin mudanzas y ahora le caben, puede empezar a
+ * hacerlas (`addMoving`; Yohany, 28 de octubre de 2026).
  */
 export async function updateSpace(input: {
   id: string;
   editToken: string;
   space: string;
+  addMoving?: boolean;
 }): Promise<{ ok: true } | Fail> {
   if (!isKey(DRIVER_SPACES, input.space)) return fail("Elija cuánto espacio tiene ahora.");
   const space = input.space;
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("space, full_space, edit_token_hash")
+      .select("space, full_space, services, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos sus datos en este teléfono.");
     }
-    const patch: Record<string, string> = { space };
+    const patch: { space: string; full_space?: string; services?: Service[] } = { space };
+    const services = servicesOf(data.services);
+    // Las de antes, sin servicios, ya hacen todos.
+    if (input.addMoving && services && !services.includes("mudanza")) {
+      patch.services = servicesOf([...services, "mudanza"]) ?? undefined;
+    }
     // Las de antes no guardaban lo que podía llevar al empezar: con eso vuelve el formulario.
     if (!data.full_space) patch.full_space = fullSpace(data);
     const { error: upErr } = await db().from("availabilities").update(patch).eq("id", input.id);

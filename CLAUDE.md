@@ -185,7 +185,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   (`SpaceLeftPicker`, `updateSpace`; Yohany, 28 de octubre de 2026: con
   solo las dos de la mudanza no podía decir que iba lleno). Con "Sobres y
   paquetes" tampoco le salen los fletes, aunque el flete no diga su tamaño
-  (Yohany, 28 de octubre de 2026): cuando carga,
+  (Yohany, 28 de octubre de 2026). Si no hace mudanzas y sube a "Una
+  habitación" o "Una casa", una hoja le pregunta "¿Ahora también hace
+  mudanzas?" (`addMoving` de `updateSpace`), porque pudo descargar todo a
+  mitad de camino (Yohany, 28 de octubre de 2026): cuando carga,
   la baja, y cuando descarga, la sube, aunque quede con más espacio del que
   tenía al empezar, porque pudo salir lleno (Yohany, 21 de octubre de 2026).
   `space` guarda lo que le queda (lo que miran los clientes) y

@@ -106,7 +106,8 @@ se elige igual que el destino.
   datos, si hace mudanzas o fletes, tiene las cuatro tarjetas (de sobres y paquetes
   a una casa; Yohany, 28 de octubre de 2026: con las dos de la mudanza no
   podía decir que iba lleno). Con "Sobres y paquetes" ya no le salen
-  fletes. Cuando carga, la baja, y cuando descarga, la
+  fletes. Si no hace mudanzas y sube a una habitación o una casa, se le
+  pregunta si ahora también las hace. Cuando carga, la baja, y cuando descarga, la
   sube, aunque haya salido lleno. Los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
   (la lista de clientes que tocaron su tarjeta, con "Lo llevo"), que se quitó.
 
