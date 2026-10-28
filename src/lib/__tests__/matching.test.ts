@@ -10,7 +10,6 @@ const driver = (o: Partial<AvailabilityLike> = {}): AvailabilityLike => ({
   origin_city: "monteria",
   destination_city: "cartagena",
   service_date: date,
-  space: "camion_entero",
   ...o,
 });
 
@@ -19,7 +18,6 @@ const request = (o: Partial<RequestLike> = {}): RequestLike => ({
   origin_city: "monteria",
   destination_city: "sincelejo",
   service_date: date,
-  volume: "medio_camion",
   ...o,
 });
 
@@ -27,25 +25,24 @@ describe("servicios", () => {
   it("solo le salen los clientes que piden uno de los servicios que hace", () => {
     const fletes = driver({ services: ["flete", "encomienda"] });
     expect(matchesTrip(fletes, request({ service: "flete" }))).toBe(true);
-    expect(matchesTrip(fletes, request({ service: "encomienda", volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(fletes, request({ service: "encomienda" }))).toBe(true);
     expect(matchesTrip(fletes, request({ service: "mudanza" }))).toBe(false);
-    expect(matchesTrip(driver({ services: ["mudanza"], destination_city: ANY_DESTINATION }), request({ service: "diligencia", volume: "sobres" }))).toBe(false);
+    expect(matchesTrip(driver({ services: ["mudanza"], destination_city: ANY_DESTINATION }), request({ service: "diligencia" }))).toBe(false);
   });
 
-  it("al que va lleno, con espacio solo para sobres y paquetes, no le salen fletes", () => {
-    const lleno = driver({ services: ["flete", "encomienda"], space: "solo_paquetes" });
-    expect(matchesTrip(lleno, request({ service: "flete", volume: "sobres" }))).toBe(false);
-    expect(matchesTrip(lleno, request({ service: "encomienda", volume: "sobres" }))).toBe(true);
-    expect(matchesTrip(driver({ services: ["flete"], space: "carga_parcial" }), request({ service: "flete", volume: "sobres" }))).toBe(true);
+  it("si se llenó y quitó mudanzas y fletes, le siguen saliendo las encomiendas", () => {
+    const lleno = driver({ services: ["encomienda"] });
+    expect(matchesTrip(lleno, request({ service: "flete" }))).toBe(false);
+    expect(matchesTrip(lleno, request({ service: "mudanza" }))).toBe(false);
+    expect(matchesTrip(lleno, request({ service: "encomienda" }))).toBe(true);
   });
 
   it("lo guardado antes de los servicios: el transportista hace todos y la solicitud le sirve a cualquiera", () => {
-    expect(matchesTrip(driver({ services: null }), request({ service: "diligencia", volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(driver({ services: null }), request({ service: "diligencia" }))).toBe(true);
     expect(matchesTrip(driver({ services: ["diligencia"] }), request({ service: null }))).toBe(true);
   });
 
-  it("el servicio no salta las otras reglas: el tamaño y la ruta siguen contando", () => {
-    expect(matchesTrip(driver({ services: ["mudanza"], space: "carga_parcial" }), request({ service: "mudanza" }))).toBe(false);
+  it("el servicio no salta las otras reglas: la ruta sigue contando", () => {
     expect(matchesTrip(driver({ services: ["mudanza"] }), request({ service: "mudanza", destination_city: "medellin" }))).toBe(false);
   });
 });
@@ -84,15 +81,6 @@ describe("matchesTrip", () => {
     expect(matchesTrip(driver({ service_date: "2027-01-15" }), anyDay)).toBe(true);
     // Lo demás se sigue mirando igual.
     expect(matchesTrip(driver(), request({ service_date: null, origin_city: "cartagena", destination_city: "monteria" }))).toBe(false);
-    expect(matchesTrip(driver({ space: "solo_paquetes" }), anyDay)).toBe(false);
-  });
-
-  it("respeta cuánto puede llevar", () => {
-    expect(matchesTrip(driver({ space: "solo_paquetes" }), request())).toBe(false);
-    expect(matchesTrip(driver({ space: "solo_paquetes" }), request({ volume: "sobres" }))).toBe(true);
-    expect(matchesTrip(driver({ space: "carga_parcial" }), request({ volume: "carga_parcial" }))).toBe(true);
-    expect(matchesTrip(driver({ space: "carga_parcial" }), request())).toBe(false);
-    expect(matchesTrip(driver({ space: "medio_camion" }), request({ volume: "camion_entero" }))).toBe(false);
   });
 
   it("con cualquier destino atiende a los que salen de su municipio o de uno cercano, vayan a donde vayan", () => {
@@ -103,9 +91,8 @@ describe("matchesTrip", () => {
     expect(matchesTrip(anywhere, request({ origin_city: "cerete", destination_city: "medellin" }))).toBe(true);
     // Sincelejo ya queda lejos, aunque vaya para el mismo lado.
     expect(matchesTrip(anywhere, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(false);
-    // Lo demás se sigue respetando: el día, la carga y el mismo municipio.
+    // Lo demás se sigue respetando: el día y el mismo municipio.
     expect(matchesTrip(anywhere, request({ service_date: "2026-10-31" }))).toBe(false);
-    expect(matchesTrip(driver({ destination_city: ANY_DESTINATION, space: "solo_paquetes" }), request())).toBe(false);
     expect(matchesTrip(anywhere, request({ destination_city: "monteria" }))).toBe(false);
   });
 
@@ -195,17 +182,6 @@ describe("casos con municipios reales", () => {
     expect(matchesTrip(driver(a), request(r))).toBe(expected);
   });
 
-  // Todas las combinaciones de lo que el cliente mueve y lo que le queda.
-  const order = ["sobres", "carga_parcial", "medio_camion", "camion_entero"] as const;
-  const spaces = ["solo_paquetes", "carga_parcial", "medio_camion", "camion_entero"] as const;
-  it.each(spaces.flatMap((space, i) => order.map((volume, j) => [space, volume, j <= i] as const)))(
-    "le queda %s y el cliente mueve %s: %s",
-    (space, volume, expected) => {
-      expect(matchesTrip(driver({ space }), request({ volume }))).toBe(expected);
-      // Lo mismo con cualquier destino.
-      expect(matchesTrip(driver({ space, destination_city: ANY_DESTINATION }), request({ volume }))).toBe(expected);
-    },
-  );
 });
 
 describe("con la carretera guardada", () => {

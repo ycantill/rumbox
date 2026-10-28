@@ -1,84 +1,21 @@
 import { describe, expect, it } from "vitest";
-import {
-  DRIVER_SPACES,
-  VOLUMES,
-  spaceFitsVolume,
-  SERVICES,
-  serviceHasSize,
-  spaceForServices,
-  servicesOf,
-  spaceInSentence,
-  type DriverSpace,
-  type Volume,
-} from "../domain";
+import { DRIVER_SPACES, SERVICES, UNSIZED_SPACE, UNSIZED_VOLUME, VOLUMES, servicesOf } from "../domain";
 
-describe("spaceFitsVolume", () => {
-  it("con solo espacio para paquetes caben sobres, pero no muebles ni una mudanza", () => {
-    expect(spaceFitsVolume("solo_paquetes", "sobres")).toBe(true);
-    expect(spaceFitsVolume("solo_paquetes", "carga_parcial")).toBe(false);
-    expect(spaceFitsVolume("solo_paquetes", "medio_camion")).toBe(false);
+describe("sin tamaño ni espacio", () => {
+  it("lo nuevo guarda un valor fijo que la base acepta", () => {
+    expect(Object.keys(VOLUMES)).toContain(UNSIZED_VOLUME);
+    expect(Object.keys(DRIVER_SPACES)).toContain(UNSIZED_SPACE);
   });
 
-  it("quien lleva algunas cosas también lleva paquetes, pero no una habitación", () => {
-    expect(spaceFitsVolume("carga_parcial", "sobres")).toBe(true);
-    expect(spaceFitsVolume("carga_parcial", "carga_parcial")).toBe(true);
-    expect(spaceFitsVolume("carga_parcial", "medio_camion")).toBe(false);
-  });
-
-  it("una casa de 2 habitaciones o más sirve para todo, y una habitación no lleva una casa", () => {
-    expect(spaceFitsVolume("camion_entero", "camion_entero")).toBe(true);
-    expect(spaceFitsVolume("medio_camion", "medio_camion")).toBe(true);
-    expect(spaceFitsVolume("medio_camion", "camion_entero")).toBe(false);
-  });
-
-  it("cada tamaño del transportista lleva el mismo tamaño del cliente y ninguno más grande", () => {
-    const spaces = Object.keys(DRIVER_SPACES) as DriverSpace[];
-    const volumes = Object.keys(VOLUMES) as Volume[];
-    spaces.forEach((space, i) => {
-      volumes.forEach((volume, j) => expect(spaceFitsVolume(space, volume)).toBe(j <= i));
-    });
-  });
-});
-
-describe("tamaños de carga", () => {
-  it("el cliente y el transportista eligen de la misma lista, en el mismo orden", () => {
-    expect(Object.values(DRIVER_SPACES)).toEqual(Object.values(VOLUMES));
-  });
-
-  it("en el MVP no están los espacios del carro particular (baúl y asientos)", () => {
+  it("los espacios del carro particular (baúl y asientos) ya no valen", () => {
     expect(Object.keys(DRIVER_SPACES)).not.toContain("baul");
     expect(Object.keys(DRIVER_SPACES)).not.toContain("asientos");
-  });
-
-  it("el espacio se puede poner dentro de una frase: \"Tiene espacio para …\"", () => {
-    expect(spaceInSentence("camion_entero")).toBe("una casa entera");
-    expect(spaceInSentence("medio_camion")).toBe("una habitación");
-    expect(spaceInSentence("solo_paquetes")).toBe("sobres y paquetes");
   });
 });
 
 describe("servicios", () => {
   it("son cinco, en el orden del diseño", () => {
     expect(Object.keys(SERVICES)).toEqual(["mudanza", "flete", "encomienda", "encargo", "diligencia"]);
-  });
-
-  it("solo la mudanza pregunta el tamaño", () => {
-    expect(serviceHasSize("mudanza")).toBe(true);
-    expect(serviceHasSize("flete")).toBe(false);
-    expect(serviceHasSize("encomienda")).toBe(false);
-    expect(serviceHasSize("encargo")).toBe(false);
-    expect(serviceHasSize("diligencia")).toBe(false);
-  });
-
-  it("el espacio del que viaja: el que eligió si hace mudanzas, y si no, sale de sus servicios", () => {
-    expect(spaceForServices(["mudanza", "flete"], "camion_entero")).toBe("camion_entero");
-    expect(spaceForServices(["mudanza"], "medio_camion")).toBe("medio_camion");
-    // Con mudanza solo valen las dos de la mudanza.
-    expect(spaceForServices(["mudanza"], "carga_parcial")).toBeNull();
-    expect(spaceForServices(["mudanza"], "")).toBeNull();
-    // Sin mudanza no se pregunta.
-    expect(spaceForServices(["flete", "encargo"], "")).toBe("carga_parcial");
-    expect(spaceForServices(["encomienda", "diligencia"], "camion_entero")).toBe("solo_paquetes");
   });
 
   it("de una lista deja los que existen, sin repetir y en orden; sin lista, null", () => {

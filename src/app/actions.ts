@@ -9,14 +9,11 @@ import {
   ANY_DAY,
   ANY_DESTINATION,
   DRIVER_SPACES,
+  UNSIZED_SPACE,
   UNSIZED_VOLUME,
   isKey,
-  serviceHasSize,
   servicesOf,
-  spaceForServices,
-  type DriverSpace,
   type Service,
-  type Volume,
 } from "@/lib/domain";
 import { matchesTrip, newestBy } from "@/lib/matching";
 import {
@@ -29,7 +26,7 @@ import {
 } from "@/lib/rate-limit";
 import { offRoad, viaFits } from "@/lib/route";
 import { db } from "@/lib/supabase";
-import { driverInputError, requestInputError } from "@/lib/validate";
+import { NO_SERVICES_ERROR, driverInputError, requestInputError } from "@/lib/validate";
 import { normalizeWhatsApp } from "@/lib/whatsapp";
 
 type Fail = { ok: false; error: string };
@@ -40,7 +37,6 @@ export type DriverMatch = {
   destination_city: string;
   /** Desde qué día viaja: con "Cualquier día" el cliente lo ve si es después de hoy. */
   service_date: string;
-  space: DriverSpace;
   /** Los servicios que hace. null en las de antes de los servicios: hace todos. */
   services: Service[] | null;
   whatsapp: string;
@@ -55,8 +51,6 @@ export type PublishResult =
       editToken: string;
       /** La carretera de su viaje (`encodePath`), o null si va por la línea recta. */
       route: string | null;
-      /** El espacio que quedó guardado: si no hace mudanzas, sale de sus servicios. */
-      space: DriverSpace;
     }
   | Fail;
 
@@ -65,15 +59,12 @@ export async function publishAvailability(input: {
   destination: string;
   date: string;
   services: string[];
-  space: string;
   whatsapp: string;
 }): Promise<PublishResult> {
   const whatsapp = normalizeWhatsApp(input.whatsapp ?? "");
   const invalid = driverInputError(input, todayInBogota());
   if (invalid || !whatsapp) return fail(invalid ?? "Escriba su número de 10 dígitos.");
   const services = servicesOf(input.services) ?? [];
-  // El espacio solo se pregunta si hace mudanzas; si no, sale de los servicios.
-  const space = spaceForServices(services, input.space) as DriverSpace;
 
   const editToken = randomBytes(24).toString("base64url");
   const ipHash = hashIp(clientIp(await headers()));
@@ -85,9 +76,10 @@ export async function publishAvailability(input: {
     services,
     // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
     time_slot: "todo_el_dia",
-    space,
-    // Lo que podía llevar al empezar: `space` es lo que le queda y él lo cambia en su tarjeta.
-    full_space: space,
+    // Ya no se pregunta el espacio (Yohany, 28 de octubre de 2026). Las
+    // columnas no pueden quedar vacías.
+    space: UNSIZED_SPACE,
+    full_space: UNSIZED_SPACE,
     whatsapp,
     edit_token_hash: hashToken(editToken),
   };
@@ -109,7 +101,7 @@ export async function publishAvailability(input: {
     if (error) throw error;
     // No se le muestran los clientes: por su privacidad, ellos lo ven a él
     // (Vía B) y son los que llaman o escriben.
-    return { ok: true as const, id: data.id as string, editToken, route, space };
+    return { ok: true as const, id: data.id as string, editToken, route };
   });
 }
 
@@ -143,10 +135,6 @@ export type MyAvailabilityResult =
   | {
       ok: true;
       status: "activa" | "llena";
-      /** Lo que le queda: él mismo lo baja en su tarjeta. */
-      space: DriverSpace;
-      /** Lo que podía llevar al ponerse disponible. */
-      fullSpace: DriverSpace;
       /** El municipio por donde va, si ya lo marcó. */
       currentCity: string | null;
       /** La carretera de su viaje, o null si va por la línea recta. */
@@ -164,7 +152,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, full_space, current_city, route, services, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, space, current_city, route, services, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -180,8 +168,6 @@ export async function getMyAvailability(input: { id: string; editToken: string }
     return {
       ok: true as const,
       status,
-      space: data.space,
-      fullSpace: fullSpace(data),
       currentCity: getCity(data.current_city) ? (data.current_city as string) : null,
       route: (data.route as string | null) ?? null,
       services: servicesOf(data.services),
@@ -232,39 +218,28 @@ export async function updateLocation(input: {
 }
 
 /**
- * "¿Cuánto espacio te queda?": el transportista cambia lo que le queda, que es
- * lo que miran los clientes. Puede elegir cualquiera: si descarga en el camino,
- * puede quedar con más espacio del que tenía al empezar (Yohany, 21 de
- * octubre de 2026). Si salió sin mudanzas y ahora le caben, puede empezar a
- * hacerlas (`addMoving`; Yohany, 28 de octubre de 2026).
+ * "¿Qué servicios hace ahora?": el que viaja los cambia en el camino (Yohany,
+ * 28 de octubre de 2026). Si se llena, quita mudanzas y fletes; si descarga,
+ * los vuelve a marcar. Solo le salen los clientes que piden uno de esos.
  */
-export async function updateSpace(input: {
+export async function updateServices(input: {
   id: string;
   editToken: string;
-  space: string;
-  addMoving?: boolean;
+  services: string[];
 }): Promise<{ ok: true } | Fail> {
-  if (!isKey(DRIVER_SPACES, input.space)) return fail("Elija cuánto espacio tiene ahora.");
-  const space = input.space;
+  const services = servicesOf(input.services);
+  if (!services?.length) return fail(NO_SERVICES_ERROR);
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("space, full_space, services, edit_token_hash")
+      .select("edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
     if (!data || !tokenMatches(input.editToken, data.edit_token_hash)) {
       return fail("No encontramos sus datos en este teléfono.");
     }
-    const patch: { space: string; full_space?: string; services?: Service[] } = { space };
-    const services = servicesOf(data.services);
-    // Las de antes, sin servicios, ya hacen todos.
-    if (input.addMoving && services && !services.includes("mudanza")) {
-      patch.services = servicesOf([...services, "mudanza"]) ?? undefined;
-    }
-    // Las de antes no guardaban lo que podía llevar al empezar: con eso vuelve el formulario.
-    if (!data.full_space) patch.full_space = fullSpace(data);
-    const { error: upErr } = await db().from("availabilities").update(patch).eq("id", input.id);
+    const { error: upErr } = await db().from("availabilities").update({ services }).eq("id", input.id);
     if (upErr) throw upErr;
     return { ok: true as const };
   });
@@ -296,7 +271,6 @@ export async function createRequest(input: {
   destination: string;
   date: string;
   service: string;
-  volume: string;
   replaces?: { id: string; editToken: string };
 }): Promise<RequestResult> {
   const invalid = requestInputError(input, todayInBogota());
@@ -310,8 +284,9 @@ export async function createRequest(input: {
     // hasta que la cierre.
     service_date: input.date === ANY_DAY ? null : input.date,
     service,
-    // Solo la mudanza pregunta el tamaño.
-    volume: (serviceHasSize(service) ? input.volume : UNSIZED_VOLUME) as Volume,
+    // Ya no se pregunta el tamaño (Yohany, 28 de octubre de 2026). La columna
+    // no puede quedar vacía.
+    volume: UNSIZED_VOLUME,
   };
 
   const editToken = randomBytes(24).toString("base64url");
@@ -356,7 +331,7 @@ export async function getMyRequest(input: { id: string; editToken: string }): Pr
   return withDb(CLIENT_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("requests")
-      .select("origin_city, destination_city, service_date, service, volume, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, service, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -466,11 +441,10 @@ async function findDrivers(r: {
   destination_city: string;
   service_date: string | null;
   service?: Service | null;
-  volume: Volume;
 }): Promise<DriverMatch[]> {
   const drivers = db()
     .from("availabilities")
-    .select("id, origin_city, destination_city, service_date, space, services, current_city, route, whatsapp");
+    .select("id, origin_city, destination_city, service_date, services, current_city, route, whatsapp");
   const { data, error } = await (r.service_date === null ? drivers : drivers.lte("service_date", r.service_date))
     // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
     .not("destination_city", "is", null)
@@ -517,11 +491,6 @@ async function tripRoute(origin: string, destination: string): Promise<string | 
   if (error) throw error;
   const saved = (data?.route_options as string[] | undefined)?.[0];
   return saved ?? (await roadRoute(from, to));
-}
-
-/** Lo que podía llevar al ponerse disponible. Las de antes no lo guardaban. */
-function fullSpace(a: { space: string; full_space: string | null }): DriverSpace {
-  return (isKey(DRIVER_SPACES, a.full_space) ? a.full_space : a.space) as DriverSpace;
 }
 
 function fail(error: string): Fail {

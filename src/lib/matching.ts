@@ -11,13 +11,7 @@
 
 import { getCity, haversineKm } from "./cities";
 import { decodePath, projectOnPath, projectOnSegment, type Point } from "./path";
-import {
-  ANY_DESTINATION,
-  spaceFitsVolume,
-  type DriverSpace,
-  type Service,
-  type Volume,
-} from "./domain";
+import { ANY_DESTINATION, type Service } from "./domain";
 
 /**
  * Qué tan lejos de la carretera puede quedar el pueblo del cliente. También es
@@ -51,7 +45,6 @@ export type AvailabilityLike = {
   origin_city: string;
   destination_city: string;
   service_date: string; // YYYY-MM-DD: desde qué día viaja
-  space: DriverSpace;
   /** El municipio por donde va, si ya lo marcó. */
   current_city?: string | null;
   /** La carretera de su viaje (`encodePath`), si se pudo calcular. */
@@ -65,7 +58,6 @@ export type RequestLike = {
   destination_city: string;
   /** El día del viaje, o null si es "Cualquier día". */
   service_date: string | null;
-  volume: Volume;
   /** Lo que necesita. Las solicitudes de antes no lo tienen: le sirve cualquiera. */
   service?: Service | null;
 };
@@ -75,13 +67,9 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   // El transportista viaja desde su día en adelante, hasta que se apaga
   // (Yohany, 21 de octubre de 2026). Con "Cualquier día" le sirve cualquiera.
   if (r.service_date !== null && a.service_date > r.service_date) return false;
-  if (!spaceFitsVolume(a.space, r.volume)) return false;
-  // El flete no dice qué tan grande es, pero no cabe en quien solo tiene
-  // espacio para sobres y paquetes: así dice que va lleno (Yohany, 28 de
-  // octubre de 2026).
-  if (r.service === "flete" && !spaceFitsVolume(a.space, "carga_parcial")) return false;
   // Solo le salen los clientes que piden uno de los servicios que hace (Yohany,
-  // 27 de octubre de 2026).
+  // 27 de octubre de 2026). No se mira el tamaño (Yohany, 28 de octubre de
+  // 2026): si se llena, quita mudanzas y fletes de sus servicios.
   if (r.service && a.services && !a.services.includes(r.service)) return false;
   // Origen y destino no pueden ser el mismo municipio. Las solicitudes nuevas
   // ya no lo permiten; esto deja fuera las que quedaron guardadas de antes.
