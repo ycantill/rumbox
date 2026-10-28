@@ -169,7 +169,8 @@ se probó en un teléfono:
 - **Carros particulares:** paquetes y sobres en el baúl o los asientos
   traseros. Salieron del MVP en octubre de 2026; lo que había está anotado en
   "Qué queda para después" de [MVP.md](MVP.md).
-- El resto está en "Qué queda para después" de [MVP.md](MVP.md).
+- **Publicidad** (queda pendiente): en las pantallas del cliente y del
+  conductor. El análisis está en el documento de negocio (privado).
 
 ## Hecho
 
