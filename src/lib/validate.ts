@@ -55,8 +55,11 @@ export function requestInputError(input: Trip & { service: string; volume: strin
   return null;
 }
 
+/** Hasta cuántos días adelante se puede elegir el viaje. */
+export const MAX_DAYS_AHEAD = 90;
+
 /** Fecha YYYY-MM-DD entre hoy (hora Colombia) y 90 días adelante. */
 export function isValidServiceDate(date: string, today: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date ?? "")) return false;
-  return date >= today && date <= addDays(today, 90);
+  return date >= today && date <= addDays(today, MAX_DAYS_AHEAD);
 }

@@ -203,6 +203,11 @@ export function ClientForm() {
           save(KEYS.clientRequest, null);
           // La cerró él: vuelve al inicio con el aviso (Yohany, 27 de octubre de 2026).
           if (reason === "closed") {
+            // La pantalla queda guardada al irse (Next la conserva): sin esto,
+            // al volver a pedir saldría otra vez la solicitud que cerró.
+            setCurrent(null);
+            setMatches(null);
+            setNotice(null);
             announce("Listo. Cerramos su solicitud.");
             router.push("/");
             return;
@@ -219,7 +224,27 @@ export function ClientForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <BackHome />
+      {/* Si tocó "Cambiar" y se arrepiente, vuelve a su solicitud sin cambiarla. */}
+      {current ? (
+        <button
+          type="button"
+          onClick={() => {
+            // Lo que alcanzó a cambiar se descarta: la próxima vez el formulario trae su solicitud.
+            setOrigin(current.origin);
+            setDestination(current.destination);
+            setDate(current.date);
+            setService(current.service ?? "");
+            setSize(isKey(CLIENT_SIZES, current.volume) ? current.volume : "");
+            setEditing(false);
+            setError(null);
+          }}
+          className="self-start text-[15px] text-muted"
+        >
+          ← Volver
+        </button>
+      ) : (
+        <BackHome />
+      )}
       <h1 className="title">¿Qué necesita?</h1>
       <InfoNote message={notice} />
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}

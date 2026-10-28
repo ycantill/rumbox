@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useEffectEvent, useId, useRef, useState, useSyncExternalStore } from "react";
 import { CITIES_BY_DEPARTMENT, getCity, searchCities, simplify, type City } from "@/lib/cities";
+import { addDays } from "@/lib/dates";
 import {
   ANY_DAY,
   ANY_DAY_LABEL,
@@ -22,6 +23,7 @@ import { KEYS, load, save } from "@/lib/local-store";
 import { CLIENT_TIPS, NO_CHARGE_TIP } from "@/lib/safety";
 import { TOAST_EVENT, takeAnnouncement } from "@/lib/toast";
 import { track } from "@/lib/track";
+import { MAX_DAYS_AHEAD } from "@/lib/validate";
 import { telLink, waLink } from "@/lib/whatsapp";
 
 export function Field({
@@ -534,6 +536,8 @@ export function DayPicker({
         aria-label="Otra fecha"
         className="pointer-events-none absolute bottom-0 right-0 h-px w-1/4 opacity-0"
         min={today}
+        // Más lejos el servidor no la acepta: el calendario no la deja elegir.
+        max={today ? addDays(today, MAX_DAYS_AHEAD) : undefined}
         value={other ? value : ""}
         onChange={(e) => e.target.value && onChange(e.target.value)}
       />
