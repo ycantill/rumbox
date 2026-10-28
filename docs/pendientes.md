@@ -148,18 +148,14 @@ se probó en un teléfono:
   clientes; un cliente que solicita después lo ve en su lista y lo llama.
 - Un teléfono que tenía guardado un carro particular: si estaba disponible,
   vuelve el formulario con sus datos y sin elegir cuánto puede llevar.
-- El transportista ya no ve "¿Qué vehículo tienes?": elige en "¿Cuánto puedes
-  llevar?" entre los cuatro tamaños, y su tarjeta dice "Puedes llevar…".
-- Un transportista que puede llevar "Algunas cosas" le sale a un cliente que
-  mueve algunas cosas, pero no a uno que mueve una habitación.
+- El que viaja quita mudanzas en "¿Qué servicios hace ahora?": deja de
+  salirle a un cliente de mudanza de su ruta y le sigue saliendo al de
+  encomienda.
 - Tocar "Ponerme disponible" o "Solicitar transportista" sin llenar nada: sale
   el mensaje de Rumbox de lo primero que falta, no el globito del navegador.
 - Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
   el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
   pasó…".
-- Bajar "¿Cuánto espacio te queda?" y luego "Ya no estoy disponible": el
-  formulario vuelve con lo que podía llevar al empezar, no con lo que le
-  quedaba.
 - Abrir una dirección que no existe: sale "No encontramos esta página".
 
 ## Menores

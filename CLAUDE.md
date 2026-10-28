@@ -46,13 +46,13 @@ src/app/ayuda/                   Ayuda: fraudes y seguridad
 src/app/terminos/                Términos y condiciones
 src/app/robots.ts, sitemap.ts    Para Google; src/lib/site.ts tiene el dominio y el noindex
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
-                                 getMyAvailability, updateSpace, updateLocation,
+                                 getMyAvailability, updateServices, updateLocation,
                                  createRequest,
                                  getMyRequest, closeRequest,
                                  getLiveConfig, trackEvent)
 src/components/ui.tsx            Componentes compartidos (hojas de abajo, Toast) y useBogotaDates
 src/components/support.tsx       Piezas de /ayuda y /privacidad
-src/lib/domain.ts                Vocabulario: tamaños de carga
+src/lib/domain.ts                Vocabulario: servicios, días y destinos
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
 src/lib/path.ts, directions.ts   La carretera: guardarla y medir sobre ella; pedirla a OpenRouteService
@@ -112,13 +112,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   Señal `#1a3f73`, Ocre vial `#e2bf76`, Cartón `#b7987b` y Noche `#0f1b2d`
   (tokens en `globals.css`), Big Shoulders Display para títulos en
   mayúsculas y Archivo para el texto, bordes de 1px, radios de 6 a 8px y sin
-  sombras. `Logo`, `Symbol` y los íconos de servicios y de espacio están en
+  sombras. `Logo`, `Symbol` y los íconos de servicios están en
   `src/components/ui.tsx`.
 - Los textos del diseño mandan (Yohany: "respeta los textos del diseño"),
   aunque difieran de los que se citan más abajo en esta guía: donde una
   decisión de abajo cite un texto viejo, vale la decisión y el texto es el
   de la app. Toda la app trata de **usted** ("¿Hacia dónde va?", "Elija
-  cuánto espacio tiene"), incluidos errores, consejos, `/ayuda` y
+  qué servicio necesita"), incluidos errores, consejos, `/ayuda` y
   `/privacidad`.
 - Al que viaja, en la pantalla del cliente, se le dice "conductor" ("Buscar
   conductor", "3 conductores van para allá"); en el inicio, su botón es "Voy
@@ -132,15 +132,18 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   hace?" (`availabilities.services`, migración `0020_servicios.sql`), y solo
   le salen los clientes que piden uno de esos. Reemplaza el "sin casillas,
   todos hacen todo" del 26 de octubre.
-- Solo la mudanza pregunta "¿Qué tan grande?" (Yohany, 27 de octubre de
-  2026, con el prototipo; antes también el flete), con dos tarjetas: "Una
-  habitación" (`medio_camion`) y "Una casa" (`camion_entero`). Los demás
-  servicios se guardan como `sobres`, así le salen a cualquiera que los haga.
-- El que viaja responde "¿Cuánto espacio tiene?" solo si marca mudanzas, con
-  esas mismas dos tarjetas (`MOVING_SPACES`). Si no hace mudanzas no se le
-  pregunta y se guarda según sus servicios (`spaceForServices`):
-  `carga_parcial` si hace fletes ("Tiene espacio para algunas cosas") y
-  `solo_paquetes` si no.
+- No se pregunta el tamaño ni el espacio (Yohany, 28 de octubre de 2026):
+  es aproximado y lo hablan por teléfono, como el precio. Filtran solo los
+  servicios. Antes la mudanza preguntaba "¿Qué tan grande?" y el que viaja
+  "¿Cuánto espacio tiene?". Las columnas `requests.volume` y
+  `availabilities.space` y `full_space` quedan en la base y lo nuevo guarda
+  un valor fijo (`UNSIZED_VOLUME`, `UNSIZED_SPACE`).
+- "¿Qué servicios hace ahora?" (Yohany, 28 de octubre de 2026): debajo de
+  sus datos, el que viaja cambia sus servicios durante el viaje
+  (`updateServices`, migración `0021_servicios_en_el_camino.sql`). Si se
+  llena, quita mudanzas y fletes y le siguen saliendo las encomiendas; si
+  descarga a mitad de camino, los vuelve a marcar. Sin ninguno no se puede:
+  para eso está "Ya no estoy disponible".
 - Los errores de los formularios son los del prototipo: el botón se ve
   apagado (opacidad 50%) mientras falta algo y, al tocarlo, dice debajo qué
   falta ("Elija qué servicio necesita.", "Revise la ruta.", "Elija al menos
@@ -157,7 +160,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   "¿Hacia dónde?", "¿Cuánto puedes llevar?").
 - Nada de jerga técnica en pantalla: no "cotizar", "ruta programada", "mano de
   obra", "tarifa", "GPS", "Modo Ruta", "local", "zona" ni distancias en km.
-- Los errores usan el mismo tono, por ejemplo "Elija cuánto espacio tiene".
+- Los errores usan el mismo tono, por ejemplo "Elija al menos un servicio".
 
 **Sin cuentas**
 - No hay login ni contraseñas ("Cero registros"). El número de teléfono
@@ -180,19 +183,6 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   privacidad del cliente, siempre es el cliente quien llama o escribe. El
   transportista no ve la lista de clientes que esperan, porque una lista con
   la que no puede hacer nada solo frustra (Yohany): espera que lo llamen.
-- "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
-  datos, si hace mudanzas o fletes, el transportista tiene las cuatro tarjetas
-  (`SpaceLeftPicker`, `updateSpace`; Yohany, 28 de octubre de 2026: con
-  solo las dos de la mudanza no podía decir que iba lleno). Con "Sobres y
-  paquetes" tampoco le salen los fletes, aunque el flete no diga su tamaño
-  (Yohany, 28 de octubre de 2026): cuando carga,
-  la baja, y cuando descarga, la sube, aunque quede con más espacio del que
-  tenía al empezar, porque pudo salir lleno (Yohany, 21 de octubre de 2026).
-  `space` guarda lo que le queda (lo que miran los clientes) y
-  `full_space` lo que podía llevar al empezar, que es con lo que vuelve el
-  formulario. Reemplazó a "Te encontraron" (la lista de clientes que tocaron
-  su tarjeta, con "Lo llevo" y el espacio calculado por puntos), que se quitó
-  junto con la tabla `contacts` (migración `0014_sin_te_encontraron.sql`).
 - Cada tarjeta de transportista en los resultados del cliente tiene "Escribir por
   WhatsApp", un enlace `wa.me` con el mensaje listo, y "Llamar", un enlace
   `tel:`. Los dos salen de `ContactButtons` en `src/components/ui.tsx`.
@@ -240,8 +230,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   llenó). Pide confirmar en una hoja ("¿Dejar de estar disponible?", con el
   sí en rojo) y luego vuelve al inicio con el aviso "Ya no aparece en las
   búsquedas. Buen viaje." (Yohany, 27 de octubre de 2026). Está dentro del
-  bloque oscuro de arriba. "Solo queda espacio para paquetes" ya no existe: para
-  eso está "¿Cuánto espacio te queda?".
+  bloque oscuro de arriba. Si solo se llenó, cambia "¿Qué servicios hace
+  ahora?".
 
 **Emparejamiento**
 - El match es por ruta (el Modo Ruta, por debajo): clientes de su día en
@@ -331,19 +321,15 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   `todo_el_dia` (la columna no puede quedar vacía) y las solicitudes nuevas la
   dejan vacía. El emparejamiento ya no la mira.
 
-**Carga por tamaño de casa**
-- La carga se mide por tamaño de casa, con cuatro opciones: "Sobres y
-  paquetes", "Algunas cosas", "Una habitación" y "Una casa", cada una con
-  una pista corta de lo que incluye y su ícono.
-- El transportista responde "¿Cuánto espacio tiene?" solo si hace mudanzas,
-  y el cliente solo elige tamaño en la mudanza (ver "Servicios"). Al
-  transportista le salen los clientes cuya carga es igual o más chica que la
-  suya.
-- No se pregunta el vehículo (Yohany lo quitó en octubre de 2026): importa
-  cuánto puede llevar, no en qué. La columna `vehicle_type` queda en la base
-  para lo guardado antes y lo nuevo la deja vacía.
-- Las claves vienen de cuando se medía en camiones y no se cambian: el cliente
-  guarda `sobres`, `carga_parcial`, `medio_camion` y `camion_entero`, y el
+**Sin tamaño ni vehículo**
+- No se pregunta el tamaño de la carga ni el espacio libre (Yohany, 28 de
+  octubre de 2026; ver "Servicios"). Antes se medía por tamaño de casa
+  ("Sobres y paquetes", "Algunas cosas", "Una habitación" y "Una casa").
+- No se pregunta el vehículo (Yohany lo quitó en octubre de 2026). La
+  columna `vehicle_type` queda en la base para lo guardado antes y lo nuevo
+  la deja vacía.
+- Las claves de tamaño siguen en la base y no se cambian: el cliente guarda
+  `sobres`, `carga_parcial`, `medio_camion` y `camion_entero`, y el
   transportista lo mismo, salvo `solo_paquetes` en vez de `sobres`.
 - El carro particular (con "Espacio en el baúl" y "Asientos traseros libres")
   salió del MVP en octubre de 2026 y queda anotado para después en

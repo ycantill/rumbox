@@ -10,13 +10,7 @@ import {
   ANY_DESTINATION,
   ANY_DESTINATION_HINT,
   ANY_DESTINATION_LABEL,
-  CLIENT_SIZES,
-  DRIVER_SPACES,
-  MOVING_SPACES,
   SERVICES,
-  type ClientSize,
-  type DriverSpace,
-  type MovingSpace,
   type Service,
 } from "@/lib/domain";
 import type { Page } from "@/lib/analytics";
@@ -376,11 +370,6 @@ export function ServicePicker({ value, onChange }: { value: Service | ""; onChan
   );
 }
 
-/** "¿Qué tan grande?", solo para la mudanza: las mismas tarjetas del espacio del que viaja. */
-export function SizePicker({ value, onChange }: { value: ClientSize | ""; onChange: (s: ClientSize) => void }) {
-  return <SpaceCards options={CLIENT_SIZES} value={value} onChange={onChange} />;
-}
-
 /** "¿Qué servicios hace?": puede marcar varios. */
 export function ServiceChecklist({
   value,
@@ -427,61 +416,6 @@ export function ServiceChecklist({
   );
 }
 
-/**
- * "¿Cuánto espacio tiene?" del que viaja: solo si hace mudanzas, con las dos
- * tarjetas de la mudanza.
- */
-export function SpacePicker({ value, onChange }: { value: string; onChange: (s: MovingSpace) => void }) {
-  return <SpaceCards options={MOVING_SPACES} value={value} onChange={onChange} />;
-}
-
-/**
- * "¿Cuánto espacio tiene ahora?" del que ya va de viaje: las cuatro tarjetas,
- * para que baje cuando carga y suba cuando descarga en el camino (Yohany, 21 y
- * 28 de octubre de 2026). Con las dos de la mudanza no podía decir que ya iba
- * lleno.
- */
-export function SpaceLeftPicker({ value, onChange }: { value: string; onChange: (s: DriverSpace) => void }) {
-  return <SpaceCards options={DRIVER_SPACES} value={value} onChange={onChange} />;
-}
-
-/** Tarjetas con ícono, nombre y ejemplos. Lo elegido va en Señal. */
-function SpaceCards<K extends DriverSpace>({
-  options,
-  value,
-  onChange,
-}: {
-  options: Record<K, { label: string; hint: string }>;
-  value: string;
-  onChange: (key: K) => void;
-}) {
-  return (
-    <div className="grid grid-cols-2 gap-2">
-      {(Object.keys(options) as K[]).map((key) => {
-        const selected = value === key;
-        return (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={selected}
-            onClick={() => onChange(key)}
-            className={`flex flex-col gap-2 rounded-md border p-3 text-left active:translate-y-px ${
-              selected ? "border-brand bg-brand text-white" : "border-line bg-surface text-ink"
-            }`}
-          >
-            <span className={`grid size-[52px] place-items-center rounded-lg ${selected ? "bg-white" : "bg-bg"}`}>
-              <SpaceIcon space={key} size={44} />
-            </span>
-            <span className="flex flex-col gap-0.5">
-              <span className="text-[15px] font-bold">{options[key].label}</span>
-              <span className="text-[13px] leading-snug opacity-85">{options[key].hint}</span>
-            </span>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 /**
  * El día que se ve elegido: el que tocó la persona o, si no tocó ninguno o el
@@ -1061,48 +995,3 @@ export function ServiceIcon({ service, size = 48 }: { service: Service; size?: n
   return <Icon size={size}>{SERVICE_ICONS[service]}</Icon>;
 }
 
-const SPACE_ICONS: Record<DriverSpace, React.ReactNode> = {
-  // Sobre y cajita.
-  solo_paquetes: (
-    <>
-      <rect x="6" y="15" width="24" height="16" rx="1.5" />
-      <path d="M6 17 L18 25 L30 17" fill="none" />
-      <rect x="27" y="23" width="15" height="13" rx="1" />
-      <line x1="34.5" y1="23" x2="34.5" y2="27" />
-    </>
-  ),
-  // Caja y maleta.
-  carga_parcial: (
-    <>
-      <rect x="6" y="22" width="17" height="16" rx="1" />
-      <line x1="6" y1="27" x2="23" y2="27" />
-      <rect x="26" y="17" width="16" height="21" rx="2.5" />
-      <path d="M30 17 V13 H38 V17" fill="none" />
-      <line x1="31" y1="22" x2="31" y2="33" />
-      <line x1="37" y1="22" x2="37" y2="33" />
-    </>
-  ),
-  // Cama.
-  medio_camion: (
-    <>
-      <rect x="5" y="14" width="6" height="24" rx="1" />
-      <rect x="11" y="26" width="32" height="8" rx="1" />
-      <rect x="14" y="21" width="9" height="5" rx="1.5" fill="#fff" />
-      <line x1="11" y1="34" x2="11" y2="38" />
-      <line x1="42" y1="34" x2="42" y2="38" />
-    </>
-  ),
-  // Casa.
-  camion_entero: (
-    <>
-      <path d="M6 22 L24 9 L42 22 V39 H6 Z" />
-      <rect x="13" y="28" width="8" height="11" fill="#fff" />
-      <rect x="27" y="25" width="9" height="7" fill="#fff" />
-      <line x1="31.5" y1="25" x2="31.5" y2="32" />
-    </>
-  ),
-};
-
-export function SpaceIcon({ space, size = 48 }: { space: DriverSpace; size?: number }) {
-  return <Icon size={size}>{SPACE_ICONS[space]}</Icon>;
-}

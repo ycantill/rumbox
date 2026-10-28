@@ -6,7 +6,7 @@ import {
   publishAvailability,
   updateAvailability,
   updateLocation,
-  updateSpace,
+  updateServices,
 } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import {
@@ -20,8 +20,6 @@ import {
   SafetyTips,
   ServiceChecklist,
   SignalDot,
-  SpaceLeftPicker,
-  SpacePicker,
   useBogotaDates,
   useServiceDay,
 } from "@/components/ui";
@@ -30,13 +28,12 @@ import { getCity } from "@/lib/cities";
 import { capitalize, whenText } from "@/lib/dates";
 import {
   DRIVER_SPACES,
-  MOVING_SPACES,
   SAME_CITY_ERROR,
   SERVICES,
+  UNSIZED_SPACE,
   destinationName,
   isKey,
   type DriverSpace,
-  type MovingSpace,
   type Service,
 } from "@/lib/domain";
 import { KEYS, load, save } from "@/lib/local-store";
@@ -46,7 +43,7 @@ import { routeProgress, routeStops } from "@/lib/route";
 import { DRIVER_TIPS } from "@/lib/safety";
 import { NO_CONNECTION, callServer } from "@/lib/server-call";
 import { announce } from "@/lib/toast";
-import { driverInputError } from "@/lib/validate";
+import { NO_SERVICES_ERROR, driverInputError } from "@/lib/validate";
 import { formatWhatsApp, normalizeWhatsApp } from "@/lib/whatsapp";
 
 // Lo guardado antes puede traer también la ayuda para cargar, que ya no se pregunta.
@@ -62,10 +59,9 @@ export type MyPost = {
   date: string; // desde qué día viaja
   /** Los servicios que hace. Los guardados antes de los servicios no los tienen. */
   services?: Service[] | null;
+  // Ya no se pregunta (Yohany, 28 de octubre de 2026): solo dice si es del
+  // carro particular de antes, que ya no vale.
   space: DriverSpace;
-  // Lo que podía llevar al ponerse disponible; `space` es lo que le queda, que
-  // él cambia en su tarjeta. Con esto vuelve el formulario, para el próximo viaje.
-  fullSpace?: DriverSpace;
   // El municipio por donde va, si ya lo marcó con la ubicación del teléfono.
   current?: string | null;
   // La carretera de su viaje (`encodePath`), para "¿Por dónde vas?". Sin ella,
@@ -82,8 +78,6 @@ export function DriverForm() {
   const [pickedDate, setDate] = useState("");
   const date = useServiceDay(pickedDate);
   const [services, setServices] = useState<Service[]>([]);
-  // Solo si hace mudanzas: una habitación o una casa.
-  const [space, setSpace] = useState<MovingSpace | "">("");
   const [whatsapp, setWhatsapp] = useState("");
   const [error, setError] = useState<string | null>(null);
   // Si se acaba de poner disponible: el título dice "¡Listo!".
@@ -141,10 +135,6 @@ export function DriverForm() {
       setOrigin(current.origin);
       setDestination(current.destination ?? "");
       if (current.services) setServices(current.services);
-      // Lo que podía llevar al empezar, no lo que le quedó libre al final del viaje.
-      const space = current.fullSpace ?? current.space;
-      // Solo las dos de la mudanza son una opción.
-      if (isKey(MOVING_SPACES, space)) setSpace(space);
     }
     setPosts([]);
     setJustPublished(false);
@@ -152,10 +142,9 @@ export function DriverForm() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  const input = { origin, destination, date, services, space, whatsapp };
+  const input = { origin, destination, date, services, whatsapp };
   // Lo que falta: el botón se ve apagado y, al tocarlo, se dice debajo.
   const invalid = today ? driverInputError(input, today) : null;
-  const moving = services.includes("mudanza");
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -179,7 +168,7 @@ export function DriverForm() {
         destination,
         date,
         services,
-        space: res.space,
+        space: UNSIZED_SPACE,
         route: res.route,
       };
       updateCurrent(post);
@@ -256,13 +245,6 @@ export function DriverForm() {
           <ServiceChecklist value={services} onChange={setServices} />
         </fieldset>
 
-        {/* Solo si hace mudanzas, con los tamaños de la mudanza del cliente. */}
-        {moving && (
-          <Field label="¿Cuánto espacio tiene?">
-            <SpacePicker value={space} onChange={setSpace} />
-          </Field>
-        )}
-
         <div className="flex flex-col gap-2">
           <label htmlFor="phone" className="label">
             Su teléfono
@@ -319,7 +301,7 @@ function CurrentWork({
   // particular (baúl o asientos) vuelve al formulario: tiene que elegir otra vez.
   const ended = !post.destination || !isKey(DRIVER_SPACES, post.space);
 
-  // Si sigue encendida y con cuánto espacio, desde el servidor: al abrir la
+  // Si sigue encendida y con qué servicios, desde el servidor: al abrir la
   // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No ve
   // a los clientes: por su privacidad, ellos son los que lo llaman.
   const { id, editToken } = post;
@@ -348,8 +330,6 @@ function CurrentWork({
           }
           setError((e) => (e === NO_CONNECTION ? null : e));
           onPatch({
-            space: res.space,
-            fullSpace: res.fullSpace,
             current: res.currentCity,
             route: res.route,
             services: res.services,
@@ -377,14 +357,14 @@ function CurrentWork({
   if (ended) return null;
 
 
-  // "¿Cuánto espacio te queda?": a los clientes solo les sale si les cabe.
-  async function changeSpace(space: DriverSpace) {
+  // "¿Qué servicios hace ahora?": solo le salen los clientes que piden uno de esos.
+  async function changeServices(services: Service[]) {
     const before = post;
     setBusy(true);
     setError(null);
     latest.current++;
-    onChange({ ...post, space, fullSpace: post.fullSpace ?? post.space });
-    const res = await callServer(() => updateSpace({ id, editToken, space }));
+    onChange({ ...post, services });
+    const res = await callServer(() => updateServices({ id, editToken, services }));
     latest.current++;
     setBusy(false);
     if (!res.ok) {
@@ -466,10 +446,7 @@ function CurrentWork({
 
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
-      {/* Solo si hace mudanzas o fletes (las de antes, sin servicios, hacen todo). */}
-      {(!post.services || post.services.includes("mudanza") || post.services.includes("flete")) && (
-        <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
-      )}
+      <ServicesNow services={post.services} busy={busy} onChange={changeServices} />
 
       <SafetyTips tips={DRIVER_TIPS} />
 
@@ -516,29 +493,38 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
 }
 
 /**
- * "¿Cuánto espacio tiene ahora?": cuando carga o descarga, él mismo cambia lo
- * que le queda, y los clientes de mudanza solo lo ven si les cabe; los de
- * flete, si le queda más que sobres y paquetes. Son las
- * cuatro tarjetas: baja hasta "Sobres y paquetes" cuando se llena, y puede
- * subir, porque pudo empezar lleno y descargar en el camino.
+ * "¿Qué servicios hace ahora?" (Yohany, 28 de octubre de 2026): reemplazó a
+ * "¿Cuánto espacio tiene ahora?". Si se llena, quita mudanzas y fletes, y le
+ * siguen saliendo las encomiendas; si descarga en el camino, los vuelve a
+ * marcar. Los de antes, sin servicios, hacen todos.
  */
-function SpaceLeft({
-  space,
+function ServicesNow({
+  services,
   busy,
   onChange,
 }: {
-  space: DriverSpace;
+  services: MyPost["services"];
   busy: boolean;
-  onChange: (space: DriverSpace) => void;
+  onChange: (services: Service[]) => void;
 }) {
+  const value = services ?? (Object.keys(SERVICES) as Service[]);
+  // Sin ninguno no le saldría nadie: para eso está "Ya no estoy disponible".
+  const [empty, setEmpty] = useState(false);
   return (
     <section className="flex flex-col gap-3 rounded-lg border border-line-soft bg-surface p-[18px]">
-      <h2 className="card-title">¿Cuánto espacio tiene ahora?</h2>
-      <fieldset disabled={busy}>
-        <legend className="sr-only">¿Cuánto espacio tiene ahora?</legend>
-        <SpaceLeftPicker value={space} onChange={(s) => s !== space && onChange(s)} />
+      <h2 className="card-title">¿Qué servicios hace ahora?</h2>
+      <fieldset disabled={busy} className="flex flex-col gap-2.5">
+        <legend className="sr-only">¿Qué servicios hace ahora?</legend>
+        <ServiceChecklist
+          value={value}
+          onChange={(next) => {
+            setEmpty(next.length === 0);
+            if (next.length > 0) onChange(next);
+          }}
+        />
       </fieldset>
-      <p className="text-sm leading-snug text-muted">Cámbielo cuando cargue o descargue.</p>
+      <FieldError message={empty ? NO_SERVICES_ERROR : null} />
+      <p className="text-sm leading-snug text-muted">Si se llena, quite mudanzas y fletes. Cuando descargue, vuelva a marcarlos.</p>
     </section>
   );
 }

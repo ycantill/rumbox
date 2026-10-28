@@ -65,7 +65,7 @@ export default function TermsPage() {
           <Bullets
             items={[
               "Ponga solo su propio teléfono.",
-              "Diga la verdad sobre hacia dónde va, qué día y cuánto espacio tiene.",
+              "Diga la verdad sobre hacia dónde va, qué día y qué servicios hace.",
               "Usted responde por tener los papeles que pida la ley para el servicio que hace y por cuidar lo que lleva.",
               "Apague su viaje con “Ya no estoy disponible” cuando ya no pueda llevar nada.",
             ]}

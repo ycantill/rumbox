@@ -47,7 +47,7 @@ export default function PrivacyPage() {
             items={[
               "Si usted va de viaje, su teléfono. Si necesita un servicio, no se lo pedimos.",
               "De dónde sale, hacia dónde va y qué día.",
-              "Qué servicio necesita y, si es una mudanza, qué tan grande es. Si usted va de viaje, qué servicios hace y cuánto espacio tiene.",
+              "Qué servicio necesita. Si usted va de viaje, qué servicios hace.",
               "Una huella de su conexión a internet, para frenar a quien abusa de la app. No guardamos su dirección de internet.",
             ]}
           />

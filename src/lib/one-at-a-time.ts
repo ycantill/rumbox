@@ -6,8 +6,8 @@ import { isStillValid } from "./dates";
 import { DRIVER_SPACES, isKey } from "./domain";
 
 /**
- * Si el viaje guardado en el teléfono todavía vale: con destino y un espacio
- * de hoy. No se vence (Yohany, 21 de octubre de 2026).
+ * Si el viaje guardado en el teléfono todavía vale: con destino y sin el
+ * carro particular de antes. No se vence (Yohany, 21 de octubre de 2026).
  */
 export function tripIsOn(post: { destination: string | null; space: string }): boolean {
   return Boolean(post.destination) && isKey(DRIVER_SPACES, post.space);

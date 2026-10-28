@@ -23,7 +23,6 @@ import {
   ServicePicker,
   Signal,
   SignalDot,
-  SizePicker,
   Symbol,
   useBogotaDates,
   useServiceDay,
@@ -35,17 +34,9 @@ import {
   ANY_DAY,
   ANY_DAY_LABEL,
   ANY_DESTINATION,
-  CLIENT_SIZES,
   SAME_CITY_ERROR,
   SERVICES,
-  UNSIZED_VOLUME,
-  VOLUMES,
-  isKey,
-  serviceHasSize,
-  spaceInSentence,
-  type ClientSize,
   type Service,
-  type Volume,
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
 import { KEYS, forget, load, save } from "@/lib/local-store";
@@ -63,7 +54,6 @@ export type MyRequest = {
   date: string;
   /** Lo que necesita. Las guardadas antes de los servicios no lo tienen. */
   service?: Service;
-  volume: Volume;
 };
 
 /** Todo en una sola pantalla, con las mismas preguntas y el mismo orden que el transportista. */
@@ -76,8 +66,6 @@ export function ClientForm() {
   const day = useServiceDay(pickedDate);
   const date = pickedDate === ANY_DAY ? ANY_DAY : day;
   const [service, setService] = useState<Service | "">("");
-  // "¿Qué tan grande?", solo para la mudanza.
-  const [size, setSize] = useState<ClientSize | "">("");
   const [error, setError] = useState<string | null>(null);
   // "Buscando conductores", mientras se guarda la solicitud.
   const [searching, setSearching] = useState(false);
@@ -112,7 +100,6 @@ export function ClientForm() {
       setOrigin(saved.origin);
       setDestination(saved.destination);
       if (saved.service) setService(saved.service);
-      if (isKey(CLIENT_SIZES, saved.volume)) setSize(saved.volume);
       // Vale hasta que termina el día del viaje: después se olvida y vuelve el formulario.
       if (isStillValid(saved.date, today)) {
         setDate(saved.date);
@@ -125,8 +112,7 @@ export function ClientForm() {
     setLoaded(true);
   }, [today]);
 
-  const volume = service && serviceHasSize(service) ? size : UNSIZED_VOLUME;
-  const input = { origin, destination, date, service, volume };
+  const input = { origin, destination, date, service };
   // Lo que falta: el botón se ve apagado y, al tocarlo, se dice debajo.
   const invalid = today ? requestInputError(input, today) : null;
 
@@ -163,7 +149,6 @@ export function ClientForm() {
         destination,
         date,
         service: service as Service,
-        volume: volume as Volume,
       };
       save(KEYS.clientRequest, mine);
       setCurrent(mine);
@@ -187,7 +172,6 @@ export function ClientForm() {
       setDestination(current.destination);
       setDate(current.date);
       setService(current.service ?? "");
-      setSize(isKey(CLIENT_SIZES, current.volume) ? current.volume : "");
     }
     setEditing(false);
     setError(null);
@@ -283,12 +267,6 @@ export function ClientForm() {
           <ServicePicker value={service} onChange={setService} />
           {service && <p className="mt-3 text-sm leading-snug text-muted">{SERVICES[service].hint}</p>}
         </fieldset>
-
-        {service && serviceHasSize(service) && (
-          <Field label="¿Qué tan grande?">
-            <SizePicker value={size} onChange={setSize} />
-          </Field>
-        )}
 
         {/* La ruta, como en una guía de envío. El origen no sale en la lista
             del destino. El aviso queda para lo guardado de antes. */}
@@ -498,9 +476,10 @@ function MyRequestView({
                       {direct ? "↑" : "↗"}
                     </span>
                     <div className="flex flex-col gap-[3px]">
-                      <p className="text-[17px] font-bold leading-snug">Tiene espacio para {spaceInSentence(m.space)}</p>
+                      <p className="text-[17px] font-bold leading-snug">
+                        Sale {sale} de {getCity(m.origin_city)?.name}
+                      </p>
                       <p className="text-sm leading-snug text-muted">
-                        Sale {sale} de {getCity(m.origin_city)?.name} ·{" "}
                         {m.destination_city === ANY_DESTINATION
                           ? "va a cualquier destino"
                           : direct
@@ -560,14 +539,10 @@ function MyRequestView({
   );
 }
 
-/** "Mudanza · 1 habitación", o solo el servicio si no pregunta el tamaño. */
+/** El servicio que pidió. No se pregunta el tamaño (Yohany, 28 de octubre de 2026). */
 function requestService(request: MyRequest): string {
-  // Las guardadas antes de los servicios dicen solo el tamaño.
-  if (!request.service) return isKey(VOLUMES, request.volume) ? VOLUMES[request.volume].label : "";
-  const { label } = SERVICES[request.service];
-  return serviceHasSize(request.service) && isKey(CLIENT_SIZES, request.volume)
-    ? `${label} · ${CLIENT_SIZES[request.volume].short}`
-    : label;
+  // Las guardadas antes de los servicios le sirven a cualquiera.
+  return request.service ? SERVICES[request.service].label : "Cualquiera";
 }
 
 /** Una casilla de la guía: el rótulo en mayúsculas pequeñas y el dato. */

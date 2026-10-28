@@ -4,9 +4,9 @@
 > Rumbox y tiene la identidad y las pantallas del diseño de Claude Design:
 > trato de usted, cinco servicios (mudanza, flete, encomienda, encargo y
 > diligencia) y "¿Qué servicios hace?" para el que viaja, que filtra el
-> emparejamiento (migración `0020_servicios.sql`). Solo la mudanza pregunta
-> el tamaño, y el que viaja solo dice cuánto espacio tiene si hace mudanzas
-> (prototipo de Rumbox, también del 27 de octubre). Al cerrar la solicitud o
+> emparejamiento (migración `0020_servicios.sql`). Desde el 28 de octubre no
+> se pregunta el tamaño ni el espacio: el que viaja cambia sus servicios
+> durante el viaje. Al cerrar la solicitud o
 > dejar de estar disponible, la app vuelve al inicio con un aviso. Donde este documento cite textos de antes, valen los
 > de la app (ver CLAUDE.md, "Diseño de Rumbox" y "Servicios").
 
@@ -34,10 +34,10 @@ promete clientes: dice que está disponible, no que está recibiendo clientes.
 identifica cada publicación y el navegador recuerda los datos básicos (mano de
 obra y número) para no volver a escribirlos.
 
-**Carga por tamaño de casa.** El cliente y el transportista eligen de la misma
-lista: "Paquetes o sobres", "Algunas cosas", "Una habitación o apartaestudio" y
-"Una casa de 2 habitaciones o más". No se pregunta el vehículo: Yohany lo quitó
-en octubre de 2026 porque lo que importa es cuánto puede llevar.
+**Sin tamaño ni vehículo.** No se pregunta qué tan grande es la carga ni
+cuánto espacio tiene el que viaja (Yohany, 28 de octubre de 2026): es
+aproximado y lo hablan por teléfono, como el precio. Filtran los servicios.
+Tampoco se pregunta el vehículo (Yohany, octubre de 2026).
 
 **Llamada o WhatsApp.** Al transportista se le pide "Tu teléfono", no "Tu
 WhatsApp". Al cliente no se le pide (Yohany, 23 de octubre de 2026): es él
@@ -102,13 +102,11 @@ se elige igual que el destino.
 - La pantalla revisa sola, al volver a la app y cada minuto, si su
   disponibilidad sigue encendida. Los clientes que solicitan después de que
   él se puso disponible lo ven en su lista y lo llaman.
-- "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
-  datos, si hace mudanzas o fletes, tiene las cuatro tarjetas (de sobres y paquetes
-  a una casa; Yohany, 28 de octubre de 2026: con las dos de la mudanza no
-  podía decir que iba lleno). Con "Sobres y paquetes" ya no le salen
-  fletes. Cuando carga, la baja, y cuando descarga, la
-  sube, aunque haya salido lleno. Los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
-  (la lista de clientes que tocaron su tarjeta, con "Lo llevo"), que se quitó.
+- "¿Qué servicios hace ahora?" (Yohany, 28 de octubre de 2026): debajo de
+  sus datos cambia sus servicios durante el viaje. Si se llena, quita
+  mudanzas y fletes; si descarga a mitad de camino, los vuelve a marcar.
+  Reemplazó a "¿Cuánto espacio te queda?" (21 de octubre de 2026), que a su
+  vez reemplazó a "Te encontraron".
 
 **Pantalla del cliente** (`/solicitar`)
 - Una sola pantalla, casi igual a la del transportista: sin pasos, con las
@@ -116,7 +114,7 @@ se elige igual que el destino.
 - La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
 - Desde dónde y hacia dónde, que no puede ser el mismo municipio; qué día
-  ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué va a mover, con la lista de tamaños. No se pide el teléfono (Yohany, 23
+  ("Cualquier día", que viene elegido, Hoy, Mañana o calendario); qué servicio necesita, sin tamaño. No se pide el teléfono (Yohany, 23
   de octubre de 2026): ya no hay avisos, y es el cliente quien llama. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
   2026): la hablan por teléfono.
 
