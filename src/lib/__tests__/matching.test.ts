@@ -32,6 +32,13 @@ describe("servicios", () => {
     expect(matchesTrip(driver({ services: ["mudanza"], destination_city: ANY_DESTINATION }), request({ service: "diligencia", volume: "sobres" }))).toBe(false);
   });
 
+  it("al que va lleno, con espacio solo para sobres y paquetes, no le salen fletes", () => {
+    const lleno = driver({ services: ["flete", "encomienda"], space: "solo_paquetes" });
+    expect(matchesTrip(lleno, request({ service: "flete", volume: "sobres" }))).toBe(false);
+    expect(matchesTrip(lleno, request({ service: "encomienda", volume: "sobres" }))).toBe(true);
+    expect(matchesTrip(driver({ services: ["flete"], space: "carga_parcial" }), request({ service: "flete", volume: "sobres" }))).toBe(true);
+  });
+
   it("lo guardado antes de los servicios: el transportista hace todos y la solicitud le sirve a cualquiera", () => {
     expect(matchesTrip(driver({ services: null }), request({ service: "diligencia", volume: "sobres" }))).toBe(true);
     expect(matchesTrip(driver({ services: ["diligencia"] }), request({ service: null }))).toBe(true);

@@ -69,6 +69,10 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   // (Yohany, 21 de octubre de 2026). Con "Cualquier día" le sirve cualquiera.
   if (r.service_date !== null && a.service_date > r.service_date) return false;
   if (!spaceFitsVolume(a.space, r.volume)) return false;
+  // El flete no dice qué tan grande es, pero no cabe en quien solo tiene
+  // espacio para sobres y paquetes: así dice que va lleno (Yohany, 28 de
+  // octubre de 2026).
+  if (r.service === "flete" && !spaceFitsVolume(a.space, "carga_parcial")) return false;
   // Solo le salen los clientes que piden uno de los servicios que hace (Yohany,
   // 27 de octubre de 2026).
   if (r.service && a.services && !a.services.includes(r.service)) return false;

@@ -11,6 +11,7 @@ import {
   ANY_DESTINATION_HINT,
   ANY_DESTINATION_LABEL,
   CLIENT_SIZES,
+  DRIVER_SPACES,
   MOVING_SPACES,
   SERVICES,
   type ClientSize,
@@ -432,6 +433,16 @@ export function ServiceChecklist({
  */
 export function SpacePicker({ value, onChange }: { value: string; onChange: (s: MovingSpace) => void }) {
   return <SpaceCards options={MOVING_SPACES} value={value} onChange={onChange} />;
+}
+
+/**
+ * "¿Cuánto espacio tiene ahora?" del que ya va de viaje: las cuatro tarjetas,
+ * para que baje cuando carga y suba cuando descarga en el camino (Yohany, 21 y
+ * 28 de octubre de 2026). Con las dos de la mudanza no podía decir que ya iba
+ * lleno.
+ */
+export function SpaceLeftPicker({ value, onChange }: { value: string; onChange: (s: DriverSpace) => void }) {
+  return <SpaceCards options={DRIVER_SPACES} value={value} onChange={onChange} />;
 }
 
 /** Tarjetas con ícono, nombre y ejemplos. Lo elegido va en Señal. */

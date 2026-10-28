@@ -103,8 +103,10 @@ se elige igual que el destino.
   disponibilidad sigue encendida. Los clientes que solicitan después de que
   él se puso disponible lo ven en su lista y lo llaman.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
-  datos, si hace mudanzas, tiene las dos tarjetas de la mudanza (una
-  habitación o una casa). Cuando carga, la baja, y cuando descarga, la
+  datos, si hace mudanzas o fletes, tiene las cuatro tarjetas (de sobres y paquetes
+  a una casa; Yohany, 28 de octubre de 2026: con las dos de la mudanza no
+  podía decir que iba lleno). Con "Sobres y paquetes" ya no le salen
+  fletes. Cuando carga, la baja, y cuando descarga, la
   sube, aunque haya salido lleno. Los clientes solo lo ven si les cabe. Reemplaza a "Te encontraron"
   (la lista de clientes que tocaron su tarjeta, con "Lo llevo"), que se quitó.
 

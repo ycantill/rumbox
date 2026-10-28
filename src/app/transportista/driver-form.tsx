@@ -20,6 +20,7 @@ import {
   SafetyTips,
   ServiceChecklist,
   SignalDot,
+  SpaceLeftPicker,
   SpacePicker,
   useBogotaDates,
   useServiceDay,
@@ -465,8 +466,8 @@ function CurrentWork({
 
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
-      {/* Solo si hace mudanzas (las de antes, sin servicios, hacen todo). */}
-      {(!post.services || post.services.includes("mudanza")) && (
+      {/* Solo si hace mudanzas o fletes (las de antes, sin servicios, hacen todo). */}
+      {(!post.services || post.services.includes("mudanza") || post.services.includes("flete")) && (
         <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
       )}
 
@@ -516,9 +517,10 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
 
 /**
  * "¿Cuánto espacio tiene ahora?": cuando carga o descarga, él mismo cambia lo
- * que le queda, y los clientes de mudanza solo lo ven si les cabe. Son las dos
- * tarjetas de la mudanza: puede subir, porque pudo empezar lleno y descargar
- * en el camino.
+ * que le queda, y los clientes de mudanza solo lo ven si les cabe; los de
+ * flete, si le queda más que sobres y paquetes. Son las
+ * cuatro tarjetas: baja hasta "Sobres y paquetes" cuando se llena, y puede
+ * subir, porque pudo empezar lleno y descargar en el camino.
  */
 function SpaceLeft({
   space,
@@ -534,7 +536,7 @@ function SpaceLeft({
       <h2 className="card-title">¿Cuánto espacio tiene ahora?</h2>
       <fieldset disabled={busy}>
         <legend className="sr-only">¿Cuánto espacio tiene ahora?</legend>
-        <SpacePicker value={space} onChange={(s) => s !== space && onChange(s)} />
+        <SpaceLeftPicker value={space} onChange={(s) => s !== space && onChange(s)} />
       </fieldset>
       <p className="text-sm leading-snug text-muted">Cámbielo cuando cargue o descargue.</p>
     </section>
