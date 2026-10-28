@@ -6,6 +6,7 @@ import { TrackVisit } from "@/components/ui";
 
 export const metadata: Metadata = {
   title: "Cómo cuidamos sus datos",
+  description: "Qué datos guarda Rumbox, para qué y cuánto tiempo.",
 };
 
 const LINK = "font-semibold text-brand underline";

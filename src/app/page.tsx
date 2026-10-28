@@ -64,12 +64,15 @@ export default function Home() {
         ))}
       </ol>
 
-      <footer className="mt-auto flex gap-5 pt-5 text-sm">
+      <footer className="mt-auto flex flex-wrap gap-x-5 gap-y-2 pt-5 text-sm">
         <Link href="/ayuda" className="text-brand underline">
           Ayuda
         </Link>
         <Link href="/privacidad" className="text-brand underline">
           Cómo cuidamos sus datos
+        </Link>
+        <Link href="/terminos" className="text-brand underline">
+          Términos y condiciones
         </Link>
       </footer>
     </main>
