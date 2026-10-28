@@ -262,9 +262,13 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   aquí" y los que ya pasó quedan en gris, con la línea recorrida en Señal,
   pero se pueden tocar por si se equivocó. Ya no hay lista desplegable con los pueblos de la ruta. Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
-  (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya quedó más de 20 km atrás
-  (`BEHIND_TOLERANCE_KM`). Sin marcar, cuenta desde su origen: tampoco le
-  salen los que quedan más de 20 km detrás de donde sale. Con "Cualquier
+  (migración `0016_por_donde_va.sql`). Con eso no les sale a los clientes cuyo pueblo ya pasó
+  (`PASSED_TOLERANCE_KM`, 3 km para lo que se corre al medir; Yohany, 28 de
+  octubre de 2026: le tocaría devolverse a recoger, y el origen del cliente
+  es donde se recoge o se hace el servicio; antes eran 20 km). Sin marcar,
+  cuenta desde su origen: no le salen los que quedan más de 20 km detrás de
+  donde sale (`BEHIND_TOLERANCE_KM`), porque puede recoger en un pueblo
+  vecino antes de arrancar. Con "Cualquier
   destino" no hay ruta: elige entre todos los municipios (`CitySelect`) y el match es por cercanía a donde va, no a donde salió. El cliente
   no ve por dónde va (Yohany): solo sirve para el match.
 - La ruta es por carretera (Yohany, 21 de octubre de 2026): al ponerse
@@ -273,8 +277,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   guarda simplificada en `route` (migración `0017_ruta_por_carretera.sql`).
   Si otro ya hizo el mismo viaje, reusa la guardada (`route_options`). Con ella salen los
   pueblos de "¿Por dónde vas?" y el match mira la carretera: el pueblo del
-  cliente a 35 km o menos (`CORRIDOR_ROAD_TOLERANCE_KM`), y los 20 km atrás
-  se cuentan sobre la carretera. Si no hay llave, el servicio no responde en
+  cliente a 35 km o menos (`CORRIDOR_ROAD_TOLERANCE_KM`), y lo que quedó atrás
+  se cuenta sobre la carretera. Si no hay llave, el servicio no responde en
   5 segundos o la disponibilidad es de antes, todo sigue con la línea recta
   y su corredor ancho (una cuarta parte del viaje a cada lado). Solo se le
   mandan las coordenadas de los dos municipios, nada de la persona.

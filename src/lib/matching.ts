@@ -34,11 +34,18 @@ export const CORRIDOR_MIN_TOLERANCE_KM = CORRIDOR_ROAD_TOLERANCE_KM;
 export const CORRIDOR_TOLERANCE_RATIO = 0.25;
 
 /**
- * Cuánto puede haber quedado atrás el pueblo del cliente y todavía servirle,
- * de donde sale o de por dónde va. Por dónde va se guarda como el municipio
- * más cercano, que puede quedar un poco adelante de él.
+ * Cuánto puede quedar detrás de su origen el pueblo del cliente, mientras no
+ * ha salido: puede recogerlo en un pueblo vecino antes de arrancar.
  */
 export const BEHIND_TOLERANCE_KM = 20;
+
+/**
+ * Cuánto puede haber quedado atrás el pueblo del cliente cuando ya marcó por
+ * dónde va. Si ya pasó, le tocaría devolverse a recoger (Yohany, 28 de
+ * octubre de 2026; antes eran los mismos 20 km): el margen solo cubre lo que
+ * se corre un pueblo al medirlo sobre la carretera.
+ */
+export const PASSED_TOLERANCE_KM = 3;
 
 export type AvailabilityLike = {
   origin_city: string;
@@ -106,8 +113,9 @@ export function matchesTrip(a: AvailabilityLike, r: RequestLike): boolean {
   if (!onCorridor || pFrom.alongKm > pTo.alongKm) return false;
   // El pueblo del cliente no puede haber quedado atrás de donde está: el
   // municipio por donde va o, si no lo ha marcado, el de donde sale.
-  const here = driverNow ? corridor.place(driverNow).alongKm : 0;
-  if (here - pFrom.alongKm > BEHIND_TOLERANCE_KM) return false;
+  const left = driverNow && driverNow.slug !== driverFrom.slug;
+  const here = corridor.place(left ? driverNow : driverFrom).alongKm;
+  if (here - pFrom.alongKm > (left ? PASSED_TOLERANCE_KM : BEHIND_TOLERANCE_KM)) return false;
   return true;
 }
 

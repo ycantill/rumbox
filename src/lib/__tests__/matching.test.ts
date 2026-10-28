@@ -118,8 +118,8 @@ describe("matchesTrip", () => {
     expect(matchesTrip(onTheWay, request())).toBe(false);
     expect(matchesTrip(onTheWay, request({ destination_city: "cartagena" }))).toBe(false);
     expect(matchesTrip(onTheWay, request({ origin_city: "cerete", destination_city: "cartagena" }))).toBe(false);
-    // Sincelejo quedó unos pocos km atrás: todavía le sirve.
-    expect(matchesTrip(onTheWay, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(true);
+    // Sincelejo también quedó atrás: le tocaría devolverse.
+    expect(matchesTrip(onTheWay, request({ origin_city: "sincelejo", destination_city: "cartagena" }))).toBe(false);
     // Sin marcar, o todavía en el origen, todo sigue igual.
     expect(matchesTrip(driver({ current_city: null }), request())).toBe(true);
     expect(matchesTrip(driver({ current_city: "monteria" }), request())).toBe(true);
@@ -179,7 +179,7 @@ describe("casos con municipios reales", () => {
     ["va por Tolú: el cliente de Montería quedó atrás", { current_city: "tolu" }, {}, false],
     ["va por Tolú: sale de Tolú", { current_city: "tolu" }, trip("tolu", "cartagena"), true],
     ["va por Tolú: sale de San Onofre, más adelante", { current_city: "tolu" }, trip("san-onofre", "turbaco"), true],
-    ["va por Tolú: Sincelejo quedó a pocos km", { current_city: "tolu" }, trip("sincelejo", "cartagena"), true],
+    ["va por Tolú: Sincelejo quedó atrás", { current_city: "tolu" }, trip("sincelejo", "cartagena"), false],
     ["marcó que sigue en Montería", { current_city: "monteria" }, {}, true],
   ];
 
@@ -241,6 +241,13 @@ describe("con la carretera guardada", () => {
     // Pelaya queda más adelante, Puerto Salgar quedó muy atrás.
     expect(matchesTrip(inAguachica, request(trip("pelaya", "bosconia")))).toBe(true);
     expect(matchesTrip(inAguachica, request(trip("puerto-salgar", "barranquilla")))).toBe(false);
+  });
+
+  it("apenas pasa el pueblo del cliente, deja de salirle: le tocaría devolverse", () => {
+    expect(matchesTrip(road, request(trip("bogota", "barranquilla")))).toBe(true);
+    expect(matchesTrip({ ...road, current_city: "bogota" }, request(trip("bogota", "barranquilla")))).toBe(true);
+    expect(matchesTrip({ ...road, current_city: "villeta" }, request(trip("bogota", "barranquilla")))).toBe(false);
+    expect(matchesTrip({ ...road, current_city: "villeta" }, request(trip("villeta", "barranquilla")))).toBe(true);
   });
 
   it("una carretera dañada vale como si no hubiera: la línea recta", () => {
