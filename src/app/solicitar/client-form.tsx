@@ -219,7 +219,27 @@ export function ClientForm() {
 
   return (
     <div className="flex flex-col gap-6">
-      <BackHome />
+      {/* Si tocó "Cambiar" y se arrepiente, vuelve a su solicitud sin cambiarla. */}
+      {current ? (
+        <button
+          type="button"
+          onClick={() => {
+            // Lo que alcanzó a cambiar se descarta: la próxima vez el formulario trae su solicitud.
+            setOrigin(current.origin);
+            setDestination(current.destination);
+            setDate(current.date);
+            setService(current.service ?? "");
+            setSize(isKey(CLIENT_SIZES, current.volume) ? current.volume : "");
+            setEditing(false);
+            setError(null);
+          }}
+          className="self-start text-[15px] text-muted"
+        >
+          ← Volver
+        </button>
+      ) : (
+        <BackHome />
+      )}
       <h1 className="title">¿Qué necesita?</h1>
       <InfoNote message={notice} />
       {/* noValidate: el navegador no muestra su propio globito; los errores salen abajo, con nuestras palabras. */}
