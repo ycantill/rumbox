@@ -3,6 +3,7 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, Big_Shoulders } from "next/font/google";
 import { ServiceWorker } from "@/components/service-worker";
 import { Toast } from "@/components/ui";
+import { OPEN_TO_SEARCH, SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Big Shoulders Display para los títulos, en mayúsculas, y Archivo para el
@@ -29,6 +30,10 @@ export const metadata: Metadata = {
   description:
     "Mudanzas, fletes, encomiendas, encargos y diligencias con conductores que ya van de viaje. Usted habla directo con ellos por llamada o WhatsApp y acuerdan el precio.",
   applicationName: "Rumbox",
+  metadataBase: new URL(SITE_URL),
+  // La imagen para compartir es opengraph-image.png, en esta misma carpeta.
+  openGraph: { siteName: "Rumbox", locale: "es_CO", type: "website" },
+  robots: OPEN_TO_SEARCH ? undefined : { index: false, follow: false },
   appleWebApp: { capable: true, title: "Rumbox", statusBarStyle: "default" },
 };
 

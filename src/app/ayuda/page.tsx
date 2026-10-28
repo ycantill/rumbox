@@ -6,6 +6,7 @@ import { NO_CHARGE_TIP } from "@/lib/safety";
 
 export const metadata: Metadata = {
   title: "Ayuda",
+  description: "Qué acordar antes del servicio y qué hacer si lo estafan.",
 };
 
 const LINK = "font-semibold text-brand underline";

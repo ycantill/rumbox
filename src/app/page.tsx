@@ -71,6 +71,9 @@ export default function Home() {
         <Link href="/privacidad" className="text-brand underline">
           Cómo cuidamos sus datos
         </Link>
+        <Link href="/terminos" className="text-brand underline">
+          Términos
+        </Link>
       </footer>
     </main>
   );

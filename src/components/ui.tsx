@@ -579,12 +579,17 @@ function shortDay(date: string): string {
 
 /**
  * El permiso para guardar los datos (Ley 1581 de 2012), justo antes del botón
- * que los envía, con el enlace a /privacidad.
+ * que los envía, con los enlaces a /terminos y /privacidad.
  */
 export function PrivacyNote({ children }: { children: React.ReactNode }) {
   return (
     <p className="text-[13px] leading-normal text-muted">
       {children}{" "}
+      Al continuar acepta los{" "}
+      <Link href="/terminos" className="text-brand underline">
+        términos
+      </Link>
+      .{" "}
       <Link href="/privacidad" className="text-brand underline">
         Cómo cuidamos sus datos
       </Link>

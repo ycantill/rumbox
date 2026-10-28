@@ -12,8 +12,9 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
   clara (27 de octubre de 2026). Propuesta del handoff: fondo `#0f1b2d`,
   superficies `#18263d` y los mismos ocre y cartón. Falta que Yohany lo
   confirme.
-- **Dominio y marca:** revisar rumbox.co y la marca Rumbox en la SIC. El
-  correo de prueba de `src/lib/legal.ts` ahora es `ayuda@rumbox.co`.
+- **Dominio y marca:** el dominio ya está comprado (28 de octubre de 2026);
+  falta conectarlo en Vercel y revisar la marca Rumbox en la SIC. El correo
+  de prueba de `src/lib/legal.ts` es `ayuda@rumbox.co`: hay que crearlo.
 
 ### 10. Datos de verdad en el aviso de privacidad
 
@@ -30,8 +31,10 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 ### 10b. Términos y condiciones
 
 - **Decisión:** entran en el MVP (Yohany, 20 de octubre de 2026).
-- **Falta:** escribirlos y enlazarlos junto al aviso de privacidad. Deberían
-  decir, por lo menos, que Rumbox solo conecta a las personas, que el precio y
+- **Hecho el borrador** (28 de octubre de 2026): `/terminos`, enlazado en
+  el pie del inicio y en la nota de los botones ("Al continuar acepta los
+  términos").
+- **Falta:** que alguien que conozca la ley los revise. Dicen, por lo menos, que Rumbox solo conecta a las personas, que el precio y
   el servicio los acuerdan el cliente y el transportista, que Rumbox no
   responde por la carga ni por el viaje, y qué está prohibido (números
   ajenos, datos falsos). Necesitan los mismos datos del responsable que el
@@ -39,16 +42,13 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ### 10c. Aparecer en Google (SEO)
 
-- **Decisión:** entra en el MVP, pero queda en espera (Yohany, 20 de octubre
-  de 2026).
-- **Hoy:** cada pantalla tiene título, el idioma es español y hay una
-  descripción general en `src/app/layout.tsx`, que todavía dice "Mira cuánto
-  cuesta tu mudanza" (ya no hay precio; también en `src/app/manifest.ts`).
-  No hay mapa del sitio, ni `robots`, ni dirección oficial (`metadataBase`),
-  ni imagen y texto para cuando el enlace se comparte por WhatsApp o
-  Facebook.
+- **Decisión:** entra en el MVP (Yohany, 20 de octubre de 2026). El 28 de
+  octubre se hizo el paso 1, con `noindex`.
+- **Hoy:** cada pantalla tiene título y descripción, hay mapa del sitio,
+  `robots`, la dirección oficial (`SITE_URL` en `src/lib/site.ts`) y la
+  imagen para compartir por WhatsApp o Facebook (`opengraph-image.png`).
 - **Plan, en tres pasos:**
-  1. Base técnica: `sitemap.ts`, `robots.ts`, la dirección oficial en un solo
+  1. Hecho (28 de octubre de 2026). Base técnica: `sitemap.ts`, `robots.ts`, la dirección oficial en un solo
      lugar, una descripción para cada pantalla, la imagen para compartir y
      quitar "cuánto cuesta". Mientras dure el demo, pedirle a Google que no
      la muestre (`noindex`) y prenderlo al abrir al público, porque hoy
@@ -60,10 +60,11 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
      con la palabra "trasteo", que es como se busca en Colombia, y un botón a
      "Necesito mover algo". Empezar con las ciudades principales, sin
      favorecer ninguna región.
-- **Dominio:** la app se llama Rumbox (Yohany, 21 de octubre de 2026,
-  porque muvia.co ya tenía dueño). mudavia.co y mudavia.com.co estaban
-  libres ese día; falta comprarlos y revisar la marca en la SIC.
-- **Falta decidir:** cuándo se retoma.
+- **Dominio:** Yohany lo compró (28 de octubre de 2026). Falta conectarlo
+  en Vercel y revisar la marca en la SIC.
+- **Al abrir al público:** poner `OPEN_TO_SEARCH = true` en
+  `src/lib/site.ts` (quita el `noindex` y anuncia el mapa del sitio) y
+  revisar que `SITE_URL` sea el dominio conectado en Vercel.
 
 ## Propuestas
 

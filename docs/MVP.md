@@ -182,8 +182,11 @@ preguntan.
 
 **Privacidad y términos**: permiso para guardar los datos encima de los
 botones de enviar y página "Cómo cuidamos tus datos" (`/privacidad`), por la
-Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los términos
-y condiciones también entran en el MVP; falta escribirlos.
+Ley 1581 de 2012. El contacto es de prueba mientras dura el demo. Los
+términos de uso (`/terminos`) están en borrador: Rumbox solo conecta, no
+cobra, no revisa a las personas ni la carga y no responde por el servicio, y
+lo que no se permite. La misma nota de los botones dice "Al continuar acepta
+los términos", y el inicio los enlaza en el pie.
 
 **Consejos de seguridad** (`src/lib/safety.ts`, Yohany, 23 de octubre de
 2026): Rumbox no maneja plata, así que los fraudes pasan en la llamada o el
@@ -198,8 +201,11 @@ de fraudes y seguridad: qué acordar por WhatsApp antes del trasteo y los pasos 
 guardar pantallazos y denunciar en ADenunciar o el CAI Virtual. No hay botón
 para reportar: queda para después.
 
-**Aparecer en Google (SEO)**: entra en el MVP, pero está en espera. El plan
-está en el punto 10c de [pendientes.md](pendientes.md).
+**Aparecer en Google (SEO)**: entra en el MVP. La base técnica está hecha
+(`src/lib/site.ts`, `robots.ts`, `sitemap.ts`, descripción por pantalla e
+imagen para compartir), pero Google no la muestra (`noindex`) hasta abrir al
+público. El resto del plan está en el punto 10c de
+[pendientes.md](pendientes.md).
 
 **Analíticas** (`src/lib/analytics.ts`): para saber si el piloto funciona,
 la app cuenta las visitas a cada pantalla, si quien entra ya había venido

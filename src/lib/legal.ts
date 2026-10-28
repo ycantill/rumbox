@@ -13,3 +13,6 @@ export const PRIVACY_CONTACT = {
 
 /** Desde cuándo vale la política. Cámbiala si cambia el texto. */
 export const PRIVACY_UPDATED = "27 de octubre de 2026";
+
+/** Desde cuándo valen los términos. Cámbiala si cambia el texto. */
+export const TERMS_UPDATED = "28 de octubre de 2026";
