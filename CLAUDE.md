@@ -391,7 +391,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   vuelve al inicio con el aviso "Listo. Cerramos su solicitud." (`Toast` en
   el layout, `announce` en `src/lib/toast.ts`; Yohany, 27 de octubre de 2026).
   "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
-  reemplaza la de antes.
+  reemplaza la de antes. Para regresar sin cambiarla están "← Volver" y la
+  flecha de atrás del teléfono, que no lo saca de Rumbox (Yohany, 28 de
+  octubre de 2026). Las hojas de abajo también se cierran con esa flecha.
 - Vale hasta que termina el día del viaje: después se olvida y vuelve el
   formulario. La de "Cualquier día" no se vence.
 

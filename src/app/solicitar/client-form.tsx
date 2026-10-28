@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useTransition } from "react";
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from "react";
 import {
   closeRequest,
   createRequest,
@@ -90,6 +90,10 @@ export function ClientForm() {
   const [matches, setMatches] = useState<DriverMatch[] | null>(null);
   // "Cambiar mi solicitud": vuelve el formulario y la de antes sigue abierta hasta mandar la nueva.
   const [editing, setEditing] = useState(false);
+  // "Cambiar" deja una entrada en el historial: así la flecha de atrás del
+  // teléfono vuelve a su solicitud en vez de sacarlo de Rumbox (Yohany, 28 de
+  // octubre de 2026). true mientras esa entrada sigue ahí.
+  const editEntry = useRef(false);
   // Una cosa a la vez en el teléfono: si está como transportista, se va a esa pantalla.
   const screen = useActiveScreen();
   const [loaded, setLoaded] = useState(false);
@@ -166,9 +170,40 @@ export function ClientForm() {
       setNotice(null);
       setMatches(res.matches);
       setEditing(false);
+      // La entrada de "Cambiar" ya no sirve: atrás no debe volver al formulario.
+      if (editEntry.current) {
+        editEntry.current = false;
+        window.history.back();
+      }
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
   }
+
+  // Se arrepintió de cambiarla: vuelve a su solicitud y lo que alcanzó a
+  // cambiar se descarta, para que la próxima vez el formulario la traiga igual.
+  function stopEditing() {
+    if (current) {
+      setOrigin(current.origin);
+      setDestination(current.destination);
+      setDate(current.date);
+      setService(current.service ?? "");
+      setSize(isKey(CLIENT_SIZES, current.volume) ? current.volume : "");
+    }
+    setEditing(false);
+    setError(null);
+  }
+  const onBack = useEffectEvent(() => {
+    if (!editEntry.current) return;
+    editEntry.current = false;
+    stopEditing();
+  });
+
+  // La flecha de atrás mientras cambia su solicitud.
+  useEffect(() => {
+    if (!editing) return;
+    window.addEventListener("popstate", onBack);
+    return () => window.removeEventListener("popstate", onBack);
+  }, [editing]);
 
   if (!loaded || (!current && screen === "/transportista")) return null;
 
@@ -196,6 +231,8 @@ export function ClientForm() {
         matches={matches}
         onRestart={() => {
           // El formulario vuelve con los mismos datos, para cambiar solo lo que haga falta.
+          window.history.pushState(null, "");
+          editEntry.current = true;
           setEditing(true);
           window.scrollTo({ top: 0, behavior: "smooth" });
         }}
@@ -228,16 +265,8 @@ export function ClientForm() {
       {current ? (
         <button
           type="button"
-          onClick={() => {
-            // Lo que alcanzó a cambiar se descarta: la próxima vez el formulario trae su solicitud.
-            setOrigin(current.origin);
-            setDestination(current.destination);
-            setDate(current.date);
-            setService(current.service ?? "");
-            setSize(isKey(CLIENT_SIZES, current.volume) ? current.volume : "");
-            setEditing(false);
-            setError(null);
-          }}
+          // Igual que la flecha de atrás del teléfono.
+          onClick={() => (editEntry.current ? window.history.back() : stopEditing())}
           className="self-start text-[15px] text-muted"
         >
           ← Volver
