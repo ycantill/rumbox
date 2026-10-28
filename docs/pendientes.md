@@ -68,7 +68,7 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 - **Destino de la diligencia** (Yohany, 28 de octubre de 2026, sin decidir):
   el origen de cualquier servicio es donde hay que recoger o hacer algo
   (en un encargo, donde se compra; en una diligencia, donde se hace), y por
-  eso el conductor que ya pasó más de 20 km de ahí no le sale al cliente.
+  eso el conductor que ya pasó por ahí no le sale al cliente.
   Yohany no está segura de que la diligencia necesite destino. Hoy lo pide
   como todos los servicios.
 
