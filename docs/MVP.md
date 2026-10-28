@@ -150,7 +150,7 @@ Tiene dos botones:
 - "Ya no necesito este servicio": pide confirmar ("¿Dejamos de mostrar tu
   solicitud a los transportistas?"), deja de salirles a los transportistas y
   le devuelve el formulario con los mismos datos.
-- "Cambiar mi solicitud": le devuelve el formulario con los mismos datos.
+- "Cambiar mi solicitud": le devuelve el formulario con los mismos datos. "← Volver" y la flecha de atrás del teléfono lo regresan a su solicitud sin cambiarla.
   Al enviarla, la nueva reemplaza la de antes, que deja de salirles a los
   transportistas.
 
