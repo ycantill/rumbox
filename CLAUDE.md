@@ -181,9 +181,11 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   transportista no ve la lista de clientes que esperan, porque una lista con
   la que no puede hacer nada solo frustra (Yohany): espera que lo llamen.
 - "¿Cuánto espacio te queda?" (Yohany, 21 de octubre de 2026): debajo de sus
-  datos, si hace mudanzas, el transportista tiene las cuatro tarjetas
+  datos, si hace mudanzas o fletes, el transportista tiene las cuatro tarjetas
   (`SpaceLeftPicker`, `updateSpace`; Yohany, 28 de octubre de 2026: con
-  solo las dos de la mudanza no podía decir que iba lleno): cuando carga,
+  solo las dos de la mudanza no podía decir que iba lleno). Con "Sobres y
+  paquetes" tampoco le salen los fletes, aunque el flete no diga su tamaño
+  (Yohany, 28 de octubre de 2026): cuando carga,
   la baja, y cuando descarga, la sube, aunque quede con más espacio del que
   tenía al empezar, porque pudo salir lleno (Yohany, 21 de octubre de 2026).
   `space` guarda lo que le queda (lo que miran los clientes) y

@@ -466,8 +466,8 @@ function CurrentWork({
 
       <WhereYouAre post={post} latestRef={latest} onPatch={onPatch} />
 
-      {/* Solo si hace mudanzas (las de antes, sin servicios, hacen todo). */}
-      {(!post.services || post.services.includes("mudanza")) && (
+      {/* Solo si hace mudanzas o fletes (las de antes, sin servicios, hacen todo). */}
+      {(!post.services || post.services.includes("mudanza") || post.services.includes("flete")) && (
         <SpaceLeft space={post.space} busy={busy} onChange={changeSpace} />
       )}
 
@@ -517,7 +517,8 @@ function StartTrip({ post, onStart }: { post: MyPost; onStart: () => void }) {
 
 /**
  * "¿Cuánto espacio tiene ahora?": cuando carga o descarga, él mismo cambia lo
- * que le queda, y los clientes de mudanza solo lo ven si les cabe. Son las
+ * que le queda, y los clientes de mudanza solo lo ven si les cabe; los de
+ * flete, si le queda más que sobres y paquetes. Son las
  * cuatro tarjetas: baja hasta "Sobres y paquetes" cuando se llena, y puede
  * subir, porque pudo empezar lleno y descargar en el camino.
  */
