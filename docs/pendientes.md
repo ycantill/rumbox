@@ -171,6 +171,19 @@ se probó en un teléfono:
   "Qué queda para después" de [MVP.md](MVP.md).
 - **Publicidad** (queda pendiente): en las pantallas del cliente y del
   conductor. El análisis está en el documento de negocio (privado).
+- **App nativa en las tiendas** (Yohany, 28 de octubre de 2026, queda
+  pendiente): la prefiere a invitar a instalar la PWA, pero para el MVP basta
+  el enlace, que se abre de una vez desde WhatsApp; la tienda le suma pasos a
+  quien maneja poco el celular. Cuando se haga, primero Android con TWA
+  (PWABuilder o Bubblewrap): empaca el mismo sitio y los cambios llegan
+  solos; la cuenta de Google cuesta US$25 una vez, y a las cuentas
+  personales nuevas les pide 14 días de prueba cerrada con 12 personas.
+  Luego iPhone con Capacitor: Yohany tiene Mac para compilar, la cuenta de
+  Apple cuesta US$99 al año y Apple suele rechazar las apps que solo son un
+  sitio web; los avisos al celular podrían ser lo propio que la salve.
+  Reescribirla en React Native no vale la pena. La nativa sí traería avisos
+  al celular sin el enredo de iPhone.
+- El resto está en "Qué queda para después" de [MVP.md](MVP.md).
 
 ## Hecho
 
