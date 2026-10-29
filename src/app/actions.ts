@@ -8,10 +8,6 @@ import { roadRoute } from "@/lib/directions";
 import {
   ANY_DAY,
   ANY_DESTINATION,
-  DRIVER_SPACES,
-  UNSIZED_SPACE,
-  UNSIZED_VOLUME,
-  isKey,
   servicesOf,
   type Service,
 } from "@/lib/domain";
@@ -74,12 +70,6 @@ export async function publishAvailability(input: {
     service_date: input.date,
     // "¿Qué servicios hace?": solo le salen los clientes que piden uno de esos.
     services,
-    // Ya no hay jornadas. La columna no puede quedar vacía: "Todo el día".
-    time_slot: "todo_el_dia",
-    // Ya no se pregunta el espacio (Yohany, 28 de octubre de 2026). Las
-    // columnas no pueden quedar vacías.
-    space: UNSIZED_SPACE,
-    full_space: UNSIZED_SPACE,
     whatsapp,
     edit_token_hash: hashToken(editToken),
   };
@@ -152,7 +142,7 @@ export async function getMyAvailability(input: { id: string; editToken: string }
   return withDb(DRIVER_DB_ERROR, async () => {
     const { data, error } = await db()
       .from("availabilities")
-      .select("origin_city, destination_city, service_date, space, current_city, route, services, status, edit_token_hash")
+      .select("origin_city, destination_city, service_date, current_city, route, services, status, edit_token_hash")
       .eq("id", input.id)
       .maybeSingle();
     if (error) throw error;
@@ -160,10 +150,9 @@ export async function getMyAvailability(input: { id: string; editToken: string }
       return { ...fail("No encontramos sus datos en este teléfono."), gone: true as const };
     }
     // No se vence (Yohany, 21 de octubre de 2026): sigue hasta "Ya no estoy
-    // disponible". Las de antes, sin destino o en carro particular (baúl o
-    // asientos), ya no les salen a los clientes: quedan apagadas.
-    const active =
-      data.status === "activa" && Boolean(data.destination_city) && isKey(DRIVER_SPACES, data.space);
+    // disponible". Las de antes sin destino ya no les salen a los clientes:
+    // quedan apagadas.
+    const active = data.status === "activa" && Boolean(data.destination_city);
     const status = active ? "activa" : "llena";
     return {
       ok: true as const,
@@ -284,9 +273,6 @@ export async function createRequest(input: {
     // hasta que la cierre.
     service_date: input.date === ANY_DAY ? null : input.date,
     service,
-    // Ya no se pregunta el tamaño (Yohany, 28 de octubre de 2026). La columna
-    // no puede quedar vacía.
-    volume: UNSIZED_VOLUME,
   };
 
   const editToken = randomBytes(24).toString("base64url");
@@ -446,9 +432,8 @@ async function findDrivers(r: {
     .from("availabilities")
     .select("id, origin_city, destination_city, service_date, services, current_city, route, whatsapp");
   const { data, error } = await (r.service_date === null ? drivers : drivers.lte("service_date", r.service_date))
-    // Las de antes, sin destino o en carro particular (baúl o asientos), ya no salen.
+    // Las de antes sin destino ya no salen.
     .not("destination_city", "is", null)
-    .in("space", Object.keys(DRIVER_SPACES))
     .eq("status", "activa")
     // Sin teléfono no sirve: ya se borró porque dejó de valer.
     .not("whatsapp", "is", null)
