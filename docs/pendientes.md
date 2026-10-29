@@ -1,26 +1,26 @@
 # Rumbox · Pendientes
 
 Lo que falta por decidir o construir en el MVP, por orden de importancia.
-Actualizado el 18 de octubre de 2026. Los números son los de la revisión de
-ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
+Revisado el 29 de octubre de 2026. Los números vienen de la primera revisión
+(18 de octubre); cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
 ## Decisiones de Yohany
 
-### 0. Modo oscuro y dominio de Rumbox
+### 0. Dominio de Rumbox
 
-- **Modo oscuro:** el diseño de Rumbox no lo cubre y la app quedó siempre
-  clara (27 de octubre de 2026). Propuesta del handoff: fondo `#0f1b2d`,
-  superficies `#18263d` y los mismos ocre y cartón. Falta que Yohany lo
-  confirme.
 - **Dominio y marca:** el dominio ya está comprado (28 de octubre de 2026);
   falta conectarlo en Vercel y revisar la marca Rumbox en la SIC. El correo
   de prueba de `src/lib/legal.ts` es `ayuda@rumbox.co`: hay que crearlo.
+- **Responsable:** Yohany piensa crear una SAS (con buzón u oficina virtual
+  y teléfono propio) para que sea la responsable de los datos y la dueña de
+  la marca. Sin decidir; conviene consultarlo con un contador o abogado.
 
 ### 10. Datos de verdad en el aviso de privacidad
 
 - **Problema:** el aviso de privacidad y la página `/privacidad` ya existen,
   pero con datos de prueba para el demo (Yohany, 20 de octubre de 2026): el
-  correo `ayuda@mudavia.co` y el teléfono `300 111 2233`, que no es real. El
+  correo `ayuda@rumbox.co`, que todavía no existe, y el teléfono
+  `300 111 2233`, que no es real. El
   Decreto 1377 de 2013 pide el nombre (o razón social), domicilio,
   dirección, correo y teléfono del responsable, y alguien tiene que responder
   ahí (10 días hábiles para preguntas, 15 para reclamos).
@@ -58,15 +58,18 @@ ese día; cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
      en pasar lo ganado a la nueva dirección.
   3. Una página por ciudad ("Trasteos en Montería", "Fletes de Cali a Buga"),
      con la palabra "trasteo", que es como se busca en Colombia, y un botón a
-     "Necesito mover algo". Empezar con las ciudades principales, sin
+     "Necesito un servicio". Empezar con las ciudades principales, sin
      favorecer ninguna región.
 - **Dominio:** Yohany lo compró (28 de octubre de 2026). Falta conectarlo
   en Vercel y revisar la marca en la SIC.
 - **Al abrir al público:** poner `OPEN_TO_SEARCH = true` en
   `src/lib/site.ts` (quita el `noindex` y anuncia el mapa del sitio) y
   revisar que `SITE_URL` sea el dominio conectado en Vercel.
-- **Destino de la diligencia** (Yohany, 28 de octubre de 2026, sin decidir):
-  el origen de cualquier servicio es donde hay que recoger o hacer algo
+
+### 10d. Destino de la diligencia
+
+- **Sin decidir** (Yohany, 28 de octubre de 2026): el origen de cualquier
+  servicio es donde hay que recoger o hacer algo
   (en un encargo, donde se compra; en una diligencia, donde se hace), y por
   eso el conductor que ya pasó por ahí no le sale al cliente.
   Yohany no está segura de que la diligencia necesite destino. Hoy lo pide
@@ -84,78 +87,73 @@ Facebook y WhatsApp.
 
 Next.js 16.4 trae `experimental.useOffline`: si se cae la señal, el envío
 queda en espera y se manda solo cuando vuelve, y el hook `useOffline` permite
-avisar "sin señal". Hoy la app muestra "No pudimos conectarnos. Revisa tu
-señal e intenta otra vez." y la persona vuelve a tocar. Riesgos: es
+avisar "sin señal". Hoy la app muestra "No pudimos conectarnos. Revise su
+señal e intente otra vez." y la persona vuelve a tocar. Riesgos: es
 experimental, y si el envío llegó pero se perdió la respuesta, podría
 guardarse dos veces (las listas ya no muestran repetidos).
 
 ## Por probar en un celular
 
-Lo construido en octubre de 2026 pasó lint, typecheck, pruebas y build, pero no
-se probó en un teléfono:
+Lo construido pasó lint, typecheck, pruebas y build, y casi todo se probó en
+el navegador del computador, pero falta probarlo en un teléfono. Yohany está
+en las pruebas manuales (28 de octubre de 2026).
 
-- Con "Tu solicitud" abierta, un transportista que le sirve se pone disponible
+- Con "Su solicitud" abierta, un conductor que le sirve se pone disponible
   en otro teléfono: aparece en la lista en un par de segundos, sin esperar el
   minuto.
-
-- El transportista está disponible y un cliente solicita después: al volver
-  a la app (o al minuto, con la pantalla abierta), el cliente le sale en la
-  lista sin tener que recargar.
-- El cliente solicita y cierra la app. Al abrir otra vez `/solicitar` ve "Tu
-  solicitud" con los transportistas de ese momento, no el formulario.
-- "Ya no necesito este servicio" pide confirmar, vuelve el formulario con los
-  mismos datos y el cliente ya no le sale a ningún transportista.
-- "Cambiar mi solicitud" y enviarla cambiando el día: al transportista del
-  día de antes ya no le sale ese cliente.
-- El día del viaje, "Tu solicitud" y "Estás disponible para este servicio"
-  se ven hasta la medianoche; al día siguiente vuelve el formulario con los
-  datos de antes, sin el día.
-
+- El conductor está disponible y un cliente busca después: al cliente le
+  sale en la lista.
+- El cliente busca y cierra la app. Al abrir otra vez `/solicitar` ve "Su
+  solicitud" con los conductores de ese momento, no el formulario.
+- "Ya no necesito el servicio" pide confirmar en una hoja, vuelve al inicio
+  con "Listo. Cerramos su solicitud." y el cliente ya no le sale a ningún
+  conductor.
+- "Ya no estoy disponible" pide confirmar, vuelve al inicio con "Ya no
+  aparece en las búsquedas. Buen viaje." y el conductor ya no le sale a
+  ningún cliente.
+- "Cambiar" y enviarla cambiando el día: al conductor que sale después de
+  ese día ya no le sale ese cliente. "← Volver" y la flecha de atrás del
+  teléfono regresan a "Su solicitud" sin cambiarla.
+- Una solicitud para un día concreto se ve hasta la medianoche de ese día;
+  al día siguiente vuelve el formulario con "Su solicitud anterior ya
+  pasó…". La de "Cualquier día" y la disponibilidad del conductor no se
+  vencen.
 - Con la llave de OpenRouteService puesta en Vercel, ponerse disponible de
-  Bogotá a Cartagena: la lista de "¿Por dónde vas?" muestra pueblos de la carretera
-  (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni Puerto Berrío.
-- "Comienza tu viaje" en Android (abre Google Maps) y en iPhone (abre
+  Bogotá a Cartagena: el dibujo de "¿Por dónde va?" muestra pueblos de la
+  carretera (Honda o Puerto Salgar, Aguachica, Bosconia…), no Pacho ni
+  Puerto Berrío.
+- Marcar en "¿Por dónde va?" un pueblo más adelante del de un cliente: ese
+  cliente ya no le sale.
+- "+ Paso por otro pueblo" con un pueblo fuera de la carretera: sale "Listo,
+  su camino ahora pasa por …" y el dibujo cambia.
+- "Comenzar viaje en Maps" en Android (abre Google Maps) y en iPhone (abre
   Mapas): abre el camino hasta el destino, y al volver a Rumbox dice
-  "Continúa tu viaje".
+  "Continuar viaje en Maps".
 - Instalar la app en Android y en iPhone y ver el logo de Rumbox.
-- Con el modo avión, tocar "Solicitar transportista" o "Ponerme disponible": debe
+- Con el modo avión, tocar "Buscar conductor" o "Ponerme disponible": debe
   salir el aviso de señal sin perder lo llenado.
-- El cliente no ve ningún precio ni le preguntan por escaleras. Al final ve
-  "Llama o escribe por WhatsApp y acuerden el precio", o "Guardamos tu
-  solicitud" si no hay transportistas.
-- El cliente llena todo en una sola pantalla, como el transportista. Ninguno
-  de los dos ve la pregunta de la ayuda para cargar.
-- Ninguna de las dos pantallas pregunta la jornada: solo "Hoy", "Mañana" u
-  otra fecha. "Hoy" sale también de noche.
-- "Cambiar mi solicitud" devuelve el formulario con lo que había llenado.
+- La primera vez que toca "Escribir por WhatsApp" o "Llamar" en una visita
+  sale la hoja "Antes de escribir" (o "Antes de llamar"); las siguientes,
+  abre de una vez. "Llamar" abre el marcador con el número.
+- "Otra fecha" abre el calendario, también en iPhone.
 - Abrir un enlace viejo a `/cotizar`: debe llevar a `/solicitar`. También con
   la app instalada.
-- Los campos de municipio vacíos dicen "Escribe o elige" y el texto se ve
+- Los campos de municipio vacíos dicen "Escriba o elija" y el texto se ve
   entero.
 - El municipio elegido en un campo no sale en la lista del otro, y si lo
-  escribe sale "Ese municipio ya lo elegiste. Elige otro." (se probó en el
-  navegador del computador).
-- Sin elegir hacia dónde va, no deja ponerse disponible.
+  escribe sale "Ese municipio ya lo eligió. Elija otro.".
 - "Cualquier destino" sale de primero al tocar la flecha del destino y al
-  escribir "cual"; al elegirlo, el campo lo muestra. La tarjeta dice "… → Cualquier destino", le salen los
-  clientes que salen de su municipio o de uno cercano y al cliente le sale "Va de … a
-  cualquier destino".
-- Un viaje: la pregunta "¿Qué día viajas?" y la tarjeta "Viajas…".
-- Un teléfono que tenía guardada una disponibilidad sin destino, de antes: al
-  abrir la pantalla vuelve el formulario con sus datos para elegir el destino.
-- Tocar "Llamar" en un transportista: debe abrir el marcador con el número.
-- El transportista ya no ve "Clientes buscando transportista" ni nada de los
-  clientes; un cliente que solicita después lo ve en su lista y lo llama.
-- Un teléfono que tenía guardado un carro particular: si estaba disponible,
-  vuelve el formulario con sus datos y sin elegir cuánto puede llevar.
+  escribir "cual"; al elegirlo, el campo lo muestra. Le salen los clientes
+  que salen de su municipio o de uno cercano, y en la tarjeta del cliente
+  dice "va a cualquier destino".
 - El que viaja quita mudanzas en "¿Qué servicios hace ahora?": deja de
   salirle a un cliente de mudanza de su ruta y le sigue saliendo al de
-  encomienda.
-- Tocar "Ponerme disponible" o "Solicitar transportista" sin llenar nada: sale
-  el mensaje de Rumbox de lo primero que falta, no el globito del navegador.
-- Abrir la app un día después de que se venció el viaje o la solicitud: vuelve
-  el formulario con "Tu viaje anterior ya pasó…" o "Tu solicitud anterior ya
-  pasó…".
+  encomienda. Si quita todos, sale "Elija al menos un servicio.".
+- Tocar "Ponerme disponible" o "Buscar conductor" sin llenar nada: el botón
+  se ve apagado y, al tocarlo, sale debajo lo primero que falta, no el
+  globito del navegador.
+- Un teléfono que tenía guardada una disponibilidad sin destino o con un
+  carro particular, de antes: al abrir la pantalla vuelve el formulario.
 - Abrir una dirección que no existe: sale "No encontramos esta página".
 
 ## Menores
@@ -167,6 +165,10 @@ se probó en un teléfono:
 
 ## Para después del MVP
 
+- **Modo oscuro** (Yohany, 28 de octubre de 2026: "no es que lo vayan a usar
+  en la oscuridad"): el diseño de Rumbox no lo cubre y la app se ve siempre
+  clara. Propuesta del handoff: fondo `#0f1b2d`, superficies `#18263d` y los
+  mismos ocre y cartón.
 - **Disponibilidades programadas:** rutas que el transportista repite todos
   los días o todas las semanas. Es una mejora futura
 - **Carros particulares:** paquetes y sobres en el baúl o los asientos
@@ -343,3 +345,28 @@ se probó en un teléfono:
   "Escribir por WhatsApp" o "Llamar", y el contacto sigue con "Entendido".
   Sin "Cancelar", y sin "Para cuidarte" en "Tu solicitud" (queda el enlace
   "Qué hacer si te estafan").
+- **PR #62, rediseño de Rumbox (27 de octubre de 2026):** el nombre Rumbox,
+  la identidad y las pantallas de Claude Design, trato de usted y cinco
+  servicios que filtran el emparejamiento (migración `0020_servicios.sql`).
+- **PR #63, prototipo de Rumbox (27 de octubre de 2026):** hojas de abajo
+  para confirmar, los consejos antes del primer contacto de cada visita con
+  "Cancelar", y el aviso al volver al inicio después de cerrar la solicitud o
+  apagar el viaje. Sin migración.
+- **PR #64 y #65:** al cerrar, la pantalla ya no vuelve con lo cerrado, y la
+  flecha de atrás devuelve de "Cambiar" a "Su solicitud". Sin migración.
+- **PR #66 y #67:** la publicidad y la app nativa quedan anotadas para
+  después del MVP.
+- **PR #68 (28 de octubre de 2026):** "Términos y condiciones" en borrador
+  (10b) y la base para Google con `noindex` (10c, paso 1). Sin migración.
+- **PR #70:** al conductor que ya pasó el pueblo del cliente no le sale
+  (3 km de margen en vez de 20). Sin migración.
+- **PR #71, sin tamaño ni espacio (28 de octubre de 2026):** el que viaja
+  cambia sus servicios en el camino ("¿Qué servicios hace ahora?"); la
+  mudanza ya no pregunta el tamaño. Reemplaza el espacio que el PR #69
+  también le pedía al que hace fletes. Migración
+  `0021_servicios_en_el_camino.sql`.
+- **PR #72:** "Otra fecha" abre el calendario también en iPhone.
+- **PR #73, limpieza de la base (29 de octubre de 2026):** se quitan la
+  tabla `reviews` y las columnas que ya no se usaban. Migración
+  `0022_limpieza.sql`, ya corrida.
+- **PR #74:** README, CLAUDE.md y docs/negocio al día tras la limpieza.

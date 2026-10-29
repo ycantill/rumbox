@@ -43,6 +43,7 @@ src/app/page.tsx                 Inicio
 src/app/solicitar/               Cliente: formulario para solicitar transportista
 src/app/transportista/           Transportista: ponerse disponible y ver su servicio
 src/app/ayuda/                   Ayuda: fraudes y seguridad
+src/app/privacidad/              Cómo cuidamos sus datos (aviso de privacidad)
 src/app/terminos/                Términos y condiciones
 src/app/robots.ts, sitemap.ts    Para Google; src/lib/site.ts tiene el dominio y el noindex
 src/app/actions.ts               Server Actions (publishAvailability, updateAvailability,
@@ -53,10 +54,15 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
 src/components/ui.tsx            Componentes compartidos (hojas de abajo, Toast) y useBogotaDates
 src/components/support.tsx       Piezas de /ayuda y /privacidad
 src/lib/domain.ts                Vocabulario: servicios, días y destinos
+src/lib/validate.ts              Lo que falta en los formularios (navegador y servidor, mismos textos)
+src/lib/rate-limit.ts            Límites por teléfono y por conexión
+src/lib/legal.ts                 El responsable de los datos y las fechas de privacidad y términos
+src/lib/one-at-a-time.ts         Qué tiene abierto el teléfono (solicitud o viaje)
+src/lib/toast.ts                 El aviso de abajo al cerrar algo
 src/lib/matching.ts              Emparejamiento por ruta
 src/lib/route.ts                 La ruta del transportista pueblo por pueblo y por dónde va
 src/lib/path.ts, directions.ts   La carretera: guardarla y medir sobre ella; pedirla a OpenRouteService
-src/lib/maps.ts                  El enlace de "Comienza tu viaje" al mapa (Google o Apple)
+src/lib/maps.ts                  El enlace de "Comenzar viaje en Maps" al mapa (Google o Apple)
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
@@ -115,9 +121,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   sombras. `Logo`, `Symbol` y los íconos de servicios están en
   `src/components/ui.tsx`.
 - Los textos del diseño mandan (Yohany: "respeta los textos del diseño"),
-  aunque difieran de los que se citan más abajo en esta guía: donde una
-  decisión de abajo cite un texto viejo, vale la decisión y el texto es el
-  de la app. Toda la app trata de **usted** ("¿Hacia dónde va?", "Elija
+  aunque difieran de los que se acordaron antes. Los que cita esta guía son
+  los de la app al 29 de octubre de 2026; si alguno quedó viejo, vale la
+  decisión y el texto es el de la app. Toda la app trata de **usted** ("¿Hacia dónde va?", "Elija
   qué servicio necesita"), incluidos errores, consejos, `/ayuda` y
   `/privacidad`.
 - Al que viaja, en la pantalla del cliente, se le dice "conductor" ("Buscar
@@ -156,8 +162,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Audiencia y tono**
 - La app es para personas que no manejan mucho el celular. Textos cortos, que
-  suenen a una persona hablando, y preguntas simples ("¿Desde dónde?",
-  "¿Hacia dónde?", "¿Cuánto puedes llevar?").
+  suenen a una persona hablando, y preguntas simples ("¿Qué necesita?",
+  "¿Hacia dónde va?", "¿Para cuándo?").
 - Nada de jerga técnica en pantalla: no "cotizar", "ruta programada", "mano de
   obra", "tarifa", "GPS", "Modo Ruta", "local", "zona" ni distancias en km.
 - Los errores usan el mismo tono, por ejemplo "Elija al menos un servicio".
@@ -172,8 +178,9 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   nadie.
 
 **Llamada o WhatsApp**
-- Al transportista se le pide "Tu teléfono", no "Tu WhatsApp": el número sirve
-  para llamar y para escribir por WhatsApp. Se le dice que los clientes lo
+- Al transportista se le pide "Su teléfono", no "Su WhatsApp": el número sirve
+  para llamar y para escribir por WhatsApp ("Aquí lo llaman o le escriben por
+  WhatsApp."). Se le dice que los clientes lo
   pueden llamar o escribir por WhatsApp.
 - Al cliente no se le pide el teléfono (Yohany, 23 de octubre de 2026): ya no
   hay avisos y es él quien llama o escribe, así que nadie lo veía. Su
@@ -200,27 +207,28 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   disponible".
 - No repitas la palabra "disponible". Solo aparece en los botones "Ponerme
   disponible" y "Ya no estoy disponible" (Yohany, 20 de octubre de 2026; antes
-  "Ya no voy a trabajar") y en el título "Estás disponible para este
-  servicio".
+  "Ya no voy a trabajar"), en el título "Usted está disponible" y en la hoja
+  que confirma apagarla, con los textos del diseño.
 - No le prometas clientes: nada de "Estás recibiendo clientes".
 
 **Un viaje a la vez**
-- El transportista siempre va de viaje: el formulario pregunta "¿Dónde
-  estás?", "¿Hacia dónde vas?" y "¿Qué día viajas?". El destino es
+- El transportista siempre va de viaje: el formulario se titula "¿Hacia
+  dónde va?", con "Está en" y "Va a" en la guía, y sigue con "¿Qué día
+  sale?", "¿Qué servicios hace?" y "Su teléfono". El destino es
   obligatorio; no hay modo local (Yohany lo quitó en octubre de 2026). En la lista
-  del destino, la primera opción es "Cualquier destino" ("Vas a donde te
+  del destino, la primera opción es "Cualquier destino" ("Va a donde le
   pidan"), no un botón aparte (Yohany, octubre de 2026). También sale al
   escribir "cual" o "destino". Viene de `anyDestination` en `CitySelect` y se
   guarda como `cualquiera` (`ANY_DESTINATION`) en `destination_city`.
 - Tiene una sola disponibilidad activa. Si ya tiene una, la pantalla muestra
-  "Estás disponible para este servicio" con sus datos ("Viajas…") y el
-  aviso de que los clientes lo llaman o le escriben por WhatsApp, en vez del
+  "Usted está disponible" con su ruta, sus servicios, el día ("Sale hoy.") y
+  el aviso de que lo llaman o le escriben a su número, en vez del
   formulario. No hay lista de varios días.
 - "Hoy" viene elegido. No se vence (Yohany, 21 de octubre de 2026): el día
   que elige (`service_date`) es desde cuándo viaja, y sigue encendida hasta
   "Ya no estoy disponible". Les sale a los clientes de ese día o de después y
-  a los de "Cualquier día". Su tarjeta dice "Viajas desde hoy" (o desde el
-  día que eligió, si todavía no llega). Antes se apagaba a la medianoche de
+  a los de "Cualquier día". Su tarjeta dice "Sale hoy." (o el día que
+  eligió, si todavía no llega). Antes se apagaba a la medianoche de
   su día. Lo que quedó guardado sin destino, de cuando era opcional, se
   apaga y vuelve el formulario para que elija hacia dónde va.
 - Las rutas que se repiten (todos los días o todas las semanas) son una mejora
@@ -240,7 +248,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Con "Cualquier destino" el match es por origen: los mismos clientes, si
   salen de su municipio o de uno cercano (35 km, la tolerancia mínima del
   corredor), vayan a donde vayan (Yohany, octubre de 2026).
-- "¿Por dónde vas?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
+- "¿Por dónde va?" (Yohany, 21 de octubre de 2026): debajo de sus datos, el
   transportista toca en el dibujo de su ruta el pueblo por donde va, de
   los de su ruta (`routeStops`: todos los municipios por donde pasa la
   carretera, con el centro a 6 km o menos, porque muchas pasan por una
@@ -248,7 +256,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   son más de 40 se deja uno cada tanto, primero los pueblos de cruce. Sin
   carretera, uno cada ~40 km de la línea recta, como mucho 12. El dibujo
   tiene un punto por pueblo, del origen al destino, y cada uno se toca para
-  marcarlo (Yohany, 22 de octubre de 2026): el de ahora dice "Vas por
+  marcarlo (Yohany, 22 de octubre de 2026): el de ahora dice "Usted va
   aquí" y los que ya pasó quedan en gris, con la línea recorrida en Señal,
   pero se pueden tocar por si se equivocó. Ya no hay lista desplegable con los pueblos de la ruta. Lo cambia él a mano (Yohany, 22 de octubre
   de 2026): no se usa la ubicación del teléfono. Se guarda en `current_city`
@@ -266,42 +274,42 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   llave, `OPENROUTESERVICE_API_KEY` en Vercel, `src/lib/directions.ts`) y la
   guarda simplificada en `route` (migración `0017_ruta_por_carretera.sql`).
   Si otro ya hizo el mismo viaje, reusa la guardada (`route_options`). Con ella salen los
-  pueblos de "¿Por dónde vas?" y el match mira la carretera: el pueblo del
+  pueblos de "¿Por dónde va?" y el match mira la carretera: el pueblo del
   cliente a 35 km o menos (`CORRIDOR_ROAD_TOLERANCE_KM`), y lo que quedó atrás
   se cuenta sobre la carretera. Si no hay llave, el servicio no responde en
   5 segundos o la disponibilidad es de antes, todo sigue con la línea recta
   y su corredor ancho (una cuarta parte del viaje a cada lado). Solo se le
   mandan las coordenadas de los dos municipios, nada de la persona.
 - "Otro pueblo" (Yohany, 22 de octubre de 2026): la ruta es la más rápida,
-  pero puede no ser por donde va. Debajo del dibujo de "¿Por dónde vas?"
-  está "¿Vas por un pueblo que no está en la ruta?", con `CitySelect`, solo
+  pero puede no ser por donde va. Debajo del dibujo de "¿Por dónde va?"
+  está "+ Paso por otro pueblo", que abre un `CitySelect`, solo
   para esos. Si el
   pueblo que agrega no queda sobre su carretera (`offRoad`), `updateLocation`
   le pide a OpenRouteService la carretera pasando por ahí y la guarda en
   `route`, si no es más de 1,5 veces la de antes (`viaFits`); así la lista y
-  el match siguen su camino, y le sale "Listo, tu camino ahora pasa por …"
+  el match siguen su camino, y le sale "Listo, su camino ahora pasa por …"
   hasta que escoja otro. Si no se puede, queda marcado igual. Reemplazó a
   "¿Por cuál camino vas?" (escoger entre 2 o 3 caminos armados con pueblos
   de cruce), que se quitó porque los caminos casi no cambiaban. La columna
   `route_options` (migración `0019_varios_caminos.sql`) queda con la más
   rápida del viaje, para reusarla, porque `route` puede cambiar.
-- "Comienza tu viaje" (Yohany, 22 de octubre de 2026): debajo de sus datos,
-  un botón abre el mapa navegando hasta su destino (`mapsUrl` en
+- "Comenzar viaje en Maps" (Yohany, 22 de octubre de 2026; antes "Comienza
+  tu viaje"): en el bloque oscuro de arriba, un botón abre el mapa navegando hasta su destino (`mapsUrl` en
   `src/lib/maps.ts`, un enlace sin llave): Google Maps en Android y Mapas de
   Apple en iPhone, porque viene en todos y Google Maps sin su app no guía
   (Yohany). No se manda el origen: el mapa arranca
   desde donde está el teléfono, así que sirve igual después de un desvío.
   Cuando ya lo tocó (`started`, solo en el teléfono) o marcó un pueblo en
-  "¿Por dónde vas?", dice "Continúa tu viaje". El mapa no le devuelve nada a
-  Rumbox: "¿Por dónde vas?" sigue a mano. Con "Cualquier destino" no sale.
+  "¿Por dónde va?", dice "Continuar viaje en Maps". El mapa no le devuelve nada a
+  Rumbox: "¿Por dónde va?" sigue a mano. Con "Cualquier destino" no sale.
 - Origen y destino nunca son el mismo municipio, ni para el cliente ni para
   el transportista: no hay trasteos dentro del mismo pueblo (Yohany, octubre
   de 2026). El municipio elegido en un campo no sale en la lista del otro
   (`exclude` de `CitySelect`); si lo escribe, sale "Ese municipio ya lo
-  elegiste. Elige otro.". Si aun así quedan
-  iguales (datos guardados de antes), sale el aviso "Elige otro municipio: no
-  puede ser el mismo de salida." (`SAME_CITY_ERROR`) debajo del destino: no
-  puede continuar y el servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
+  eligió. Elija otro.". Si aun así quedan
+  iguales (datos guardados de antes), sale el aviso "El origen y el destino
+  deben ser distintos." (`SAME_CITY_ERROR`) debajo de la ruta, el botón dice
+  "Revise la ruta." y el servidor lo rechaza. Las solicitudes así que quedaron de antes ya no le
   salen a ningún transportista.
 - Fuera de "Cualquier destino" no hay match por cercanía (el antiguo radio de
   40 km alrededor del origen), ni opción Local/Nacional.
@@ -316,7 +324,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   sirven los transportistas de cualquier día, de hoy en adelante, y en su
   tarjeta dice qué día viaja cada uno. Se guarda con `service_date` vacío
   (migración `0015_cualquier_dia_sin_vencer.sql`) y no se vence (Yohany): sigue abierta
-  hasta "Ya no necesito este servicio".
+  hasta "Ya no necesito el servicio".
 - La columna `time_slot` se quitó en la limpieza.
 
 **Sin tamaño ni vehículo**
@@ -342,44 +350,46 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   departamento, y buscar al ojo. Al tocar el campo no se sugiere nada, la
   lista solo se abre con la flecha y no resalta ninguno si no hay uno elegido,
   y ninguna región va primero.
-- El campo vacío dice "Escribe o elige", para invitar a las dos formas.
+- El campo vacío dice "Escriba o elija", para invitar a las dos formas.
 - No hay botón "Ubicarme" (Yohany, 22 de octubre de 2026): el origen de las
   dos pantallas se elige igual que el destino, para simplificar el MVP.
   Rumbox no pide la ubicación del teléfono en ninguna pantalla.
 - Los slugs se guardan en la base de datos: no se cambian.
 
 **El cliente llena una sola pantalla**
-- El formulario del cliente es casi igual al del transportista: todo en una
-  pantalla, sin pasos, con las mismas preguntas en el mismo orden ("¿Desde
-  dónde?", "¿Hacia dónde?", "¿Qué día?", "¿Qué vas a mover?" y "Tu
-  teléfono"). Yohany lo pidió en octubre de 2026.
+- El formulario del cliente es todo en una pantalla, sin pasos (Yohany,
+  octubre de 2026), y con el diseño de Rumbox pregunta en este orden: "¿Qué
+  necesita?" (los cinco servicios en fichas, con la pista del elegido
+  debajo), la ruta ("Desde" y "Hasta") y "¿Para cuándo?". No pide teléfono.
 - No se pregunta la ayuda para cargar, ni al cliente ni al transportista
   (Yohany, 20 de octubre de 2026): es un detalle más que hablan por teléfono,
   como el precio, y en el MVP solo era ruido. No filtra el emparejamiento.
   La columna `labor` se quitó en la limpieza.
-- El botón dice "Solicitar transportista", no "Buscar": si en ese momento no
-  hay nadie, la solicitud queda guardada para cuando aparezca uno (Yohany,
-  octubre de 2026). Por eso la pantalla está en `/solicitar`; `/cotizar`
-  lleva ahí.
+- El botón dice "Buscar conductor" (el texto del diseño; antes "Solicitar
+  transportista"). Igual que antes, si en ese momento no hay nadie, la
+  solicitud queda guardada para cuando aparezca uno (Yohany, octubre de
+  2026). La pantalla está en `/solicitar`; `/cotizar` lleva ahí.
 
 **Una solicitud a la vez**
 - Como el transportista, el cliente tiene una sola solicitud abierta. Si
-  vuelve a `/solicitar`, ve "Tu solicitud" con los transportistas que le
-  sirven en ese momento, en vez del formulario. Arriba están los datos de su
-  solicitud: la ruta, el día y qué va a mover (con su pista).
+  vuelve a `/solicitar`, ve "Su solicitud" con los conductores que le
+  sirven en ese momento, en vez del formulario. Arriba, como una guía de
+  envío, están "Desde", "Hasta", "Servicio" y "Cuándo".
 - Es una pantalla de espera (Yohany, octubre de 2026): mientras no hay
-  transportistas sale "Buscando transportistas…" con ondas que salen del
+  conductores sale "Buscando conductores..." con ondas que salen del
   centro, como una señal (`animate-signal` en `globals.css`, detrás del
   símbolo; quietas si el teléfono pide menos movimiento). Con
-  transportistas, debajo de la lista sigue "Seguimos buscando conductores."
+  conductores, la lista se titula "1 conductor va para allá" (o "3
+  conductores van para allá"), dice "Llame o escriba y acuerden el precio." y
+  debajo sigue "Seguimos buscando conductores. Vuelva a mirar más tarde."
   con un punto que late. Al tocar "Buscar conductor" sale primero, por lo
   menos 1,4 segundos, "Buscando conductores" con el símbolo y la ruta.
 - "Ya no necesito el servicio", la última fila de "Su solicitud", la cierra:
   pide confirmar en una hoja ("¿Cerrar su solicitud?", con el sí en rojo) y
   vuelve al inicio con el aviso "Listo. Cerramos su solicitud." (`Toast` en
   el layout, `announce` en `src/lib/toast.ts`; Yohany, 27 de octubre de 2026).
-  "Cambiar mi solicitud" devuelve el formulario; al enviarla, la nueva
-  reemplaza la de antes. Para regresar sin cambiarla están "← Volver" y la
+  "Cambiar", arriba en "Su solicitud", devuelve el formulario; al enviarla,
+  la nueva reemplaza la de antes. Para regresar sin cambiarla están "← Volver" y la
   flecha de atrás del teléfono, que no lo saca de Rumbox (Yohany, 28 de
   octubre de 2026). Las hojas de abajo también se cierran con esa flecha.
 - Vale hasta que termina el día del viaje: después se olvida y vuelve el
@@ -391,7 +401,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Mientras la tenga, Rumbox lo lleva siempre a esa pantalla: el inicio y la
   pantalla del otro papel no se ven, y "← Inicio" no sale (`GoToActive` y
   `BackHome` en `src/components/one-at-a-time.tsx`). Desde ahí no podría hacer
-  nada. Cuando la cierra ("Ya no necesito este servicio" o "Ya no estoy
+  nada. Cuando la cierra ("Ya no necesito el servicio" o "Ya no estoy
   disponible"), vuelve al inicio; si se vence, vuelven el formulario y "←
   Inicio".
 - Lo revisa solo el navegador, con lo que guarda. Antes el servidor lo
@@ -425,19 +435,20 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Consejos de seguridad**
 - Yohany, 23 de octubre de 2026, tras revisar los fraudes posibles: "Para
-  cuidarte" con consejos cortos debajo de los datos del transportista, y
-  "Rumbox no te cobra y nunca te escribe" también en el inicio. Los del
-  cliente salen solo antes de cada contacto (ver "Llamada o WhatsApp"): Yohany
-  quitó "Para cuidarte" de "Tu solicitud", que solo tiene el enlace "Qué hacer
-  si te estafan". Los textos están en `src/lib/safety.ts`.
+  cuidarse" con consejos cortos debajo de los datos del transportista, y
+  "Rumbox nunca le cobra ni le escribe" también en el inicio y en la hoja
+  antes de contactar. Los del cliente salen solo antes del primer contacto
+  de cada visita (ver "Llamada o WhatsApp"): Yohany quitó "Para cuidarse" de
+  "Su solicitud", que solo tiene el enlace "Qué hacer si lo estafan". Los
+  textos están en `src/lib/safety.ts`.
 - `/ayuda` (Yohany, 23 de octubre de 2026) es solo de fraudes y seguridad,
   no de cómo usar la app (Yohany quitó "Cómo funciona" y las preguntas). Tiene
   qué acordar por WhatsApp antes del trasteo y lo que se puede hacer si hubo
   fraude: el 123 si está en peligro; si pagó, avisar ya al banco,
   Nequi o Daviplata, guardar pantallazos y denunciar en ADenunciar o el CAI
   Virtual de la Policía; consejos para el transportista; y que Rumbox no
-  cobra. Se llega desde "Qué hacer si te estafan" (en "Tu solicitud" y en
-  "Para cuidarte" del transportista) y desde
+  cobra. Se llega desde "Qué hacer si lo estafan" (en "Su solicitud" y en
+  "Para cuidarse" del transportista) y desde
   "Ayuda" en el pie del inicio. Su "← Volver" lleva a lo que el teléfono tiene
   abierto (`BackLink`), porque desde ahí no se puede volver al inicio.
 - No hay botón para reportar (Yohany, 23 de octubre de 2026): sin alguien
@@ -456,12 +467,12 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   apagada no se vuelve a encender.
 
 **Privacidad y términos**
-- Encima de "Solicitar transportista" y de "Ponerme disponible" va el permiso
+- Encima de "Buscar conductor" y de "Ponerme disponible" va el permiso
   para guardar los datos (`PrivacyNote` en `src/components/ui.tsx`), con el
-  enlace "Cómo cuidamos tus datos" a `/privacidad`, que también sale en el
+  enlace "Cómo cuidamos sus datos" a `/privacidad`, que también sale en el
   inicio.
 - El responsable y su contacto están en `src/lib/legal.ts`. El correo
-  `ayuda@mudavia.co` y el teléfono `300 111 2233` son de prueba, solo para el
+  `ayuda@rumbox.co` (todavía no existe) y el teléfono `300 111 2233` son de prueba, solo para el
   demo (Yohany, octubre de 2026): se cambian antes de abrir al público.
 - Los términos y condiciones entran en el MVP (Yohany, octubre de 2026).
   Están en `/terminos`, en borrador (28 de octubre de 2026): falta que alguien
@@ -475,8 +486,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Sin avisos al celular**
 - No hay avisos al celular (Yohany, 22 de octubre de 2026): en iPhone había
   que agregar Rumbox a la pantalla de inicio para recibirlos y era muy
-  complicado. El cliente entra a "Tu solicitud" cada tanto, y la pantalla se
-  lo dice ("Entra a Rumbox cada tanto para mirar."). Con la pantalla
+  complicado. El cliente entra a "Su solicitud" cada tanto, y la pantalla se
+  lo dice ("Entre a Rumbox cada tanto para mirar."). Con la pantalla
   abierta, la lista se pone al día sola. Antes había "Sí, avísame" con Web
   Push (VAPID); la tabla `push_subscriptions` se borró en
   `0018_sin_avisos_al_celular.sql`. El service worker se queda, para que la
@@ -486,7 +497,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **Analíticas propias**
 - Yohany pidió analíticas en octubre de 2026. Son propias, en la tabla
   `events` de Supabase.
-- Se cuentan las visitas a cada pantalla (`TrackVisit`), si ese navegador ya
+- Se cuentan las visitas al inicio, `/solicitar`, `/transportista` y
+  `/privacidad` (`TrackVisit`; `/ayuda` y `/terminos` no), si ese navegador ya
   había entrado (`muvia.ya-vino` en localStorage) y los toques en "Escribir por
   WhatsApp" y "Llamar" de `ContactButtons`, con el transportista que se tocó.
 - No se guarda nada de la persona: ni teléfono, ni `ip_hash`, ni un
@@ -504,8 +516,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   se mide con precisión (y desde el 28 de octubre ni siquiera se pregunta su
   tamaño), así que cualquier cálculo sería poco preciso. Tampoco hay
   descuento por ruta.
-- El cliente solicita transportista ("Solicitar transportista") y la
-  pantalla le dice que acuerden el precio. El transportista sabe qué lleva el
+- El cliente busca conductor ("Buscar conductor") y la pantalla le dice
+  "Llame o escriba y acuerden el precio." El transportista sabe qué lleva el
   cliente cuando hablan; si hace falta ayuda para cargar, lo hablan ahí.
 - No se preguntan las escaleras: solo servían para el precio. Las columnas
   `stairs_origin`, `stairs_destination` y `estimated_price` se quitaron en la

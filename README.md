@@ -105,8 +105,9 @@ que producción salvo que configures otra.
 ## Estructura
 
 ```
-src/app/                 Páginas: inicio, /solicitar (cliente), /transportista
-src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicitar
+src/app/                 Páginas: inicio, /solicitar (cliente), /transportista (conductor),
+                         /ayuda, /privacidad y /terminos
+src/app/actions.ts       Server Actions: ponerse disponible, cambiar el viaje, solicitar, cerrar
 src/components/          Componentes compartidos
 src/lib/domain.ts        Servicios, días, destinos y sus textos
 src/lib/matching.ts      Emparejamiento por ruta
