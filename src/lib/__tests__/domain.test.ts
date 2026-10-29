@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DRIVER_SPACES, SERVICES, UNSIZED_SPACE, UNSIZED_VOLUME, VOLUMES, servicesOf } from "../domain";
+import { DRIVER_SPACES, SERVICES, UNSIZED_SPACE, servicesOf } from "../domain";
 
 describe("sin tamaño ni espacio", () => {
-  it("lo nuevo guarda un valor fijo que la base acepta", () => {
-    expect(Object.keys(VOLUMES)).toContain(UNSIZED_VOLUME);
+  it("el viaje nuevo que guarda el navegador sigue valiendo", () => {
     expect(Object.keys(DRIVER_SPACES)).toContain(UNSIZED_SPACE);
   });
 

@@ -2,12 +2,11 @@
 
 import { getCity } from "./cities";
 
-// No se pregunta el vehículo: la columna `vehicle_type` de la base queda para
-// lo guardado antes.
+// No se pregunta el vehículo (Yohany, octubre de 2026): importa qué servicios
+// hace, no en qué viaja.
 //
 // El carro particular, con "Espacio en el baúl" y "Asientos traseros libres",
-// salió del MVP y queda para después (ver docs/MVP.md). Sus claves (`carro`,
-// `baul`, `asientos`) siguen permitidas en la base de datos.
+// salió del MVP y queda para después (ver docs/MVP.md).
 
 /** Origen y destino nunca son el mismo municipio, ni para el cliente ni para el transportista. */
 export const SAME_CITY_ERROR = "El origen y el destino deben ser distintos.";
@@ -65,27 +64,18 @@ export function servicesOf(raw: unknown): Service[] | null {
 // No se pregunta el tamaño ni el espacio (Yohany, 28 de octubre de 2026): es
 // aproximado y lo hablan por teléfono, como el precio y la ayuda para cargar.
 // Filtran los servicios: el que viaja los cambia durante el viaje, y si se
-// llena quita mudanzas y fletes. Las columnas quedan en la base y no pueden
-// quedar vacías, así que lo nuevo guarda un valor fijo.
-
-/** Las claves de `requests.volume`. */
-export const VOLUMES = { sobres: true, carga_parcial: true, medio_camion: true, camion_entero: true } as const;
-export type Volume = keyof typeof VOLUMES;
-/** Lo que guardan las solicitudes nuevas en `volume`. */
-export const UNSIZED_VOLUME: Volume = "sobres";
+// llena quita mudanzas y fletes. Las columnas se quitaron de la base
+// (0022_limpieza.sql).
 
 /**
- * Las claves de `availabilities.space` que valen: lo guardado con el carro
- * particular (baúl o asientos) ya no les sale a los clientes.
+ * El espacio que guarda el navegador del que viaja (`space` en su viaje): solo
+ * sirve para reconocer lo guardado con el carro particular de antes (baúl o
+ * asientos), que ya no vale.
  */
 export const DRIVER_SPACES = { solo_paquetes: true, carga_parcial: true, medio_camion: true, camion_entero: true } as const;
 export type DriverSpace = keyof typeof DRIVER_SPACES;
-/** Lo que guardan las disponibilidades nuevas en `space` y `full_space`. */
+/** Lo que guardan en el navegador los viajes nuevos. */
 export const UNSIZED_SPACE: DriverSpace = "camion_entero";
-
-// No se pregunta la ayuda para cargar (Yohany, 20 de octubre de 2026): lo
-// hablan por teléfono, como el precio. La columna `labor` queda en la base para
-// lo guardado antes y lo nuevo la deja vacía.
 
 export function isKey<T extends object>(obj: T, key: unknown): key is keyof T {
   return typeof key === "string" && Object.prototype.hasOwnProperty.call(obj, key);

@@ -63,7 +63,7 @@ src/lib/refresh.ts               Volver a pedir las listas al regresar a la app 
 src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda desde el navegador
 src/lib/safety.ts                Consejos de seguridad
 src/lib/live.ts                  Realtime en el navegador (lista del cliente al día) y sus canales
-supabase/migrations/             Esquema: availabilities, requests, reviews, events
+supabase/migrations/             Esquema: availabilities, requests, events
 public/sw.js                     Service worker
 ```
 
@@ -136,8 +136,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   es aproximado y lo hablan por teléfono, como el precio. Filtran solo los
   servicios. Antes la mudanza preguntaba "¿Qué tan grande?" y el que viaja
   "¿Cuánto espacio tiene?". Las columnas `requests.volume` y
-  `availabilities.space` y `full_space` quedan en la base y lo nuevo guarda
-  un valor fijo (`UNSIZED_VOLUME`, `UNSIZED_SPACE`).
+  `availabilities.space` y `full_space` se quitaron en la limpieza (ver
+  "Limpieza de la base").
 - "¿Qué servicios hace ahora?" (Yohany, 28 de octubre de 2026): debajo de
   sus datos, el que viaja cambia sus servicios durante el viaje
   (`updateServices`, migración `0021_servicios_en_el_camino.sql`). Si se
@@ -178,7 +178,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - Al cliente no se le pide el teléfono (Yohany, 23 de octubre de 2026): ya no
   hay avisos y es él quien llama o escribe, así que nadie lo veía. Su
   solicitud la controla el token de su teléfono. La columna `whatsapp` de
-  `requests` queda vacía en las nuevas.
+  `requests` se quitó en la limpieza.
 - El transportista no contacta al cliente (Yohany, octubre de 2026): por la
   privacidad del cliente, siempre es el cliente quien llama o escribe. El
   transportista no ve la lista de clientes que esperan, porque una lista con
@@ -317,25 +317,19 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   tarjeta dice qué día viaja cada uno. Se guarda con `service_date` vacío
   (migración `0015_cualquier_dia_sin_vencer.sql`) y no se vence (Yohany): sigue abierta
   hasta "Ya no necesito este servicio".
-- La columna `time_slot` queda en la base: las disponibilidades nuevas guardan
-  `todo_el_dia` (la columna no puede quedar vacía) y las solicitudes nuevas la
-  dejan vacía. El emparejamiento ya no la mira.
+- La columna `time_slot` se quitó en la limpieza.
 
 **Sin tamaño ni vehículo**
 - No se pregunta el tamaño de la carga ni el espacio libre (Yohany, 28 de
   octubre de 2026; ver "Servicios"). Antes se medía por tamaño de casa
   ("Sobres y paquetes", "Algunas cosas", "Una habitación" y "Una casa").
 - No se pregunta el vehículo (Yohany lo quitó en octubre de 2026). La
-  columna `vehicle_type` queda en la base para lo guardado antes y lo nuevo
-  la deja vacía.
-- Las claves de tamaño siguen en la base y no se cambian: el cliente guarda
-  `sobres`, `carga_parcial`, `medio_camion` y `camion_entero`, y el
-  transportista lo mismo, salvo `solo_paquetes` en vez de `sobres`.
+  columna `vehicle_type` se quitó en la limpieza.
 - El carro particular (con "Espacio en el baúl" y "Asientos traseros libres")
   salió del MVP en octubre de 2026 y queda anotado para después en
-  [docs/MVP.md](docs/MVP.md). Sus claves (`carro`, `baul`, `asientos`) siguen
-  permitidas en la base; lo que quedó guardado con carro ya no les sale a los
-  clientes y al transportista le vuelve el formulario.
+  [docs/MVP.md](docs/MVP.md). Lo que quedó guardado con carro quedó apagado
+  en la limpieza, y si el navegador todavía lo tiene, al transportista le
+  vuelve el formulario.
 
 **Municipios**
 - Están todos los de Colombia, con los nombres oficiales de la DIVIPOLA del
@@ -362,8 +356,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 - No se pregunta la ayuda para cargar, ni al cliente ni al transportista
   (Yohany, 20 de octubre de 2026): es un detalle más que hablan por teléfono,
   como el precio, y en el MVP solo era ruido. No filtra el emparejamiento.
-  La columna `labor` queda en la base para lo guardado antes y lo nuevo la
-  deja vacía (migración `0013_sin_ayuda_para_cargar.sql`).
+  La columna `labor` se quitó en la limpieza.
 - El botón dice "Solicitar transportista", no "Buscar": si en ese momento no
   hay nadie, la solicitud queda guardada para cuando aparezca uno (Yohany,
   octubre de 2026). Por eso la pantalla está en `/solicitar`; `/cotizar`
@@ -514,8 +507,21 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   pantalla le dice que acuerden el precio. El transportista sabe qué lleva el
   cliente cuando hablan; si hace falta ayuda para cargar, lo hablan ahí.
 - No se preguntan las escaleras: solo servían para el precio. Las columnas
-  `stairs_origin` y `stairs_destination` quedan en 0 y `estimated_price` queda
-  vacía en las solicitudes nuevas.
+  `stairs_origin`, `stairs_destination` y `estimated_price` se quitaron en la
+  limpieza.
+
+**Limpieza de la base** (Yohany, 29 de octubre de 2026)
+- La migración `0022_limpieza.sql` quitó lo que ya no usaba nadie: la tabla
+  `reviews` (las reseñas automáticas están fuera del MVP; se crea de nuevo
+  cuando lleguen), de `availabilities` las columnas `time_slot`,
+  `vehicle_type`, `labor`, `photo_url`, `space` y `full_space`, de
+  `requests` las columnas `whatsapp`, `labor`, `stairs_origin`,
+  `stairs_destination`, `estimated_price`, `time_slot` y `volume`, y los
+  índices `requests_search_idx` y `availabilities_ruta_idx`. Antes apagó lo
+  de antes que ya no salía (sin destino o en carro particular).
+- Las columnas que ya no se usan se quitan con una migración, en vez de
+  dejarlas "para lo guardado antes". El reporte del modelo para revisar con
+  un experto está en la carpeta del proyecto (`base-de-datos/`).
 
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
 fotos, API oficial de WhatsApp, avisos al celular, reseñas automáticas,

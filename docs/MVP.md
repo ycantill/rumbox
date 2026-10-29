@@ -247,7 +247,8 @@ abran con mala señal.
   con la app agregada a la pantalla de inicio. El código está en el historial
   de git (PR #28).
 - Reseñas automáticas 24 h después del viaje y felicitación al transportista
-  (la tabla `reviews` ya existe).
+  (la tabla `reviews` se quitó en `0022_limpieza.sql`: se crea de nuevo
+  cuando lleguen).
 - Formularios offline que se sincronizan al recuperar señal.
 - Monetización (el detalle está en el documento de negocio, que es privado).
 - Autocompletado de direcciones y barrios (hoy se busca el municipio entre todos
