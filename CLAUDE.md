@@ -81,8 +81,8 @@ public/sw.js                     Service worker
 - Con `cacheComponents` no se puede usar `new Date()` durante el render. Para
   "hoy" y "mañana" usa `useBogotaDates()`; las fechas van en hora de Colombia.
 - Las etiquetas visibles viven en `src/lib/domain.ts`. Cambia el texto ahí, no
-  en cada componente, y conserva las claves internas (`manana`, `camion_entero`,
-  etc.) porque se guardan en la base de datos.
+  en cada componente, y conserva las claves internas (`mudanza`, `cualquier_dia`,
+  `activa`, etc.) porque se guardan en la base de datos.
 - Un cambio de esquema va en una migración nueva numerada en
   `supabase/migrations/` (por ejemplo `0002_...sql`), nunca editando
   `0001_init.sql`. Avisa a Yohany que debe correrla en Supabase antes de
@@ -500,9 +500,10 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 
 **Sin precio**
 - En el MVP no se calcula ningún precio: el cliente y el transportista lo
-  acuerdan cuando hablan. Yohany lo decidió en octubre de 2026, porque medir
-  la carga por tamaño de casa hace menos preciso cualquier cálculo. Tampoco
-  hay descuento por ruta.
+  acuerdan cuando hablan. Yohany lo decidió en octubre de 2026: la carga no
+  se mide con precisión (y desde el 28 de octubre ni siquiera se pregunta su
+  tamaño), así que cualquier cálculo sería poco preciso. Tampoco hay
+  descuento por ruta.
 - El cliente solicita transportista ("Solicitar transportista") y la
   pantalla le dice que acuerden el precio. El transportista sabe qué lleva el
   cliente cuando hablan; si hace falta ayuda para cargar, lo hablan ahí.
@@ -511,7 +512,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   limpieza.
 
 **Limpieza de la base** (Yohany, 29 de octubre de 2026)
-- La migración `0022_limpieza.sql` quitó lo que ya no usaba nadie: la tabla
+- La migración `0022_limpieza.sql` (ya corrida en Supabase, como todas
+  hasta esa) quitó lo que ya no usaba nadie: la tabla
   `reviews` (las reseñas automáticas están fuera del MVP; se crea de nuevo
   cuando lleguen), de `availabilities` las columnas `time_slot`,
   `vehicle_type`, `labor`, `photo_url`, `space` y `full_space`, de
@@ -520,8 +522,12 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   índices `requests_search_idx` y `availabilities_ruta_idx`. Antes apagó lo
   de antes que ya no salía (sin destino o en carro particular).
 - Las columnas que ya no se usan se quitan con una migración, en vez de
-  dejarlas "para lo guardado antes". El reporte del modelo para revisar con
-  un experto está en la carpeta del proyecto (`base-de-datos/`).
+  dejarlas "para lo guardado antes". Hoy la base tiene tres tablas
+  (`availabilities`, `requests` y `events`), dos vistas de analíticas, el
+  trigger de Realtime y la tarea de pg_cron que borra los teléfonos. El
+  reporte del modelo para revisar con un experto está en la carpeta del
+  proyecto (`base-de-datos/`) y en
+  https://claude.ai/artifact/6Q93wAYpBa9krmv5ctoUEG.
 
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
 fotos, API oficial de WhatsApp, avisos al celular, reseñas automáticas,

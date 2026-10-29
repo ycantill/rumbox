@@ -1,18 +1,20 @@
 # Rumbox
 
-Plataforma web (PWA) de mudanzas, fletes, encomiendas, encargos y diligencias que conecta clientes con
-transportistas que ya van hacia otro lado y tienen espacio libre. Sin
-registro, sin comisiones y con contacto directo por llamada o WhatsApp, en
-Colombia. Todavía no está definido dónde será el piloto.
+Plataforma web (PWA) que conecta a quien necesita una mudanza, un flete, una
+encomienda, un encargo o una diligencia con conductores que ya van de viaje
+hacia otro lado. Sin registro, sin comisiones y con contacto directo por
+llamada o WhatsApp, en Colombia. Todavía no está definido dónde será el
+piloto.
 
-- **Cliente** (`/solicitar`): dice de dónde a dónde, qué día, qué va a
-  mover y su teléfono. Ve los
-  transportistas que le sirven, los llama o les escribe por WhatsApp y
-  acuerdan el precio.
-- **Transportista** (`/transportista`): se pone disponible para un viaje (de
-  dónde sale, hacia dónde va y qué día) con cuánto puede llevar. Hasta que
-  termina el día del viaje, o hasta que toque "Ya no estoy disponible", los
-  clientes lo llaman o le escriben, y él cambia cuánto espacio le queda.
+- **Cliente** (`/solicitar`): dice qué servicio necesita, de dónde a dónde y
+  qué día (o "Cualquier día"). No da su teléfono. Ve los conductores que le
+  sirven, los llama o les escribe por WhatsApp y acuerdan el precio. Si no
+  hay nadie, su solicitud queda guardada y la lista se actualiza sola.
+- **Conductor** (`/transportista`, "Voy de viaje"): se pone disponible para
+  un viaje (de dónde sale, hacia dónde va o "Cualquier destino", desde qué
+  día y qué servicios hace) y deja su teléfono. Sigue disponible hasta que
+  toque "Ya no estoy disponible". Durante el viaje marca por dónde va y
+  cambia los servicios que hace (si se llena, quita mudanzas y fletes).
 
 El alcance del MVP y lo que queda para después está en
 [docs/MVP.md](docs/MVP.md). La visión de negocio completa está en
@@ -37,9 +39,11 @@ en [Supabase](https://supabase.com).
    npm install
    ```
 
-2. Crea un proyecto en Supabase. En el **SQL Editor**, ejecuta en orden los
-   archivos de `supabase/migrations/`, empezando por `0001_init.sql`. Cada vez
-   que aparezca una migración nueva hay que ejecutarla también.
+2. Crea un proyecto en Supabase y activa la extensión **pg_cron**
+   (Database → Extensions). En el **SQL Editor**, ejecuta en orden los
+   archivos de `supabase/migrations/`, desde `0001_init.sql` hasta la última
+   (hoy `0022_limpieza.sql`). Cada vez que aparezca una migración nueva hay
+   que ejecutarla también.
 
 3. Copia `.env.example` a `.env.local`:
 
@@ -104,11 +108,11 @@ que producción salvo que configures otra.
 src/app/                 Páginas: inicio, /solicitar (cliente), /transportista
 src/app/actions.ts       Server Actions: ponerse disponible, actualizar, solicitar
 src/components/          Componentes compartidos
-src/lib/domain.ts        Tamaños de carga y sus textos
+src/lib/domain.ts        Servicios, días, destinos y sus textos
 src/lib/matching.ts      Emparejamiento por ruta
 src/lib/route.ts         La ruta del transportista pueblo por pueblo (por carretera)
 src/lib/cities.ts        Todos los municipios de Colombia y su búsqueda
-supabase/migrations/     Esquema de base de datos
+supabase/migrations/     Esquema: availabilities (viajes), requests (solicitudes), events (analíticas)
 docs/                    Alcance del MVP, pendientes y base de conocimiento de negocio
 public/sw.js             Service worker (PWA)
 ```
