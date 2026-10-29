@@ -441,7 +441,6 @@ export function DayPicker({
   anyDay?: boolean;
 }) {
   const { today, tomorrow } = useBogotaDates();
-  const dateRef = useRef<HTMLInputElement>(null);
   const other = Boolean(value) && value !== ANY_DAY && value !== today && value !== tomorrow;
   const segments = [
     ...(anyDay ? [{ label: ANY_DAY_LABEL, value: ANY_DAY }] : []),
@@ -449,19 +448,9 @@ export function DayPicker({
     { label: "Mañana", value: tomorrow },
   ];
 
-  function pickOther() {
-    const input = dateRef.current;
-    if (!input) return;
-    try {
-      input.showPicker();
-    } catch {
-      input.focus();
-    }
-  }
-
   return (
     <div
-      className={`relative grid overflow-hidden rounded-md border border-line bg-surface ${
+      className={`grid overflow-hidden rounded-md border border-line bg-surface ${
         anyDay ? "grid-cols-4" : "grid-cols-3"
       }`}
     >
@@ -470,22 +459,36 @@ export function DayPicker({
           {s.label}
         </Segment>
       ))}
-      <Segment selected={other} divider onClick={pickOther}>
+      {/*
+        "Otra fecha" es el calendario del teléfono, invisible encima del
+        segmento: el toque cae en él y lo abre. Abrirlo desde un botón con
+        showPicker no sirve en iPhone, que no lo abre.
+      */}
+      <label
+        className={`relative flex items-center justify-center px-1 py-3 text-center text-sm leading-tight ${
+          other ? "bg-ink font-bold text-white" : "border-l border-line-soft"
+        }`}
+      >
         {other ? shortDay(value) : "Otra fecha"}
-      </Segment>
-      {/* El calendario del teléfono: se abre con "Otra fecha". */}
-      <input
-        ref={dateRef}
-        type="date"
-        tabIndex={-1}
-        aria-label="Otra fecha"
-        className="pointer-events-none absolute bottom-0 right-0 h-px w-1/4 opacity-0"
-        min={today}
-        // Más lejos el servidor no la acepta: el calendario no la deja elegir.
-        max={today ? addDays(today, MAX_DAYS_AHEAD) : undefined}
-        value={other ? value : ""}
-        onChange={(e) => e.target.value && onChange(e.target.value)}
-      />
+        <input
+          type="date"
+          aria-label="Otra fecha"
+          className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0"
+          min={today}
+          // Más lejos el servidor no la acepta: el calendario no la deja elegir.
+          max={today ? addDays(today, MAX_DAYS_AHEAD) : undefined}
+          value={other ? value : ""}
+          onClick={(e) => {
+            // En la computadora el clic no abre el calendario solo.
+            try {
+              e.currentTarget.showPicker();
+            } catch {
+              // Si no se puede, el teléfono lo abre con el toque.
+            }
+          }}
+          onChange={(e) => e.target.value && onChange(e.target.value)}
+        />
+      </label>
     </div>
   );
 }
