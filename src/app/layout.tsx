@@ -28,7 +28,7 @@ const archivo = Archivo({
 export const metadata: Metadata = {
   title: { default: "Rumbox · Servicios en el camino", template: "%s · Rumbox" },
   description:
-    "Mudanzas, fletes, encomiendas, encargos y diligencias con conductores que ya van de viaje. Usted habla directo con ellos por llamada o WhatsApp y acuerdan el precio.",
+    "Mudanzas, fletes y encomiendas con conductores que ya van de viaje. Usted habla directo con ellos por llamada o WhatsApp y acuerdan el precio.",
   applicationName: "Rumbox",
   metadataBase: new URL(SITE_URL),
   // La imagen para compartir es opengraph-image.png, en esta misma carpeta.

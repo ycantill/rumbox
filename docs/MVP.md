@@ -2,13 +2,18 @@
 
 > **Rediseño de Rumbox (Yohany, 27 de octubre de 2026).** La app se llama
 > Rumbox y tiene la identidad y las pantallas del diseño de Claude Design:
-> trato de usted, cinco servicios (mudanza, flete, encomienda, encargo y
-> diligencia) y "¿Qué servicios hace?" para el que viaja, que filtra el
+> trato de usted, servicios (hoy mudanza, flete y encomienda) y "¿Qué
+> servicios hace?" para el que viaja, que filtra el
 > emparejamiento (migración `0020_servicios.sql`). Desde el 28 de octubre no
 > se pregunta el tamaño ni el espacio: el que viaja cambia sus servicios
 > durante el viaje. Al cerrar la solicitud o
 > dejar de estar disponible, la app vuelve al inicio con un aviso. Donde este documento cite textos de antes, valen los
 > de la app (ver CLAUDE.md, "Diseño de Rumbox" y "Servicios").
+>
+> **Solo carga (Yohany, 4 de noviembre de 2026).** El MVP se enfoca en
+> furgones y camiones de estacas: salen los encargos y las diligencias, y
+> los carros particulares siguen por fuera. Quedan tres servicios: mudanza,
+> flete y encomienda (migración `0023_solo_carga.sql`).
 
 Basado en el documento de producto "Plataforma Web de Logística Inteligente:
 Mudanzas y Fletes Híbridos". El objetivo del MVP es validar que transportistas
@@ -113,7 +118,7 @@ se elige igual que el destino.
   mismas preguntas en el mismo orden. Yohany lo pidió en octubre de 2026.
 - La dirección es `/solicitar`. Antes era `/cotizar`, que ahora lleva a
   `/solicitar` para que no se rompan los enlaces guardados o compartidos.
-- Primero "¿Qué necesita?": uno de los cinco servicios, sin tamaño. Luego
+- Primero "¿Qué necesita?": uno de los tres servicios, sin tamaño. Luego
   "Desde" y "Hasta", que no pueden ser el mismo municipio, y "¿Para
   cuándo?" ("Cualquier día", que viene elegido, Hoy, Mañana u Otra fecha). No se pide el teléfono (Yohany, 23
   de octubre de 2026): ya no hay avisos, y es el cliente quien llama. No se pregunta la ayuda para cargar (Yohany, 20 de octubre de
@@ -231,6 +236,14 @@ abran con mala señal.
 
 ## Qué queda para después
 
+- Encargos (que le compren algo y se lo traigan) y diligencias (una vuelta,
+  un trámite, recoger algo). Llegaron con el diseño de Rumbox el 27 de
+  octubre de 2026 y Yohany los sacó el 4 de noviembre de 2026 para enfocar el
+  MVP en carga con furgones y camiones de estacas. Cuando vuelvan: sus
+  claves eran `encargo` y `diligencia`, sus íconos (bolsa de compra y sobre)
+  están en el historial de git, y hay que abrir otra vez las revisiones de
+  `requests.service` y `availabilities.services` en una migración nueva.
+  Queda sin decidir si la diligencia necesita destino.
 - Carros particulares: llevar paquetes y sobres en el baúl o en los asientos
   traseros de un carro que ya va de viaje. Yohany lo sacó del MVP en octubre
   de 2026. Cuando vuelva, lo que había: el vehículo "Carro particular"

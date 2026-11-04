@@ -27,7 +27,7 @@ describe("servicios", () => {
     expect(matchesTrip(fletes, request({ service: "flete" }))).toBe(true);
     expect(matchesTrip(fletes, request({ service: "encomienda" }))).toBe(true);
     expect(matchesTrip(fletes, request({ service: "mudanza" }))).toBe(false);
-    expect(matchesTrip(driver({ services: ["mudanza"], destination_city: ANY_DESTINATION }), request({ service: "diligencia" }))).toBe(false);
+    expect(matchesTrip(driver({ services: ["mudanza"], destination_city: ANY_DESTINATION }), request({ service: "encomienda" }))).toBe(false);
   });
 
   it("si se llenó y quitó mudanzas y fletes, le siguen saliendo las encomiendas", () => {
@@ -38,8 +38,8 @@ describe("servicios", () => {
   });
 
   it("lo guardado antes de los servicios: el transportista hace todos y la solicitud le sirve a cualquiera", () => {
-    expect(matchesTrip(driver({ services: null }), request({ service: "diligencia" }))).toBe(true);
-    expect(matchesTrip(driver({ services: ["diligencia"] }), request({ service: null }))).toBe(true);
+    expect(matchesTrip(driver({ services: null }), request({ service: "encomienda" }))).toBe(true);
+    expect(matchesTrip(driver({ services: ["encomienda"] }), request({ service: null }))).toBe(true);
   });
 
   it("el servicio no salta las otras reglas: la ruta sigue contando", () => {

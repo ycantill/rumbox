@@ -2,7 +2,7 @@
 
 # Rumbox · guía para Claude
 
-Rumbox es una PWA de mudanzas, fletes, encomiendas, encargos y diligencias en Colombia; todavía no está
+Rumbox es una PWA de carga (mudanzas, fletes y encomiendas) en Colombia; todavía no está
 definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
 clientes con transportistas que ya van hacia otro lado y tienen espacio libre.
 Sin registro, sin comisiones y con contacto directo por llamada o WhatsApp. El
@@ -131,9 +131,20 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   de viaje". En el código y la base sigue siendo transportista.
 - El diseño no cubre el modo oscuro: por ahora la app se ve siempre clara.
 
+**Solo carga** (Yohany, 4 de noviembre de 2026)
+- El MVP se enfoca en el mercado de furgones y camiones de estacas: solo
+  carga. Salieron los encargos y las diligencias (que llegaron con el diseño
+  el 27 de octubre) y siguen por fuera los carros particulares. El vehículo
+  sigue sin preguntarse.
+- La migración `0023_solo_carga.sql` cierra las solicitudes abiertas de
+  encargo o diligencia, se los quita a los que viajan (si solo hacían eso,
+  su disponibilidad se apaga) y la base deja de aceptarlos. Si el navegador
+  todavía los tiene guardados, el cliente vuelve al formulario y al que
+  viaja se le quitan (y vuelve al formulario si no le queda ninguno).
+
 **Servicios** (Yohany, 27 de octubre de 2026, con el diseño)
-- Son cinco: mudanza, flete, encomienda, encargo y diligencia (`SERVICES` en
-  `src/lib/domain.ts`). El cliente elige uno en "¿Qué necesita?" y se guarda
+- Son tres: mudanza, flete y encomienda (`SERVICES` en
+  `src/lib/domain.ts`; eran cinco hasta "Solo carga"). El cliente elige uno en "¿Qué necesita?" y se guarda
   en `requests.service`. El que viaja marca los que hace en "¿Qué servicios
   hace?" (`availabilities.services`, migración `0020_servicios.sql`), y solo
   le salen los clientes que piden uno de esos. Reemplaza el "sin casillas,
@@ -359,7 +370,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
 **El cliente llena una sola pantalla**
 - El formulario del cliente es todo en una pantalla, sin pasos (Yohany,
   octubre de 2026), y con el diseño de Rumbox pregunta en este orden: "¿Qué
-  necesita?" (los cinco servicios en fichas, con la pista del elegido
+  necesita?" (los tres servicios en fichas, con la pista del elegido
   debajo), la ruta ("Desde" y "Hasta") y "¿Para cuándo?". No pide teléfono.
 - No se pregunta la ayuda para cargar, ni al cliente ni al transportista
   (Yohany, 20 de octubre de 2026): es un detalle más que hablan por teléfono,
@@ -541,7 +552,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   proyecto (`base-de-datos/`) y en
   https://claude.ai/artifact/6Q93wAYpBa9krmv5ctoUEG.
 
-**Fuera del MVP** (ver docs/MVP.md): carros particulares, precio aproximado,
+**Fuera del MVP** (ver docs/MVP.md): carros particulares, encargos y
+diligencias, precio aproximado,
 fotos, API oficial de WhatsApp, avisos al celular, reseñas automáticas,
 formularios offline, monetización (incluidas las disponibilidades
 programadas), autocompletado de direcciones, captcha y verificar el número

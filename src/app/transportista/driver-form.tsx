@@ -33,6 +33,7 @@ import {
   UNSIZED_SPACE,
   destinationName,
   isKey,
+  servicesOf,
   type DriverSpace,
   type Service,
 } from "@/lib/domain";
@@ -97,7 +98,13 @@ export function DriverForm() {
     // localStorage solo existe en el navegador: se lee después de hidratar.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setWhatsapp(phoneInput(p.whatsapp));
-    setPosts(load<MyPost[]>(KEYS.driverPosts, []));
+    // Los encargos y las diligencias salieron (Yohany, 4 de noviembre de
+    // 2026): si los tenía marcados en este teléfono, se le quitan.
+    setPosts(
+      load<MyPost[]>(KEYS.driverPosts, []).map((p) =>
+        p.services ? { ...p, services: servicesOf(p.services) ?? [] } : p,
+      ),
+    );
     setLoaded(Boolean(today));
   }, [today]);
 
@@ -299,7 +306,8 @@ function CurrentWork({
   // No se vence (Yohany, 21 de octubre de 2026): sigue hasta "Ya no estoy
   // disponible". Lo guardado de antes sin destino o con el espacio de un carro
   // particular (baúl o asientos) vuelve al formulario: tiene que elegir otra vez.
-  const ended = !post.destination || !isKey(DRIVER_SPACES, post.space);
+  // También si solo hacía encargos o diligencias, que salieron del MVP.
+  const ended = !post.destination || !isKey(DRIVER_SPACES, post.space) || post.services?.length === 0;
 
   // Si sigue encendida y con qué servicios, desde el servidor: al abrir la
   // pantalla, al volver a la app y cada minuto mientras la tiene abierta. No ve

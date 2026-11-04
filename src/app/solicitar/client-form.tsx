@@ -36,6 +36,7 @@ import {
   ANY_DESTINATION,
   SAME_CITY_ERROR,
   SERVICES,
+  isKey,
   type Service,
 } from "@/lib/domain";
 import { listenForDrivers } from "@/lib/live";
@@ -92,7 +93,13 @@ export function ClientForm() {
     if (!today) return;
     // Ya no se pide el teléfono (Yohany, 23 de octubre de 2026): se borra el que quedó guardado.
     forget(KEYS.clientPhone);
-    const saved = load<MyRequest | null>(KEYS.clientRequest, null);
+    let saved = load<MyRequest | null>(KEYS.clientRequest, null);
+    // Los encargos y las diligencias salieron (Yohany, 4 de noviembre de
+    // 2026) y su solicitud quedó cerrada: vuelve el formulario.
+    if (saved?.service && !isKey(SERVICES, saved.service)) {
+      save(KEYS.clientRequest, null);
+      saved = null;
+    }
     if (saved) {
       // El formulario queda con sus datos, para cambiar solo lo que haga falta.
       // localStorage solo existe en el navegador: se lee después de hidratar.

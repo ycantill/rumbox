@@ -1,8 +1,8 @@
 # Rumbox
 
-Plataforma web (PWA) que conecta a quien necesita una mudanza, un flete, una
-encomienda, un encargo o una diligencia con conductores que ya van de viaje
-hacia otro lado. Sin registro, sin comisiones y con contacto directo por
+Plataforma web (PWA) que conecta a quien necesita una mudanza, un flete o una
+encomienda con conductores de furgones y camiones de estacas que ya van de
+viaje hacia otro lado. Sin registro, sin comisiones y con contacto directo por
 llamada o WhatsApp, en Colombia. Todavía no está definido dónde será el
 piloto.
 

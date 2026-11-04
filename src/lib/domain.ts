@@ -42,13 +42,16 @@ export function destinationName(slug: string | null): string | undefined {
  * cliente elige uno en "¿Qué necesita?" y el que viaja marca los que hace en
  * "¿Qué servicios hace?". Solo le salen los clientes que piden uno de esos.
  * Las claves se guardan en la base (`requests.service`, `availabilities.services`).
+ *
+ * Solo carga (Yohany, 4 de noviembre de 2026): el MVP se enfoca en furgones y
+ * camiones de estacas, así que salieron los encargos y las diligencias
+ * (0023_solo_carga.sql). Si algo guardado en el navegador todavía los tiene,
+ * `servicesOf` y `isKey(SERVICES, …)` los dejan por fuera.
  */
 export const SERVICES = {
   mudanza: { label: "Mudanza", plural: "Mudanzas", hint: "Una habitación o una casa completa." },
   flete: { label: "Flete", plural: "Fletes", hint: "Un mueble, una nevera o unas cajas." },
   encomienda: { label: "Encomienda", plural: "Encomiendas", hint: "Un paquete, un sobre o documentos." },
-  encargo: { label: "Encargo", plural: "Encargos", hint: "Que le compren algo y se lo traigan." },
-  diligencia: { label: "Diligencia", plural: "Diligencias", hint: "Una vuelta, un trámite, recoger algo." },
 } as const;
 export type Service = keyof typeof SERVICES;
 

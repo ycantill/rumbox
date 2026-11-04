@@ -13,14 +13,19 @@ describe("sin tamaño ni espacio", () => {
 });
 
 describe("servicios", () => {
-  it("son cinco, en el orden del diseño", () => {
-    expect(Object.keys(SERVICES)).toEqual(["mudanza", "flete", "encomienda", "encargo", "diligencia"]);
+  it("son tres, solo carga, en el orden del diseño", () => {
+    expect(Object.keys(SERVICES)).toEqual(["mudanza", "flete", "encomienda"]);
   });
 
   it("de una lista deja los que existen, sin repetir y en orden; sin lista, null", () => {
-    expect(servicesOf(["diligencia", "mudanza", "mudanza", "trasteo"])).toEqual(["mudanza", "diligencia"]);
+    expect(servicesOf(["encomienda", "mudanza", "mudanza", "trasteo"])).toEqual(["mudanza", "encomienda"]);
     expect(servicesOf(null)).toBeNull();
     expect(servicesOf("mudanza")).toBeNull();
+  });
+
+  it("los encargos y las diligencias salieron del MVP: lo guardado con ellos los pierde", () => {
+    expect(servicesOf(["encargo", "flete", "diligencia"])).toEqual(["flete"]);
+    expect(servicesOf(["encargo", "diligencia"])).toEqual([]);
   });
 });
 
