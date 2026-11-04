@@ -6,7 +6,7 @@ import { TrackVisit } from "@/components/ui";
 export const metadata: Metadata = {
   title: "Necesito un servicio",
   description:
-    "Pida una mudanza, un flete, una encomienda, un encargo o una diligencia y hable directo con conductores que ya van para allá.",
+    "Pida una mudanza, un flete o una encomienda y hable directo con conductores que ya van para allá.",
 };
 
 export default function ClientPage() {

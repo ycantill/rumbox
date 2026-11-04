@@ -28,7 +28,7 @@ export default function TermsPage() {
       <div className="flex flex-col gap-[22px]">
         <SupportSection title="Qué hace Rumbox" first>
           <SupportText>
-            Rumbox pone en contacto a quien necesita una mudanza, un flete, una encomienda, un encargo o una diligencia
+            Rumbox pone en contacto a quien necesita una mudanza, un flete o una encomienda
             con conductores que ya van de viaje y tienen espacio. Nada más.
           </SupportText>
           <SupportText>

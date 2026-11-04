@@ -50,8 +50,14 @@ describe("requestInputError", () => {
   });
 
   it("ningún servicio pregunta el tamaño", () => {
-    for (const service of ["mudanza", "flete", "encomienda", "encargo", "diligencia"]) {
+    for (const service of ["mudanza", "flete", "encomienda"]) {
       expect(requestInputError({ ...request, service }, today)).toBeNull();
+    }
+  });
+
+  it("ya no se pueden pedir encargos ni diligencias", () => {
+    for (const service of ["encargo", "diligencia"]) {
+      expect(requestInputError({ ...request, service }, today)).toBe("Elija qué servicio necesita.");
     }
   });
 

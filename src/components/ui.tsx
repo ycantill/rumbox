@@ -341,7 +341,7 @@ function withoutCity(slug: string) {
 }
 
 /**
- * "¿Qué necesita?" del cliente: los cinco servicios en fichas con su ícono. Se
+ * "¿Qué necesita?" del cliente: los tres servicios en fichas con su ícono. Se
  * elige uno.
  */
 export function ServicePicker({ value, onChange }: { value: Service | ""; onChange: (s: Service) => void }) {
@@ -976,20 +976,6 @@ const SERVICE_ICONS: Record<Service, React.ReactNode> = {
       <line x1="9" y1="20" x2="39" y2="20" />
       <line x1="24" y1="14" x2="24" y2="20" />
       <rect x="28" y="26" width="7" height="5" fill="#fff" />
-    </>
-  ),
-  // Bolsa de compra.
-  encargo: (
-    <>
-      <path d="M12 18 H36 L34 38 H14 Z" />
-      <path d="M19 18 V15 a5 5 0 0 1 10 0 V18" fill="none" />
-    </>
-  ),
-  // Sobre.
-  diligencia: (
-    <>
-      <rect x="9" y="14" width="30" height="21" rx="2" />
-      <path d="M9 16 L24 27 L39 16" fill="none" />
     </>
   ),
 };

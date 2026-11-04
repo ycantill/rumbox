@@ -66,15 +66,6 @@ Revisado el 29 de octubre de 2026. Los números vienen de la primera revisión
   `src/lib/site.ts` (quita el `noindex` y anuncia el mapa del sitio) y
   revisar que `SITE_URL` sea el dominio conectado en Vercel.
 
-### 10d. Destino de la diligencia
-
-- **Sin decidir** (Yohany, 28 de octubre de 2026): el origen de cualquier
-  servicio es donde hay que recoger o hacer algo
-  (en un encargo, donde se compra; en una diligencia, donde se hace), y por
-  eso el conductor que ya pasó por ahí no le sale al cliente.
-  Yohany no está segura de que la diligencia necesite destino. Hoy lo pide
-  como todos los servicios.
-
 ## Propuestas
 
 ### 18. Compartir por WhatsApp o con código QR
@@ -164,6 +155,10 @@ en las pruebas manuales (28 de octubre de 2026).
   cada despliegue.
 
 ## Para después del MVP
+
+- **Encargos y diligencias** (Yohany, 4 de noviembre de 2026): salieron
+  para enfocar el MVP en carga con furgones y camiones de estacas. Queda
+  sin decidir si la diligencia necesita destino. Ver docs/MVP.md.
 
 - **Modo oscuro** (Yohany, 28 de octubre de 2026: "no es que lo vayan a usar
   en la oscuridad"): el diseño de Rumbox no lo cubre y la app se ve siempre

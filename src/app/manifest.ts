@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Rumbox · Servicios en el camino",
     short_name: "Rumbox",
-    description: "Mudanzas, fletes, encomiendas, encargos y diligencias con conductores que ya van de viaje.",
+    description: "Mudanzas, fletes y encomiendas con conductores que ya van de viaje.",
     lang: "es-CO",
     start_url: "/",
     display: "standalone",
