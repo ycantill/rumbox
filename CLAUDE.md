@@ -53,7 +53,14 @@ src/app/actions.ts               Server Actions (publishAvailability, updateAvai
                                  getLiveConfig, trackEvent)
 src/components/ui.tsx            Componentes compartidos (hojas de abajo, Toast) y useBogotaDates
 src/components/support.tsx       Piezas de /ayuda y /privacidad
+src/components/one-at-a-time.tsx GoToActive, BackHome y BackLink: llevan a lo que el teléfono tiene abierto
+src/components/service-worker.tsx Registra public/sw.js
+src/app/not-found.tsx, error.tsx "No encontramos esta página" y la pantalla cuando algo falla
 src/lib/domain.ts                Vocabulario: servicios, días y destinos
+src/lib/supabase.ts              db(): la conexión del servidor con la service role key
+src/lib/server-call.ts           callServer(): llamar una Server Action sin romper la pantalla
+src/lib/dates.ts                 Los días: cómo se escriben ("sábado 18 de octubre") y hasta cuándo vale una solicitud
+src/lib/whatsapp.ts              El teléfono: validarlo, escribirlo "300 123 4567" y los enlaces wa.me y tel:
 src/lib/validate.ts              Lo que falta en los formularios (navegador y servidor, mismos textos)
 src/lib/rate-limit.ts            Límites por teléfono y por conexión
 src/lib/legal.ts                 El responsable de los datos y las fechas de privacidad y términos

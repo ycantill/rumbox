@@ -42,7 +42,7 @@ en [Supabase](https://supabase.com).
 2. Crea un proyecto en Supabase y activa la extensión **pg_cron**
    (Database → Extensions). En el **SQL Editor**, ejecuta en orden los
    archivos de `supabase/migrations/`, desde `0001_init.sql` hasta la última
-   (hoy `0022_limpieza.sql`). Cada vez que aparezca una migración nueva hay
+   (hoy `0023_solo_carga.sql`). Cada vez que aparezca una migración nueva hay
    que ejecutarla también.
 
 3. Copia `.env.example` a `.env.local`:

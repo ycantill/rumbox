@@ -145,6 +145,10 @@ en las pruebas manuales (28 de octubre de 2026).
   globito del navegador.
 - Un teléfono que tenía guardada una disponibilidad sin destino o con un
   carro particular, de antes: al abrir la pantalla vuelve el formulario.
+- Un teléfono que tenía guardada una solicitud de encargo o diligencia, de
+  antes de "Solo carga": al abrir "Su solicitud" vuelve el formulario. Uno
+  que viajaba haciendo encargos o diligencias: se los quita y, si no le queda
+  ningún servicio, vuelve el formulario.
 - Abrir una dirección que no existe: sale "No encontramos esta página".
 
 ## Menores
@@ -365,3 +369,8 @@ en las pruebas manuales (28 de octubre de 2026).
   tabla `reviews` y las columnas que ya no se usaban. Migración
   `0022_limpieza.sql`, ya corrida.
 - **PR #74:** README, CLAUDE.md y docs/negocio al día tras la limpieza.
+- **PR #75:** la documentación al día con la app: los textos del diseño, los
+  servicios y lo que falta.
+- **PR #76, solo carga (4 de noviembre de 2026):** salen los encargos y las
+  diligencias; quedan mudanza, flete y encomienda. Migración
+  `0023_solo_carga.sql`.
