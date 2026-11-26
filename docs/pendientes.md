@@ -4,6 +4,10 @@ Lo que falta por decidir o construir en el MVP, por orden de importancia.
 Revisado el 29 de octubre de 2026. Los números vienen de la primera revisión
 (18 de octubre); cuando algo se termine, pásalo a [Hecho](#hecho) con su PR.
 
+> Los PR citados hasta el 29 de octubre de 2026 (#1 a #77) son del
+> repositorio anterior, que es privado. Desde el 26 de noviembre de 2026 los
+> números son los de este repositorio.
+
 ## Decisiones de Yohany
 
 ### 0. Dominio de Rumbox
@@ -71,8 +75,7 @@ Revisado el 29 de octubre de 2026. Los números vienen de la primera revisión
 ### 18. Compartir por WhatsApp o con código QR
 
 Un botón en el inicio para compartir el enlace de la app, y un código QR para
-carteles. Apoya la Fase 1 del roadmap: grupos de
-Facebook y WhatsApp.
+carteles, para difundirla en grupos de Facebook y WhatsApp.
 
 ### 19. Reintento automático cuando vuelve la señal
 
@@ -169,7 +172,7 @@ en las pruebas manuales (28 de octubre de 2026).
   clara. Propuesta del handoff: fondo `#0f1b2d`, superficies `#18263d` y los
   mismos ocre y cartón.
 - **Disponibilidades programadas:** rutas que el transportista repite todos
-  los días o todas las semanas. Es una mejora futura
+  los días o todas las semanas.
 - **Carros particulares:** paquetes y sobres en el baúl o los asientos
   traseros. Salieron del MVP en octubre de 2026; lo que había está anotado en
   "Qué queda para después" de [MVP.md](MVP.md).
@@ -368,7 +371,7 @@ en las pruebas manuales (28 de octubre de 2026).
 - **PR #73, limpieza de la base (29 de octubre de 2026):** se quitan la
   tabla `reviews` y las columnas que ya no se usaban. Migración
   `0022_limpieza.sql`, ya corrida.
-- **PR #74:** README, CLAUDE.md y docs/negocio al día tras la limpieza.
+- **PR #74:** README, CLAUDE.md y los documentos de negocio al día tras la limpieza.
 - **PR #75:** la documentación al día con la app: los textos del diseño, los
   servicios y lo que falta.
 - **PR #76, solo carga (4 de noviembre de 2026):** salen los encargos y las

@@ -17,8 +17,8 @@ piloto.
   cambia los servicios que hace (si se llena, quita mudanzas y fletes).
 
 El alcance del MVP y lo que queda para después está en
-[docs/MVP.md](docs/MVP.md). La visión de negocio completa está en
-docs/negocio/. Las decisiones de producto y las convenciones del
+[docs/MVP.md](docs/MVP.md). La visión de negocio (modelo, monetización y
+roadmap) es privada y no está en este repositorio. Las decisiones de producto y las convenciones del
 código están en [CLAUDE.md](CLAUDE.md).
 
 ## Stack
@@ -114,6 +114,6 @@ src/lib/matching.ts      Emparejamiento por ruta
 src/lib/route.ts         La ruta del transportista pueblo por pueblo (por carretera)
 src/lib/cities.ts        Todos los municipios de Colombia y su búsqueda
 supabase/migrations/     Esquema: availabilities (viajes), requests (solicitudes), events (analíticas)
-docs/                    Alcance del MVP, pendientes y base de conocimiento de negocio
+docs/                    Alcance del MVP y pendientes
 public/sw.js             Service worker (PWA)
 ```

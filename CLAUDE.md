@@ -6,11 +6,11 @@ Rumbox es una PWA de carga (mudanzas, fletes y encomiendas) en Colombia; todaví
 definido dónde será el piloto, así que no favorezcas ninguna región. Conecta
 clientes con transportistas que ya van hacia otro lado y tienen espacio libre.
 Sin registro, sin comisiones y con contacto directo por llamada o WhatsApp. El
-alcance del MVP está en [docs/MVP.md](docs/MVP.md) y la visión de negocio
-completa (modelo, precios, emparejamiento, monetización, roadmap) en
-docs/negocio/. Léelos antes de proponer funciones
-nuevas. Si el documento de negocio y las decisiones de abajo no coinciden,
-mandan las decisiones de abajo. Lo que falta por decidir o construir está en
+alcance del MVP está en [docs/MVP.md](docs/MVP.md). La visión de negocio
+completa (modelo, precios, monetización, roadmap) es privada y no está en el
+repositorio: pídesela a Yohany si la necesitas. Lee el MVP antes de proponer
+funciones nuevas. Si el documento de negocio y las decisiones de abajo no
+coinciden, mandan las decisiones de abajo. Lo que falta por decidir o construir está en
 [docs/pendientes.md](docs/pendientes.md): cuando termines algo de esa lista,
 pásalo a "Hecho" con su PR.
 
@@ -249,8 +249,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   eligió, si todavía no llega). Antes se apagaba a la medianoche de
   su día. Lo que quedó guardado sin destino, de cuando era opcional, se
   apaga y vuelve el formulario para que elija hacia dónde va.
-- Las rutas que se repiten (todos los días o todas las semanas) son una mejora
-  futura para el transportista: las "disponibilidades programadas". No van
+- Las rutas que se repiten (todos los días o todas las semanas) son las
+  "disponibilidades programadas", una posible mejora futura. No van
   en el MVP: quien repite una ruta registra cada viaje.
 - Un solo botón para apagarla: "Ya no estoy disponible" (también sirve si se
   llenó). Pide confirmar en una hoja ("¿Dejar de estar disponible?", con el
