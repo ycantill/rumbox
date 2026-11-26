@@ -1,5 +1,7 @@
 # Rumbox · Alcance del MVP
 
+> Los PR citados (#1 a #77) son del repositorio anterior, que es privado.
+
 > **Rediseño de Rumbox (Yohany, 27 de octubre de 2026).** La app se llama
 > Rumbox y tiene la identidad y las pantallas del diseño de Claude Design:
 > trato de usted, servicios (hoy mudanza, flete y encomienda) y "¿Qué
