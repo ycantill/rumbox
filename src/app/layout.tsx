@@ -49,7 +49,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Toast />
         <ServiceWorker />
         {/* Visitas y de dónde llegan, en el panel de Vercel. Sin cookies. */}
-        <Analytics />
+        {/* El script de Analytics solo existe en Vercel: en local y en el CI daría 404. */}
+        {process.env.VERCEL ? <Analytics /> : null}
       </body>
     </html>
   );

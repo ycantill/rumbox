@@ -87,6 +87,7 @@ en [Supabase](https://supabase.com).
 | `npm run db:start`  | Supabase local en Docker, con las migraciones |
 | `npm run test:e2e`  | Pruebas E2E con Playwright (Supabase local)  |
 | `npm run db:stop`   | Apaga el Supabase local                      |
+| `npm run lighthouse` | Lighthouse CI sobre el build                |
 
 El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request,
 y las pruebas E2E contra un Supabase local (necesitan Docker si las corres en tu
