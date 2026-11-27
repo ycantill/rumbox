@@ -40,3 +40,11 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 !.env.example
+
+# playwright
+/playwright-report/
+/test-results/
+
+# supabase local
+/supabase/.temp/
+/supabase/.branches/

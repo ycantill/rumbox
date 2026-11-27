@@ -272,7 +272,7 @@ export function DriverForm() {
 
         <div className="flex flex-col gap-3.5">
           <PrivacyNote>Su número se ve solo durante este viaje.</PrivacyNote>
-          <button type="submit" className={`btn-primary ${invalid ? "opacity-50" : ""}`} disabled={isPending}>
+          <button type="submit" className={`btn-primary ${invalid ? "opacity-60" : ""}`} disabled={isPending}>
             {isPending ? "Un momento…" : "Ponerme disponible"}
           </button>
           <FieldError message={error} center />

@@ -84,8 +84,13 @@ en [Supabase](https://supabase.com).
 | `npm run lint`      | ESLint                                       |
 | `npm run typecheck` | Verificación de tipos                        |
 | `npm test`          | Pruebas del emparejamiento y el vocabulario  |
+| `npm run db:start`  | Supabase local en Docker, con las migraciones |
+| `npm run test:e2e`  | Pruebas E2E con Playwright (Supabase local)  |
+| `npm run db:stop`   | Apaga el Supabase local                      |
 
-El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request.
+El CI de GitHub corre lint, typecheck, pruebas y build en cada pull request,
+y las pruebas E2E contra un Supabase local (necesitan Docker si las corres en tu
+computador: `npm run db:start` y luego `npm run test:e2e`).
 
 ## Desplegar en Vercel
 
