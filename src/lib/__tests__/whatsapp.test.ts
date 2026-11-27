@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatWhatsApp, normalizeWhatsApp, telLink } from "../whatsapp";
+import { formatWhatsApp, normalizeWhatsApp, phoneInput, telLink } from "../whatsapp";
 
 describe("normalizeWhatsApp", () => {
   it("agrega el indicativo de Colombia a celulares locales", () => {
@@ -43,5 +43,23 @@ describe("telLink", () => {
     expect(telLink("573001234567")).toBe("tel:+573001234567");
     expect(telLink("576041234567")).toBe("tel:+576041234567");
     expect(telLink("584121234567")).toBe("tel:+584121234567");
+  });
+});
+
+describe("phoneInput", () => {
+  it("agrupa el número como se escribe en Colombia mientras se escribe", () => {
+    expect(phoneInput("3")).toBe("3");
+    expect(phoneInput("3001")).toBe("300 1");
+    expect(phoneInput("3001234567")).toBe("300 123 4567");
+  });
+  it("ignora lo que no es número y no deja pasar de 10", () => {
+    expect(phoneInput("300-123-4567")).toBe("300 123 4567");
+    expect(phoneInput("300 123 45678")).toBe("300 123 4567");
+  });
+  it("quita el 57 de lo guardado antes", () => {
+    expect(phoneInput("573001234567")).toBe("300 123 4567");
+  });
+  it("un número con + es de otro país y queda como se escribió", () => {
+    expect(phoneInput("+58 412 123 4567")).toBe("+58 412 123 4567");
   });
 });
