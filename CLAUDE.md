@@ -29,6 +29,7 @@ npm run build        # build de producción
 npm run db:start     # Supabase local en Docker, con todas las migraciones
 npm run test:e2e     # Playwright contra la app compilada y el Supabase local
 npm run db:stop      # apaga el Supabase local
+npm run screenshot   # regenera docs/screenshot.png (app en :3100 con el Supabase local)
 npm run lighthouse   # Lighthouse CI sobre el build (umbrales en lighthouserc.cjs)
 ```
 
@@ -149,6 +150,9 @@ public/sw.js                     Service worker
   `driver-form.tsx`). Las claves internas que se guardan en la base
   (`manana`, `activa`) sí están en español.
 - Mantén `docs/MVP.md` al día cuando cambie una decisión de producto.
+- El README tiene una sección técnica en inglés (*Technical overview*) para quien
+  revisa el código. Si cambias la arquitectura, el emparejamiento, la privacidad o
+  las pruebas, actualízala también. Si cambia lo que se ve, regenera la captura.
 
 ## Decisiones de producto
 
@@ -597,9 +601,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   dejarlas "para lo guardado antes". Hoy la base tiene tres tablas
   (`availabilities`, `requests` y `events`), dos vistas de analíticas, el
   trigger de Realtime y la tarea de pg_cron que borra los teléfonos. El
-  reporte del modelo para revisar con un experto está en la carpeta del
-  proyecto (`base-de-datos/`) y en
-  https://claude.ai/artifact/6Q93wAYpBa9krmv5ctoUEG.
+  reporte del modelo para revisar con un experto es privado: pídeselo a Yohany.
 
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, encargos y
 diligencias, precio aproximado,

@@ -12,7 +12,8 @@
     "db:start": "supabase start -x storage-api,imgproxy,mailpit,postgres-meta,studio,edge-runtime,logflare,vector,supavisor",
     "db:stop": "supabase stop",
     "test:e2e": "playwright test",
-    "lighthouse": "lhci autorun"
+    "lighthouse": "lhci autorun",
+    "screenshot": "node scripts/screenshot.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
