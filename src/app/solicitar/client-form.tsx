@@ -310,7 +310,7 @@ export function ClientForm() {
           <PrivacyNote>Guardamos su solicitud solo mientras esté abierta.</PrivacyNote>
           <button
             type="submit"
-            className={`btn-primary ${invalid ? "opacity-50" : ""}`}
+            className={`btn-primary ${invalid ? "opacity-60" : ""}`}
             disabled={isPending}
           >
             Buscar conductor

@@ -26,10 +26,26 @@ npm run lint         # ESLint
 npm run typecheck    # next typegen + tsc --noEmit
 npm test             # Vitest (src/lib/__tests__)
 npm run build        # build de producción
+npm run db:start     # Supabase local en Docker, con todas las migraciones
+npm run test:e2e     # Playwright contra la app compilada y el Supabase local
+npm run db:stop      # apaga el Supabase local
 ```
 
 El CI (`.github/workflows/ci.yml`) corre lint, typecheck, test y build en cada
-PR. Corre los cuatro antes de dar un cambio por terminado.
+PR, y en otro job las pruebas E2E. Corre todo antes de dar un cambio por terminado.
+
+### Pruebas E2E (`e2e/`)
+
+- Corren contra un Supabase local real (`supabase/config.jsonc`, CLI fijada en
+  `devDependencies`), nunca contra la base de producción. Las llaves salen de
+  `supabase status`; son las de desarrollo del stack local.
+- Antes de cada corrida `e2e/global-setup.ts` vacía las tablas.
+- Cada prueba usa municipios distintos y su propio teléfono (`celular()`), porque
+  corren en paralelo contra la misma base y el límite es de 3 viajes por número.
+- Busca los elementos por rol y texto (`getByRole`), como los ve una persona.
+  Si cambias un texto de la interfaz, ajusta la prueba.
+- `e2e/calidad.spec.ts` revisa WCAG 2.2 AA con axe en todas las páginas y que no
+  haya scroll horizontal a 360 px. Un error de axe es un error de la app.
 
 ## Stack y estructura
 
@@ -169,7 +185,8 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   descarga a mitad de camino, los vuelve a marcar. Sin ninguno no se puede:
   para eso está "Ya no estoy disponible".
 - Los errores de los formularios son los del prototipo: el botón se ve
-  apagado (opacidad 50%) mientras falta algo y, al tocarlo, dice debajo qué
+  apagado (opacidad 60%, no menos: con 50% el texto no llega al contraste 3:1
+  de WCAG y el botón sí se puede tocar) mientras falta algo y, al tocarlo, dice debajo qué
   falta ("Elija qué servicio necesita.", "Revise la ruta.", "Elija al menos
   un servicio.", "Escriba su número de 10 dígitos."). El teléfono se va
   escribiendo como "300 123 4567".
