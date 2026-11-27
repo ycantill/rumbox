@@ -7,8 +7,8 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useSyncExternalStore } from "react";
-import type { MyRequest } from "@/app/solicitar/client-form";
-import type { MyPost } from "@/app/transportista/driver-form";
+import type { MyRequest } from "@/app/solicitar/types";
+import type { MyPost } from "@/app/transportista/types";
 import { KEYS, STORE_CHANGED, load } from "@/lib/local-store";
 import { activeScreen } from "@/lib/one-at-a-time";
 

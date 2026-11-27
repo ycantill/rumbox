@@ -67,8 +67,12 @@ PR, y en otros jobs las pruebas E2E y Lighthouse (falla si accesibilidad baja de
 
 ```
 src/app/page.tsx                 Inicio
-src/app/solicitar/               Cliente: formulario para solicitar transportista
-src/app/transportista/           Transportista: ponerse disponible y ver su servicio
+src/app/solicitar/               Cliente: client-form.tsx (formulario y qué pantalla mostrar),
+                                 my-request-view.tsx (la solicitud abierta), driver-card.tsx (cada conductor),
+                                 searching.tsx ("Buscando conductores"), types.ts (MyRequest)
+src/app/transportista/           Transportista: driver-form.tsx (formulario), current-work.tsx
+                                 ("Usted está disponible"), where-you-are.tsx (dibujo de la ruta),
+                                 use-my-trip.ts (el viaje guardado en el teléfono), types.ts (MyPost)
 src/app/ayuda/                   Ayuda: fraudes y seguridad
 src/app/privacidad/              Cómo cuidamos sus datos (aviso de privacidad)
 src/app/terminos/                Términos y condiciones
@@ -100,6 +104,10 @@ src/lib/maps.ts                  El enlace de "Comenzar viaje en Maps" al mapa (
 src/lib/cities.ts                Todos los municipios de Colombia (DIVIPOLA) y su búsqueda
 src/lib/local-store.ts           Datos que recuerda el navegador (localStorage)
 src/lib/refresh.ts               Volver a pedir las listas al regresar a la app y cada minuto
+src/lib/use-server-sync.ts       useServerSync(): una pantalla al día con el servidor (al abrir, al volver, cada minuto, en vivo)
+src/lib/use-back-step.ts         useBackStep(): un paso que se deshace con la flecha de atrás del teléfono
+src/lib/route-drawing.ts         Qué se dibuja en "¿Por dónde va?": dónde va y qué quedó atrás
+src/lib/contact-message.ts       El mensaje de WhatsApp que el cliente le manda al conductor
 src/lib/analytics.ts, track.ts  Analíticas: qué se cuenta y cómo se manda desde el navegador
 src/lib/safety.ts                Consejos de seguridad
 src/lib/live.ts                  Realtime en el navegador (lista del cliente al día) y sus canales
@@ -129,6 +137,12 @@ public/sw.js                     Service worker
   desplegar.
 - La lógica de emparejamiento y del vocabulario tiene pruebas en
   `src/lib/__tests__`; si la cambias, actualiza o agrega pruebas.
+- Los componentes muestran; la lógica pura (cálculos, textos armados, formatos)
+  va en `src/lib/` con pruebas, como `routeDrawing`, `contactMessage` o
+  `phoneInput`. Una pantalla que se mantiene al día con el servidor usa
+  `useServerSync`, no un `useEffect` propio con su contador.
+- Un archivo de componentes no pasa de unas 250 líneas: si crece, sepáralo por
+  pantalla o por pieza.
 - Los comentarios y las descripciones de las pruebas van en español. Los
   nombres de funciones, variables, tipos, componentes y archivos van en inglés,
   como ya está todo el código (`publishAvailability`, `matchesTrip`,

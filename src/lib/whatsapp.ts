@@ -25,6 +25,18 @@ export function formatWhatsApp(phone: string): string {
   return co ? `${co[1]} ${co[2]} ${co[3]}` : `+${phone}`;
 }
 
+/**
+ * El teléfono como se escribe en Colombia, "300 123 4567", con 10 números como
+ * mucho, mientras la persona lo escribe. Si empieza con "+" es de otro país y
+ * queda como lo escribió.
+ */
+export function phoneInput(raw: string): string {
+  if (raw.trim().startsWith("+")) return raw;
+  // Lo guardado de antes puede traer el 57 adelante.
+  const digits = raw.replace(/\D/g, "").replace(/^57(?=3\d{9}$)/, "").slice(0, 10);
+  return [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6)].filter(Boolean).join(" ");
+}
+
 export function waLink(phone: string, text: string): string {
   return `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
 }
