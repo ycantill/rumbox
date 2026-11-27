@@ -29,10 +29,21 @@ npm run build        # build de producción
 npm run db:start     # Supabase local en Docker, con todas las migraciones
 npm run test:e2e     # Playwright contra la app compilada y el Supabase local
 npm run db:stop      # apaga el Supabase local
+npm run lighthouse   # Lighthouse CI sobre el build (umbrales en lighthouserc.cjs)
 ```
 
 El CI (`.github/workflows/ci.yml`) corre lint, typecheck, test y build en cada
-PR, y en otro job las pruebas E2E. Corre todo antes de dar un cambio por terminado.
+PR, y en otros jobs las pruebas E2E y Lighthouse (falla si accesibilidad baja de
+100, buenas prácticas de 95, o rendimiento y SEO de 90). Corre todo antes de dar un cambio por terminado.
+
+### Lighthouse
+
+- Mide `/`, `/solicitar` y `/transportista` con emulación de celular, 3 veces cada una.
+- Se salta la auditoría `is-crawlable` porque la app tiene `noindex` a propósito
+  mientras dure el demo (`OPEN_TO_SEARCH`). Al abrirla a Google, quita esa línea
+  de `lighthouserc.cjs`.
+- Vercel Analytics se carga solo en Vercel (`process.env.VERCEL`): fuera de
+  Vercel su script no existe y daría un error en la consola.
 
 ### Pruebas E2E (`e2e/`)
 
