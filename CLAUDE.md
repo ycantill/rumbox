@@ -601,9 +601,7 @@ Estas decisiones las tomó Yohany y no se cambian sin preguntarle.
   dejarlas "para lo guardado antes". Hoy la base tiene tres tablas
   (`availabilities`, `requests` y `events`), dos vistas de analíticas, el
   trigger de Realtime y la tarea de pg_cron que borra los teléfonos. El
-  reporte del modelo para revisar con un experto está en la carpeta del
-  proyecto (`base-de-datos/`) y en
-  https://claude.ai/artifact/6Q93wAYpBa9krmv5ctoUEG.
+  reporte del modelo para revisar con un experto es privado: pídeselo a Yohany.
 
 **Fuera del MVP** (ver docs/MVP.md): carros particulares, encargos y
 diligencias, precio aproximado,
